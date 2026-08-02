@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -97,6 +98,50 @@ WorkflowResult issue(engine::Transaction& transaction,
         throw modules::RuleViolation("Only a draft invoice can be issued.");
     }
 
+    std::optional<modules::receivables::Invoice> replacement_source;
+    if (!invoice.replaces_invoice_id.empty()) {
+        const engine::RecordId source_record =
+            engine::record_id_from_string(invoice.replaces_invoice_id);
+        if (!source_record.is_valid() ||
+            invoice.replaces_invoice_id == invoice.id) {
+            throw modules::RuleViolation(
+                "That replacement draft has an invalid source invoice.");
+        }
+        replacement_source = modules::receivables::data::find_invoice(
+            transaction, invoice.replaces_invoice_id);
+        if (!replacement_source) {
+            throw modules::RuleViolation(
+                "The source invoice for this replacement is not on file.");
+        }
+        modules::receivables::validate(*replacement_source);
+        if (replacement_source->state != engine::DocumentState::Cancelled ||
+            !replacement_source->replacement_invoice_id.empty()) {
+            throw modules::RuleViolation(
+                "The source invoice is not waiting for this replacement.");
+        }
+        if (replacement_source->party_id != invoice.party_id) {
+            throw modules::RuleViolation(
+                "A replacement invoice cannot move the charge to another customer.");
+        }
+        std::size_t active_replacements = 0;
+        for (const auto& candidate :
+             modules::receivables::data::replacements_for_invoice(
+                 transaction, replacement_source->id)) {
+            modules::receivables::validate(candidate);
+            if (candidate.state != engine::DocumentState::Discarded) {
+                ++active_replacements;
+                if (candidate.id != invoice.id) {
+                    throw modules::RuleViolation(
+                        "The source invoice has another active replacement.");
+                }
+            }
+        }
+        if (active_replacements != 1U) {
+            throw modules::RuleViolation(
+                "The replacement relationship is incomplete or contradictory.");
+        }
+    }
+
     const std::vector<modules::receivables::InvoiceLine> lines =
         modules::receivables::data::lines_for_invoice(transaction, invoice.id);
     if (lines.empty()) {
@@ -184,6 +229,12 @@ WorkflowResult issue(engine::Transaction& transaction,
     invoice.issued_at = issued_at;
     invoice.issued_by = engine::to_string(who.person);
     modules::receivables::data::save_invoice(transaction, invoice);
+    if (replacement_source) {
+        replacement_source->state = engine::DocumentState::Replaced;
+        replacement_source->replacement_invoice_id = invoice.id;
+        modules::receivables::data::save_invoice(
+            transaction, *replacement_source);
+    }
 
     return {{protocol::ModuleId::receivables, invoice_record},
             "Issued invoice " + series + "-" + std::to_string(*number) +
