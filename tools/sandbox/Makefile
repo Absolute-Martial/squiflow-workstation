@@ -188,6 +188,13 @@ $(BUILD)/workflow_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC)
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/quote_to_order_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                              $(PAYLOAD_SRC) $(MODULES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
+                              $(QUOTATIONS_SRC) $(QUOTE_TO_ORDER_SRC) \
+                              tests/workflows/quote_to_order_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/administration_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                               $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
                               src/modules/administration/tests/administration_test.cpp
@@ -301,7 +308,7 @@ integrity:
 tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
-       $(BUILD)/workflow_test \
+       $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
        $(BUILD)/administration_test $(BUILD)/parties_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
@@ -339,6 +346,9 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
 >@echo
 >@echo '== workflow framework =='
 >./$(BUILD)/workflow_test
+>@echo
+>@echo '== quote to order workflow =='
+>./$(BUILD)/quote_to_order_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test
