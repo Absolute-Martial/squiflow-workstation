@@ -161,6 +161,21 @@ std::vector<Invoice> invoices_for_party(const Reader& reader,
 }
 
 template <typename Reader>
+std::vector<Invoice> replacements_for_invoice(
+    const Reader& reader, const std::string& source_invoice_id) {
+    engine::Query query{tables::kInvoice};
+    query.where_equals("replaces_invoice_id",
+                       engine::Value::text(source_invoice_id));
+    query.order_by("created_at");
+    query.order_by("id");
+    std::vector<Invoice> result;
+    for (const engine::Row& row : reader.select(query)) {
+        result.push_back(invoice_from_row(row));
+    }
+    return result;
+}
+
+template <typename Reader>
 std::vector<Payment> payments_for_party(const Reader& reader,
                                         const std::string& party_id) {
     engine::Query query{tables::kPayment};
