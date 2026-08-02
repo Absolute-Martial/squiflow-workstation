@@ -69,6 +69,7 @@ QUOTE_TO_ORDER_SRC := src/workflows/quote_to_order.cpp
 ORDER_TO_JOBS_SRC := src/workflows/order_to_jobs.cpp
 ISSUE_INVOICE_SRC := src/workflows/issue_invoice.cpp
 CANCEL_REISSUE_SRC := src/workflows/cancel_and_reissue.cpp
+TAKE_PAYMENT_SRC := src/workflows/take_payment.cpp
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
@@ -220,6 +221,13 @@ $(BUILD)/cancel_and_reissue_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/take_payment_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                            $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) \
+                            $(RECEIVABLES_SRC) $(TAKE_PAYMENT_SRC) \
+                            tests/workflows/take_payment_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/administration_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                               $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
                               src/modules/administration/tests/administration_test.cpp
@@ -337,6 +345,7 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/order_to_jobs_test $(BUILD)/administration_test $(BUILD)/parties_test \
        $(BUILD)/issue_invoice_test \
        $(BUILD)/cancel_and_reissue_test \
+       $(BUILD)/take_payment_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
        $(BUILD)/quotations_test \
@@ -385,6 +394,9 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
 >@echo
 >@echo '== cancel and reissue workflow =='
 >./$(BUILD)/cancel_and_reissue_test
+>@echo
+>@echo '== take payment workflow =='
+>./$(BUILD)/take_payment_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test
