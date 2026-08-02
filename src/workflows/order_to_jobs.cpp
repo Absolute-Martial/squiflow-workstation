@@ -260,15 +260,36 @@ std::string order_job_id(const std::string& conversion_id,
                          const std::string& order_line_id) {
     require_record_id(conversion_id, "The conversion identity is invalid.");
     require_record_id(order_line_id, "The source order-line id is invalid.");
+
+    // The delimiter prevents ambiguous concatenations. Two differently seeded
+    // FNV-1a passes form the 128-bit record identity. This is deterministic on
+    // every platform and, unlike nibble-wise XOR, does not make distinct pairs
+    // such as (root 1, line 2) and (root 2, line 1) collide by construction.
+    const std::string input = conversion_id + ":" + order_line_id;
+    auto hash = [&](std::uint64_t value, const std::uint64_t salt) {
+        value ^= salt;
+        for (const char character : input) {
+            const auto byte = static_cast<unsigned char>(character);
+            value ^= static_cast<std::uint64_t>(byte);
+            value *= 1099511628211ULL;
+        }
+        return value;
+    };
+    const std::uint64_t high = hash(14695981039346656037ULL,
+                                    0x9e3779b97f4a7c15ULL);
+    const std::uint64_t low = hash(1099511628211ULL,
+                                   0xd6e8feb86659fd93ULL);
     static constexpr char hex[] = "0123456789abcdef";
     std::string result(32U, '0');
-    bool nonzero = false;
-    for (std::size_t i = 0; i < result.size(); ++i) {
-        const int value = nibble(conversion_id[i]) ^ nibble(order_line_id[i]);
-        result[i] = hex[static_cast<std::size_t>(value)];
-        nonzero = nonzero || value != 0;
-    }
-    if (!nonzero) result.back() = '1';
+    const auto write_half = [&](const std::uint64_t value, const std::size_t offset) {
+        for (std::size_t i = 0; i < 16U; ++i) {
+            const std::size_t shift = (15U - i) * 4U;
+            result[offset + i] = hex[static_cast<std::size_t>((value >> shift) & 0x0fU)];
+        }
+    };
+    write_half(high, 0U);
+    write_half(low, 16U);
+    if (high == 0U && low == 0U) result.back() = '1';
     return result;
 }
 

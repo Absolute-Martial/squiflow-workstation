@@ -135,6 +135,9 @@ void validate(const Job& job) {
     if (!job.party_id.empty() && blank(job.party_id)) {
         throw RuleViolation("A job customer cannot be only whitespace.");
     }
+    if (!job.source_order_line_id.empty() && job.source_order_id.empty()) {
+        throw RuleViolation("A source order line cannot exist without its source order.");
+    }
     if (blank(job.title) && blank(job.description)) {
         throw RuleViolation("A job must say what is being made.");
     }
