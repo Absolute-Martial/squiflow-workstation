@@ -32,25 +32,6 @@ spdlog::level::level_enum to_backend(LogLevel level) noexcept {
     return spdlog::level::critical;
 }
 
-LogLevel from_backend(spdlog::level::level_enum level) noexcept {
-    switch (level) {
-        case spdlog::level::trace:
-        case spdlog::level::debug:
-            return LogLevel::Debug;
-        case spdlog::level::info:
-            return LogLevel::Info;
-        case spdlog::level::warn:
-            return LogLevel::Warning;
-        case spdlog::level::err:
-            return LogLevel::Error;
-        case spdlog::level::critical:
-        case spdlog::level::off:
-        case spdlog::level::n_levels:
-            return LogLevel::Fatal;
-    }
-    return LogLevel::Fatal;
-}
-
 // The bridge from spdlog to the SquiFlow sink interface.
 //
 // Deliberately not an spdlog formatter. The payload arriving here has already
@@ -83,6 +64,13 @@ private:
     std::uint64_t refusals_ = 0;
 };
 
+// The formatter records an empty category as "general", so the policy has to
+// agree: a rule on `general` must govern the records the formatter will file
+// under that name.
+std::string_view effective_category(std::string_view category) noexcept {
+    return category.empty() ? std::string_view("general") : category;
+}
+
 }  // namespace
 
 std::string_view logging_backend_version() noexcept {
@@ -98,7 +86,8 @@ public:
          LogLevel minimum_level)
         : adapter(std::make_shared<ApplicationSink>(sink_target)),
           backend("squiflow", adapter),
-          clock(clock_source) {
+          clock(clock_source),
+          policy(minimum_level) {
         backend.set_level(to_backend(minimum_level));
         // spdlog would otherwise print its own complaints to stderr, which on
         // a shop machine nobody reads. Failures are counted instead.
@@ -106,9 +95,25 @@ public:
             [this](const std::string&) { ++counters.sink_failures; });
     }
 
+    // spdlog holds one threshold; SquiFlow holds a policy. The backend is
+    // therefore set to the *lowest* level any category is allowed to speak at,
+    // and the policy makes the real decision per record. Without this the
+    // backend would silently discard a category that had been turned up.
+    void refresh_backend_floor() {
+        LogLevel floor = policy.default_level();
+        for (const CategoryLevelRule& rule : policy.rules()) {
+            if (static_cast<std::uint8_t>(rule.level) <
+                static_cast<std::uint8_t>(floor)) {
+                floor = rule.level;
+            }
+        }
+        backend.set_level(to_backend(floor));
+    }
+
     std::shared_ptr<ApplicationSink> adapter;
     spdlog::logger backend;
     const LogClock& clock;
+    LogLevelPolicy policy;
     mutable std::mutex mutex;
     LoggerCounters counters;
     std::uint64_t seen_refusals = 0;
@@ -121,17 +126,66 @@ Logger::~Logger() = default;
 
 void Logger::set_minimum_level(LogLevel level) {
     const std::lock_guard<std::mutex> guard(impl_->mutex);
-    impl_->backend.set_level(to_backend(level));
+    impl_->policy.set_default_level(level);
+    impl_->refresh_backend_floor();
 }
 
 LogLevel Logger::minimum_level() const {
     const std::lock_guard<std::mutex> guard(impl_->mutex);
-    return from_backend(impl_->backend.level());
+    return impl_->policy.default_level();
+}
+
+bool Logger::set_category_level(std::string_view category, LogLevel level) {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    if (!impl_->policy.set_category_level(category, level)) {
+        return false;
+    }
+    impl_->refresh_backend_floor();
+    return true;
+}
+
+bool Logger::clear_category_level(std::string_view category) {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    if (!impl_->policy.clear_category_level(category)) {
+        return false;
+    }
+    impl_->refresh_backend_floor();
+    return true;
+}
+
+void Logger::clear_all_category_levels() {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    impl_->policy.clear_all_category_levels();
+    impl_->refresh_backend_floor();
+}
+
+LevelConfigurationResult Logger::apply_level_configuration(
+    std::string_view text) {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    LevelConfigurationResult result = impl_->policy.apply_configuration(text);
+    impl_->refresh_backend_floor();
+    return result;
+}
+
+std::string Logger::level_configuration() const {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return impl_->policy.to_configuration();
+}
+
+LogLevel Logger::level_for(std::string_view category) const {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return impl_->policy.level_for(effective_category(category));
 }
 
 bool Logger::is_enabled(LogLevel level) const {
     const std::lock_guard<std::mutex> guard(impl_->mutex);
-    return impl_->backend.should_log(to_backend(level));
+    return static_cast<std::uint8_t>(level) >=
+           static_cast<std::uint8_t>(impl_->policy.default_level());
+}
+
+bool Logger::is_enabled(std::string_view category, LogLevel level) const {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return impl_->policy.is_enabled(effective_category(category), level);
 }
 
 void Logger::log(LogLevel level, std::string_view category,
@@ -143,7 +197,7 @@ void Logger::log(LogLevel level, std::string_view category,
     const std::lock_guard<std::mutex> guard(impl_->mutex);
 
     const spdlog::level::level_enum backend_level = to_backend(level);
-    if (!impl_->backend.should_log(backend_level)) {
+    if (!impl_->policy.is_enabled(effective_category(category), level)) {
         ++impl_->counters.suppressed;
         return;
     }

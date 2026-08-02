@@ -25,6 +25,7 @@
 
 #include "platform/local_log_storage.hpp"
 #include "platform/log_formatter.hpp"
+#include "platform/log_level_policy.hpp"
 #include "platform/log_record.hpp"
 #include "platform/logger.hpp"
 #include "platform/rotating_log_file.hpp"
@@ -36,7 +37,13 @@
 namespace {
 
 namespace platform = squiflow::platform;
+using platform::CategoryLevelRule;
+using platform::LevelConfigurationResult;
 using platform::LogField;
+using platform::LogLevelPolicy;
+using platform::is_valid_log_category;
+using platform::kMaxLogCategoryLength;
+using platform::kMaxLogCategoryRules;
 using platform::LogLevel;
 using platform::LogRecord;
 using platform::LogRotationPolicy;
@@ -717,10 +724,417 @@ void a_concurrent_file_stays_inside_its_budget() {
     check(file.counters().rotations > 0, "rotation actually happened");
 }
 
+void verbosity_is_chosen_per_category() {
+    section("per-category levels");
+
+    // A policy with no rules is exactly the old behaviour: one threshold.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        check(policy.default_level() == LogLevel::Info, "the default is the default");
+        check(policy.rule_count() == 0, "a new policy carries no rules");
+        check(policy.level_for("anything") == LogLevel::Info,
+              "an unmentioned category takes the default");
+        check(!policy.is_enabled("anything", LogLevel::Debug),
+              "debug is off under an info default");
+        check(policy.is_enabled("anything", LogLevel::Info),
+              "info is on at the boundary");
+        check(policy.is_enabled("anything", LogLevel::Fatal),
+              "fatal is never filtered out by a lower default");
+    }
+
+    // The support case this exists for: one area turned up, everything else
+    // left alone.
+    {
+        LogLevelPolicy policy(LogLevel::Warning);
+        check(policy.set_category_level("sync", LogLevel::Debug),
+              "a rule can be set");
+        check(policy.rule_count() == 1, "one rule is one rule");
+        check(policy.level_for("sync") == LogLevel::Debug,
+              "the rule governs its own category");
+        check(policy.level_for("storage") == LogLevel::Warning,
+              "an untouched category keeps the default");
+        check(policy.is_enabled("sync", LogLevel::Debug),
+              "the raised category speaks at debug");
+        check(!policy.is_enabled("storage", LogLevel::Info),
+              "the rest of the application stays quiet");
+    }
+
+    // Dotted families, and the boundary that stops a rule leaking sideways.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        check(policy.set_category_level("storage", LogLevel::Error), "family rule set");
+        check(policy.level_for("storage.migrate") == LogLevel::Error,
+              "a family rule covers its children");
+        check(policy.level_for("storage.migrate.step") == LogLevel::Error,
+              "and its grandchildren");
+        check(policy.level_for("storagecleanup") == LogLevel::Info,
+              "a family rule stops at the dot, never mid-word");
+        check(policy.level_for("storag") == LogLevel::Info,
+              "a shorter name is not a prefix match");
+        check(policy.level_for("other.storage") == LogLevel::Info,
+              "a rule matches a prefix, not a substring");
+    }
+
+    // Longest wins, and the order rules arrive in must not matter.
+    {
+        LogLevelPolicy specific_first(LogLevel::Info);
+        check(specific_first.set_category_level("storage.migrate", LogLevel::Debug),
+              "child first");
+        check(specific_first.set_category_level("storage", LogLevel::Error),
+              "then parent");
+
+        LogLevelPolicy family_first(LogLevel::Info);
+        check(family_first.set_category_level("storage", LogLevel::Error),
+              "parent first");
+        check(family_first.set_category_level("storage.migrate", LogLevel::Debug),
+              "then child");
+
+        check(specific_first.level_for("storage.migrate") == LogLevel::Debug,
+              "the specific rule wins when it was added first");
+        check(family_first.level_for("storage.migrate") == LogLevel::Debug,
+              "and also when it was added last");
+        check(specific_first.level_for("storage.backup") == LogLevel::Error,
+              "a sibling still takes the family rule");
+        check(family_first.level_for("storage.backup") == LogLevel::Error,
+              "in either order");
+    }
+
+    // Replacing a rule is an edit, not a second rule.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        check(policy.set_category_level("sync", LogLevel::Debug), "set once");
+        check(policy.set_category_level("sync", LogLevel::Fatal), "set again");
+        check(policy.rule_count() == 1, "the same category is one entry");
+        check(policy.level_for("sync") == LogLevel::Fatal, "the later value wins");
+        check(policy.clear_category_level("sync"), "a present rule is removed");
+        check(!policy.clear_category_level("sync"),
+              "removing it twice is refused, not repeated");
+        check(policy.rule_count() == 0, "and the table is empty again");
+        check(policy.level_for("sync") == LogLevel::Info,
+              "the default governs once more");
+    }
+
+    // Hostile and merely careless category names.
+    {
+        check(is_valid_log_category("a"), "one letter is a category");
+        check(is_valid_log_category("storage.migrate_2-b"),
+              "dots, digits, underscore and dash");
+        check(is_valid_log_category(std::string(kMaxLogCategoryLength, 'a')),
+              "a category may be exactly as long as the cap");
+        check(!is_valid_log_category(std::string(kMaxLogCategoryLength + 1, 'a')),
+              "one character longer is refused");
+        check(!is_valid_log_category(""), "empty is not a category");
+        check(!is_valid_log_category(".sync"), "a leading dot is refused");
+        check(!is_valid_log_category("sync."), "a trailing dot is refused");
+        check(!is_valid_log_category("a..b"), "a doubled dot is refused");
+        check(!is_valid_log_category("Sync"),
+              "upper case is refused, so lookup needs no case rules");
+        check(!is_valid_log_category("a b"), "a space is refused");
+        check(!is_valid_log_category("a=b"), "the separator character is refused");
+        check(!is_valid_log_category("a,b"), "the term separator is refused");
+        check(!is_valid_log_category("a\"b"), "a quote is refused");
+        check(!is_valid_log_category("a\nb"), "a newline is refused");
+        check(!is_valid_log_category("caf\xc3\xa9"), "a non-ASCII byte is refused");
+
+        LogLevelPolicy policy(LogLevel::Info);
+        check(!policy.set_category_level("", LogLevel::Debug),
+              "an empty rule is refused");
+        check(!policy.set_category_level("Sync", LogLevel::Debug),
+              "a mixed-case rule is refused");
+        check(policy.rule_count() == 0, "a refused rule leaves nothing behind");
+    }
+
+    // The table is bounded, and being full must not corrupt what is there.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        for (std::size_t index = 0; index < kMaxLogCategoryRules; ++index) {
+            const std::string name = "c" + std::to_string(index);
+            check(policy.set_category_level(name, LogLevel::Debug),
+                  "rules fit up to the cap");
+        }
+        check(policy.rule_count() == kMaxLogCategoryRules, "the table is full");
+        check(!policy.set_category_level("one_too_many", LogLevel::Debug),
+              "a new rule beyond the cap is refused");
+        check(policy.rule_count() == kMaxLogCategoryRules, "and nothing was evicted");
+        check(policy.set_category_level("c0", LogLevel::Fatal),
+              "a full table can still be edited");
+        check(policy.level_for("c0") == LogLevel::Fatal, "the edit took effect");
+        policy.clear_all_category_levels();
+        check(policy.rule_count() == 0, "clearing empties the table");
+    }
+
+    // Rules come back in a stable order whatever order they went in.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        check(policy.set_category_level("sync", LogLevel::Debug), "rule one");
+        check(policy.set_category_level("backup", LogLevel::Error), "rule two");
+        check(policy.set_category_level("storage", LogLevel::Warning), "rule three");
+        const std::vector<CategoryLevelRule> ordered = policy.rules();
+        check(ordered.size() == 3, "three rules come back");
+        check(ordered[0].category == "backup", "sorted, first");
+        check(ordered[1].category == "storage", "sorted, second");
+        check(ordered[2].category == "sync", "sorted, third");
+        check(ordered[0].level == LogLevel::Error, "with its level");
+    }
+
+    // A settings string a human typed.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        const LevelConfigurationResult result =
+            policy.apply_configuration("warning, sync=debug, storage.migrate=error");
+        check(result.applied == 3, "three terms applied");
+        check(result.rejected == 0, "nothing rejected");
+        check(result.fully_understood(), "and the string was understood in full");
+        check(policy.default_level() == LogLevel::Warning,
+              "the bare term set the default");
+        check(policy.level_for("sync") == LogLevel::Debug, "the first rule applied");
+        check(policy.level_for("storage.migrate") == LogLevel::Error,
+              "the second rule applied");
+        check(policy.level_for("storage") == LogLevel::Warning,
+              "an unmentioned parent takes the default");
+    }
+
+    // Sloppy but well-meant input is accepted rather than argued with.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        const LevelConfigurationResult result =
+            policy.apply_configuration("  SYNC = Debug ;; storage=WARNING,,");
+        check(result.applied == 2,
+              "whitespace, case and stray separators are tolerated");
+        check(result.rejected == 0, "and none of it counts as an error");
+        check(policy.level_for("sync") == LogLevel::Debug,
+              "the category was lower-cased");
+        check(policy.level_for("storage") == LogLevel::Warning,
+              "the level name was case-insensitive");
+    }
+
+    // Nonsense is dropped, named, and does not take the good terms with it.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        const LevelConfigurationResult result = policy.apply_configuration(
+            "sync=debug, storage=verbose, =warning, bad category=info, chatty");
+        check(result.applied == 1, "only the sound term applied");
+        check(result.rejected == 4, "four terms were refused");
+        check(!result.fully_understood(), "and the result says so");
+        check(result.rejected_terms.size() == 4, "each refusal is named");
+        check(result.rejected_terms[0] == "storage=verbose", "an unknown level is named");
+        check(result.rejected_terms[1] == "=warning", "an empty category is named");
+        check(result.rejected_terms[2] == "bad category=info",
+              "an illegal category is named");
+        check(result.rejected_terms[3] == "chatty", "an unknown bare term is named");
+        check(policy.level_for("sync") == LogLevel::Debug,
+              "the good term survived the bad ones");
+        check(policy.default_level() == LogLevel::Info,
+              "and the default was left alone");
+    }
+
+    // Empty and absurd input.
+    {
+        LogLevelPolicy policy(LogLevel::Info);
+        const LevelConfigurationResult empty = policy.apply_configuration("");
+        check(empty.applied == 0 && empty.rejected == 0,
+              "an empty string changes nothing");
+        const LevelConfigurationResult blanks = policy.apply_configuration("  ,; ,  ");
+        check(blanks.applied == 0 && blanks.rejected == 0,
+              "separators alone change nothing");
+        check(policy.default_level() == LogLevel::Info, "and the default is untouched");
+
+        std::string enormous;
+        for (int index = 0; index < 500; ++index) {
+            enormous.append("x").append(std::to_string(index)).append("=debug,");
+        }
+        const LevelConfigurationResult flood = policy.apply_configuration(enormous);
+        check(flood.rejected_terms.size() <= 130,
+              "a flood of terms cannot make the parser allocate without limit");
+        check(!flood.rejected_terms.empty() &&
+                  flood.rejected_terms.back() == "[too many terms]",
+              "and the parser says why it stopped");
+        check(policy.rule_count() <= kMaxLogCategoryRules,
+              "the rule table still respects its cap under flooding");
+
+        const std::string long_term = std::string(300, 'z') + "=nonsense";
+        LogLevelPolicy second(LogLevel::Info);
+        const LevelConfigurationResult clipped = second.apply_configuration(long_term);
+        check(clipped.rejected == 1, "an over-long term is one refusal");
+        check(clipped.rejected_terms[0].size() <= 84,
+              "and the refusal quoted back is clipped, not echoed whole");
+    }
+
+    // What is written into the support file must read back as the same policy.
+    {
+        LogLevelPolicy policy(LogLevel::Warning);
+        check(policy.set_category_level("sync", LogLevel::Debug), "rule one");
+        check(policy.set_category_level("storage.migrate", LogLevel::Fatal), "rule two");
+        const std::string text = policy.to_configuration();
+        check(text == "warning, storage.migrate=fatal, sync=debug",
+              "the policy describes itself in the form it accepts");
+
+        LogLevelPolicy restored(LogLevel::Debug);
+        const LevelConfigurationResult result = restored.apply_configuration(text);
+        check(result.fully_understood(), "its own output is understood in full");
+        check(restored.default_level() == LogLevel::Warning, "the default round-trips");
+        check(restored.level_for("sync") == LogLevel::Debug, "the first rule round-trips");
+        check(restored.level_for("storage.migrate") == LogLevel::Fatal,
+              "the second rule round-trips");
+        check(restored.to_configuration() == text, "and a second pass is identical");
+    }
+}
+
+void the_logger_obeys_the_policy() {
+    section("the logger and per-category levels");
+
+    // The plain case: one area turned up, the rest left alone.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+
+        logger.debug("sync", "chatty");
+        check(sink.lines().empty(), "debug is suppressed under an info default");
+        check(logger.counters().suppressed == 1, "and the suppression is counted");
+
+        check(logger.set_category_level("sync", LogLevel::Debug),
+              "one category can be turned up");
+        logger.debug("sync", "chatty");
+        check(sink.lines().size() == 1, "and then it speaks");
+        check(sink.contains("sync"), "the line names the category");
+
+        logger.debug("storage", "chatty");
+        check(sink.lines().size() == 1, "while the rest stays quiet");
+        check(logger.counters().suppressed == 2, "the second suppression is counted too");
+        check(logger.counters().emitted == 1, "exactly one record was emitted");
+
+        check(logger.level_for("sync") == LogLevel::Debug, "the raised level is reported");
+        check(logger.level_for("storage") == LogLevel::Info, "and so is the default");
+        check(logger.is_enabled("sync", LogLevel::Debug), "the guard agrees for the rule");
+        check(!logger.is_enabled("storage", LogLevel::Debug), "and for the default");
+        check(logger.minimum_level() == LogLevel::Info, "the default level is unchanged");
+        check(logger.is_enabled(LogLevel::Info), "the category-free guard uses the default");
+        check(!logger.is_enabled(LogLevel::Debug), "in both directions");
+    }
+
+    // The trap. The dispatcher underneath holds a single threshold of its own.
+    // If that threshold were left at the default, a category turned up to Debug
+    // would be discarded before the policy was ever consulted, and the support
+    // session would produce an empty file with nothing to explain it.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Error);
+
+        check(logger.set_category_level("sync", LogLevel::Debug),
+              "a category is raised far below the default");
+        logger.debug("sync", "detail");
+        check(sink.lines().size() == 1,
+              "the raised category is not swallowed by the dispatcher threshold");
+
+        logger.info("storage", "routine");
+        check(sink.lines().size() == 1, "an unraised category is still filtered");
+        logger.error("storage", "broken");
+        check(sink.lines().size() == 2, "and still speaks at its own level");
+        check(logger.counters().emitted == 2, "two records emitted");
+        check(logger.counters().suppressed == 1, "one suppressed");
+
+        // Lowering the raised category again must also lower the dispatcher,
+        // or the filter would stay permanently open after one support session.
+        check(logger.clear_category_level("sync"), "the rule is removed");
+        logger.debug("sync", "detail");
+        check(sink.lines().size() == 2, "and the category falls back to silence");
+        check(logger.counters().suppressed == 2, "counted as suppressed, not lost");
+    }
+
+    // Families, and the sideways leak that must not happen.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+
+        check(logger.set_category_level("storage", LogLevel::Debug), "a family is raised");
+        logger.debug("storage.migrate", "step");
+        check(sink.lines().size() == 1, "a child of the family speaks");
+        logger.debug("storagecleanup", "step");
+        check(sink.lines().size() == 1, "a similarly spelled stranger does not");
+    }
+
+    // A record with no category is filed as "general" by the formatter, so a
+    // rule on "general" has to govern it. Anything else would be a rule that
+    // silently does nothing.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+
+        check(logger.level_for("") == LogLevel::Info, "an empty category takes the default");
+        check(logger.set_category_level("general", LogLevel::Debug), "general is raised");
+        check(logger.level_for("") == LogLevel::Debug,
+              "and an empty category follows the rule the formatter will file it under");
+        logger.debug("", "nameless");
+        check(sink.lines().size() == 1, "so the nameless record is written");
+        check(sink.contains("general"), "under the name the formatter gives it");
+    }
+
+    // Configuration arriving from settings, including the part of it that is
+    // wrong. Nothing throws, the good terms apply, the bad ones are named.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+
+        const LevelConfigurationResult result =
+            logger.apply_level_configuration("warning, sync=debug, junk=nonsense");
+        check(result.applied == 2, "two terms applied");
+        check(result.rejected == 1, "one term refused");
+        check(result.rejected_terms.size() == 1 &&
+                  result.rejected_terms[0] == "junk=nonsense",
+              "and the refusal is named so startup can log it");
+
+        check(logger.minimum_level() == LogLevel::Warning, "the default moved");
+        check(logger.level_configuration() == "warning, sync=debug",
+              "the logger can state its own verbosity");
+
+        logger.info("storage", "routine");
+        check(sink.lines().empty(), "info is now below the default");
+        logger.debug("sync", "detail");
+        check(sink.lines().size() == 1, "and the configured category still speaks");
+
+        check(!logger.set_category_level("Bad Name", LogLevel::Debug),
+              "an illegal category is refused through the logger too");
+        check(logger.level_configuration() == "warning, sync=debug",
+              "and the refusal left the policy untouched");
+
+        logger.clear_all_category_levels();
+        check(logger.level_configuration() == "warning", "clearing leaves only the default");
+        logger.debug("sync", "detail");
+        check(sink.lines().size() == 1, "and the raised category is quiet again");
+    }
+
+    // Turning a category up must not disturb what the logger already promised:
+    // errors still flush immediately, and a refusing sink is still counted
+    // rather than thrown.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        check(logger.set_category_level("sync", LogLevel::Debug), "raise a category");
+
+        logger.error("sync", "failed");
+        check(sink.flushes() >= 1, "an error still flushes at once");
+
+        sink.set_accepting(false);
+        logger.debug("sync", "detail");
+        check(logger.counters().sink_failures == 1, "a refused write is counted");
+        sink.set_accepting(true);
+        logger.debug("sync", "detail");
+        check(logger.counters().sink_failures == 1, "and recovery is not counted as failure");
+    }
+}
+
 }  // namespace
 
 int main() {
     the_dispatcher_is_pinned();
+    verbosity_is_chosen_per_category();
+    the_logger_obeys_the_policy();
     levels_are_few_and_unambiguous();
     timestamps_are_exact();
     a_message_cannot_forge_a_second_entry();

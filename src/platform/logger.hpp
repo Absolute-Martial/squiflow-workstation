@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "platform/log_clock.hpp"
+#include "platform/log_level_policy.hpp"
 #include "platform/log_record.hpp"
 #include "platform/log_sink.hpp"
 
@@ -55,11 +56,38 @@ public:
     Logger& operator=(Logger&&) = delete;
     ~Logger();
 
+    // The level in force for any category without a rule of its own.
     void set_minimum_level(LogLevel level);
     LogLevel minimum_level() const;
 
-    // Cheap enough to guard an expensive diagnostic with.
+    // Per-category verbosity. One area of the application can be turned up
+    // for a support session without the rest of it drowning the file and
+    // consuming the budget the interesting lines need.
+    //
+    // Rules match by dotted prefix, longest first: `storage` covers
+    // `storage.migrate`, and a rule on `storage.migrate` overrides it. A
+    // refused rule returns false and changes nothing; see
+    // `log_level_policy.hpp` for what makes a category acceptable.
+    bool set_category_level(std::string_view category, LogLevel level);
+    bool clear_category_level(std::string_view category);
+    void clear_all_category_levels();
+
+    // Applies a settings string such as "info, sync=debug". Never throws and
+    // never refuses wholesale: readable terms apply, unreadable ones are
+    // returned so that startup can log exactly what it ignored.
+    LevelConfigurationResult apply_level_configuration(std::string_view text);
+
+    // What the current policy would be written as. Recorded at startup so a
+    // support file states its own verbosity.
+    std::string level_configuration() const;
+
+    // The level actually in force for one category.
+    LogLevel level_for(std::string_view category) const;
+
+    // Cheap enough to guard an expensive diagnostic with. The category-aware
+    // form is the accurate one; the other asks about the default level only.
     bool is_enabled(LogLevel level) const;
+    bool is_enabled(std::string_view category, LogLevel level) const;
 
     void log(LogLevel level, std::string_view category,
              std::string_view message, std::vector<LogField> fields = {});

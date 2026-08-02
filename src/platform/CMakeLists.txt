@@ -12,6 +12,7 @@ add_library(squiflow_platform STATIC
     log_record.cpp
     log_clock.cpp
     log_formatter.cpp
+    log_level_policy.cpp
     local_log_storage.cpp
     rotating_log_file.cpp
     logger.cpp)

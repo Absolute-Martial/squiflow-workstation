@@ -45,6 +45,7 @@ PLATFORM_SRC := src/platform/paths.cpp \
 # have to link path resolution in order to write a log line.
 LOGGING_SRC := src/platform/log_record.cpp \
                src/platform/log_clock.cpp \
+               src/platform/log_level_policy.cpp \
                src/platform/log_formatter.cpp \
                src/platform/local_log_storage.cpp \
                src/platform/rotating_log_file.cpp \
