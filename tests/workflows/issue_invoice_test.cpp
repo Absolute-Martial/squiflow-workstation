@@ -10,6 +10,7 @@
 #include "engine/storage/memory_store.hpp"
 #include "engine/sync/outbox.hpp"
 #include "modules/orders/module.hpp"
+#include "modules/agreements/module.hpp"
 #include "modules/pricing/module.hpp"
 #include "modules/receivables/data/repository.hpp"
 #include "modules/receivables/domain/document_number_block.hpp"
@@ -82,6 +83,7 @@ struct Shop {
         registry.add(m::pricing::make_module(now));
         registry.add(m::orders::make_module(now));
         registry.add(r::make_module(now));
+        registry.add(m::agreements::make_module(now));
         registry.install_workflow(w::make_issue_invoice(now));
         e::MigrationRunner runner{now};
         registry.collect_migrations(runner);

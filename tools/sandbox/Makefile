@@ -70,6 +70,7 @@ ORDER_TO_JOBS_SRC := src/workflows/order_to_jobs.cpp
 ISSUE_INVOICE_SRC := src/workflows/issue_invoice.cpp
 CANCEL_REISSUE_SRC := src/workflows/cancel_and_reissue.cpp
 TAKE_PAYMENT_SRC := src/workflows/take_payment.cpp
+APPLY_AGREEMENT_SRC := src/workflows/apply_agreement.cpp
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
@@ -113,6 +114,7 @@ QUOTATIONS_SRC := src/modules/quotations/module.cpp \
 
 AGREEMENTS_SRC := src/modules/agreements/module.cpp \
                   src/modules/agreements/domain/agreement.cpp \
+                  src/modules/agreements/domain/consumption.cpp \
                   src/modules/agreements/data/tables.cpp \
                   src/modules/agreements/data/repository.cpp \
                   src/modules/agreements/service/agreements_service.cpp
@@ -209,14 +211,14 @@ $(BUILD)/order_to_jobs_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC
 
 $(BUILD)/issue_invoice_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                              $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
-                             $(RECEIVABLES_SRC) $(ISSUE_INVOICE_SRC) \
+                             $(RECEIVABLES_SRC) $(AGREEMENTS_SRC) $(ISSUE_INVOICE_SRC) \
                              tests/workflows/issue_invoice_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(BUILD)/cancel_and_reissue_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                                   $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
-                                  $(RECEIVABLES_SRC) $(ISSUE_INVOICE_SRC) $(CANCEL_REISSUE_SRC) \
+                                  $(RECEIVABLES_SRC) $(AGREEMENTS_SRC) $(ISSUE_INVOICE_SRC) $(CANCEL_REISSUE_SRC) \
                                   tests/workflows/cancel_and_reissue_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -225,6 +227,14 @@ $(BUILD)/take_payment_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_
                             $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) \
                             $(RECEIVABLES_SRC) $(TAKE_PAYMENT_SRC) \
                             tests/workflows/take_payment_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/apply_agreement_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                              $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
+                              $(RECEIVABLES_SRC) $(AGREEMENTS_SRC) $(ISSUE_INVOICE_SRC) \
+                              $(CANCEL_REISSUE_SRC) $(APPLY_AGREEMENT_SRC) \
+                              tests/workflows/apply_agreement_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -346,6 +356,7 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/issue_invoice_test \
        $(BUILD)/cancel_and_reissue_test \
        $(BUILD)/take_payment_test \
+       $(BUILD)/apply_agreement_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
        $(BUILD)/quotations_test \
@@ -397,6 +408,9 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
 >@echo
 >@echo '== take payment workflow =='
 >./$(BUILD)/take_payment_test
+>@echo
+>@echo '== apply agreement workflow =='
+>./$(BUILD)/apply_agreement_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test

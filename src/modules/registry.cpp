@@ -21,8 +21,8 @@ std::vector<protocol::ModuleId> required_modules(protocol::OperationId operation
     switch(operation) {
     case O::quote_to_order:return {M::quotations,M::orders,M::pricing};
     case O::order_to_jobs:return {M::orders,M::jobs};
-    case O::issue_invoice:return {M::receivables,M::orders,M::pricing};
-    case O::cancel_and_reissue:return {M::receivables};
+    case O::issue_invoice:return {M::agreements,M::receivables,M::orders,M::pricing};
+    case O::cancel_and_reissue:return {M::agreements,M::receivables};
     case O::apply_agreement:return {M::agreements,M::pricing,M::receivables};
     case O::take_payment:return {M::receivables,M::parties};
     case O::counter_sale:return {M::orders,M::pricing,M::receivables};

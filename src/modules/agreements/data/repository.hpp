@@ -15,6 +15,7 @@
 #include "engine/storage/store.hpp"
 #include "modules/agreements/data/tables.hpp"
 #include "modules/agreements/domain/agreement.hpp"
+#include "modules/agreements/domain/consumption.hpp"
 
 namespace squiflow::modules::agreements::data {
 
@@ -28,6 +29,27 @@ template <typename Reader>
 std::optional<AgreementLine> find_line(const Reader& reader, const std::string& id) {
     const auto row = reader.find(tables::kLine, id);
     return row ? std::optional<AgreementLine>{line_from_row(*row)} : std::nullopt;
+}
+
+template <typename Reader>
+std::optional<AgreementConsumption> find_consumption(
+    const Reader& reader, const std::string& id) {
+    const auto row = reader.find(tables::kConsumption, id);
+    return row ? std::optional<AgreementConsumption>{consumption_from_row(*row)}
+               : std::nullopt;
+}
+
+template <typename Reader>
+std::vector<AgreementConsumption> consumptions_for_invoice(
+    const Reader& reader, const std::string& invoice_id) {
+    engine::Query query{tables::kConsumption};
+    query.where_equals("invoice_id", engine::Value::text(invoice_id));
+    query.order_by("consumed_at"); query.order_by("id");
+    std::vector<AgreementConsumption> result;
+    for (const engine::Row& row : reader.select(query)) {
+        result.push_back(consumption_from_row(row));
+    }
+    return result;
 }
 
 // The agreed rates of one agreement, in the order they are shown. Position
@@ -188,6 +210,8 @@ std::vector<Agreement> agreement_chain(const Reader& reader, const std::string& 
 // write outside the gate above is not expressible here.
 void save_agreement(engine::Transaction& transaction, const Agreement& agreement);
 void save_line(engine::Transaction& transaction, const AgreementLine& line);
+void save_consumption(engine::Transaction& transaction,
+                      const AgreementConsumption& consumption);
 
 // Clears the lines of an agreement that is being re-stated. Returns how many
 // lines were removed.

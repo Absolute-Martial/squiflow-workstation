@@ -806,6 +806,26 @@ int main() {
                   .ok,
               "a note on an agreement in force needs no ceremony");
         check(!shop.run(protocol::OperationId::agreement_update, kAgreeA,
+                        payload({{"reason", "Remove the consumed rate"},
+                                 {"line.0.id", kLineB},
+                                 {"line.0.product_id", kProduct},
+                                 {"line.0.agreed_name", "Loyalty card"}},
+                                {{"line_count", 1}, {"line.0.rate_minor", 800}}),
+                        session)
+                   .ok,
+              "an actively consumed line cannot be removed");
+        check(!shop.run(protocol::OperationId::agreement_update, kAgreeA,
+                        payload({{"reason", "Rewrite consumed product"},
+                                 {"line.0.id", kLineA},
+                                 {"line.0.product_id", kOtherParty},
+                                 {"line.0.agreed_name", "Business card, 350gsm"}},
+                                {{"line_count", 1},
+                                 {"line.0.rate_minor", 1400},
+                                 {"line.0.cap_scaled", 5'000'000}}),
+                        session)
+                   .ok,
+              "the product identity of a consumed line cannot be rewritten");
+        check(!shop.run(protocol::OperationId::agreement_update, kAgreeA,
                         payload({{"party_id", kParty},
                                  {"line.0.id", kLineA},
                                  {"line.0.product_id", kProduct},

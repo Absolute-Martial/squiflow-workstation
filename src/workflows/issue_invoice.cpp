@@ -10,6 +10,7 @@
 
 #include "engine/records/identity.hpp"
 #include "engine/records/payload.hpp"
+#include "modules/agreements/data/repository.hpp"
 #include "modules/receivables/data/repository.hpp"
 #include "modules/receivables/domain/credit_account.hpp"
 #include "modules/receivables/domain/document_number_block.hpp"
@@ -195,6 +196,54 @@ WorkflowResult issue(engine::Transaction& transaction,
     }
 
     const engine::Session& who = actor(call);
+    const std::string person_id = engine::to_string(who.person);
+    for (const auto& line : lines) {
+        if (line.agreement_id.empty()) continue;
+        const auto agreement = modules::agreements::data::find_agreement(
+            transaction, line.agreement_id);
+        const auto agreed_line = modules::agreements::data::find_line(
+            transaction, line.agreement_line_id);
+        if (!agreement || !agreed_line) {
+            throw modules::RuleViolation("An applied agreement or rate is no longer on file.");
+        }
+        modules::agreements::validate(*agreement);
+        modules::agreements::validate(*agreed_line);
+        if (agreement->state != modules::agreements::AgreementState::Open ||
+            agreement->party_id != invoice.party_id ||
+            agreement->valid_from > issued_at ||
+            modules::agreements::lapsed_at_moment(*agreement, issued_at)) {
+            throw modules::RuleViolation("An applied agreement is not in force for this customer.");
+        }
+        if (agreed_line->agreement_id != agreement->id ||
+            agreed_line->product_id != line.product_id ||
+            agreed_line->rate_minor != line.rate_minor ||
+            line.agreement_quantity_scaled != line.quantity_scaled) {
+            throw modules::RuleViolation("An applied agreement rate changed; reapply it before issuing.");
+        }
+        const std::string usage_id = modules::agreements::consumption_id(
+            line.id, agreed_line->id);
+        if (modules::agreements::data::find_consumption(transaction, usage_id)) {
+            throw modules::RuleViolation("That invoice line already consumed agreement quantity.");
+        }
+        auto mutable_line = *agreed_line;
+        const auto consumed = modules::agreements::consume_quantity(
+            mutable_line, line.quantity_scaled);
+        if (!consumed.ok || consumed.exceeds_cap) {
+            throw modules::RuleViolation("That agreement does not have enough quantity remaining.");
+        }
+        mutable_line.consumed_scaled = consumed.consumed_scaled;
+        modules::agreements::data::save_line(transaction, mutable_line);
+        modules::agreements::AgreementConsumption usage;
+        usage.id = usage_id;
+        usage.agreement_id = agreement->id;
+        usage.agreement_line_id = mutable_line.id;
+        usage.invoice_id = invoice.id;
+        usage.invoice_line_id = line.id;
+        usage.quantity_scaled = line.quantity_scaled;
+        usage.consumed_at = issued_at;
+        usage.consumed_by = person_id;
+        modules::agreements::data::save_consumption(transaction, usage);
+    }
     const std::string device_id = engine::to_string(who.device);
     auto block = modules::receivables::data::available_number_block(
         transaction, modules::receivables::NumberedDocumentKind::Invoice,
@@ -248,7 +297,8 @@ WorkflowDefinition make_issue_invoice(IssueInvoiceClock clock) {
     if (!clock) throw modules::RegistryError("issue_invoice needs a clock");
     WorkflowDefinition definition;
     definition.operation = protocol::OperationId::issue_invoice;
-    definition.requirements = {protocol::ModuleId::receivables,
+    definition.requirements = {protocol::ModuleId::agreements,
+                               protocol::ModuleId::receivables,
                                protocol::ModuleId::orders,
                                protocol::ModuleId::pricing};
     definition.handler = [clock = std::move(clock)](

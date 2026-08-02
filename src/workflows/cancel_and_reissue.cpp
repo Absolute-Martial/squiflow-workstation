@@ -9,6 +9,7 @@
 
 #include "engine/records/identity.hpp"
 #include "engine/records/payload.hpp"
+#include "modules/agreements/data/repository.hpp"
 #include "modules/receivables/data/repository.hpp"
 #include "modules/receivables/domain/invoice.hpp"
 #include "modules/receivables/domain/payment.hpp"
@@ -222,6 +223,32 @@ WorkflowResult cancel(engine::Transaction& transaction,
     }
 
     if (first_cancellation) {
+        for (auto usage : modules::agreements::data::consumptions_for_invoice(
+                 transaction, source.id)) {
+            modules::agreements::validate(usage);
+            if (usage.state == modules::agreements::ConsumptionState::Released) continue;
+            auto agreement_line = modules::agreements::data::find_line(
+                transaction, usage.agreement_line_id);
+            if (!agreement_line || agreement_line->agreement_id != usage.agreement_id) {
+                throw modules::RuleViolation(
+                    "Agreement consumption cannot find the quantity it must release.");
+            }
+            modules::agreements::validate(*agreement_line);
+            const auto released = modules::agreements::release_quantity(
+                *agreement_line, usage.quantity_scaled);
+            if (!released.ok) {
+                throw modules::RuleViolation(
+                    "Agreement consumption cannot release more than was consumed.");
+            }
+            agreement_line->consumed_scaled = released.consumed_scaled;
+            modules::agreements::data::save_line(transaction, *agreement_line);
+            usage.state = modules::agreements::ConsumptionState::Released;
+            usage.released_at = at;
+            usage.released_by = person;
+            usage.release_reason = "Invoice " + source.number_series + "-" +
+                std::to_string(source.number) + " cancelled: " + reason;
+            modules::agreements::data::save_consumption(transaction, usage);
+        }
         source.state = engine::DocumentState::Cancelled;
         source.cancelled_at = at;
         source.cancelled_by = person;
@@ -309,7 +336,8 @@ WorkflowDefinition make_cancel_and_reissue(CancelAndReissueClock clock) {
     }
     WorkflowDefinition definition;
     definition.operation = protocol::OperationId::cancel_and_reissue;
-    definition.requirements = {protocol::ModuleId::receivables};
+    definition.requirements = {protocol::ModuleId::agreements,
+                               protocol::ModuleId::receivables};
     definition.handler = [clock = std::move(clock)](
         engine::Transaction& transaction, const modules::Call& call) {
         return cancel(transaction, call, clock);

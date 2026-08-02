@@ -8,11 +8,13 @@ namespace squiflow::modules::agreements::tables {
 
 inline constexpr const char* kAgreement = "agreement";
 inline constexpr const char* kLine = "agreement_line";
+inline constexpr const char* kConsumption = "agreement_consumption";
 
 // Global sequence: engine 1, administration 10, parties 11, catalog 12,
 // pricing 13, orders 14, receivables 15, jobs 16, quotations 17,
 // agreements 18.
 inline constexpr int kFirstMigration = 18;
+inline constexpr int kConsumptionMigration = 24;
 
 std::vector<engine::Migration> migrations();
 

@@ -69,6 +69,13 @@ struct InvoiceLine {
     engine::RateOrigin rate_origin{engine::RateOrigin::CatalogDefault};
     std::string rate_reason{};
 
+    // Structured agreement provenance. All empty/zero for ordinary rates;
+    // all populated together for an agreement-backed line.
+    std::string agreement_id{};
+    std::string agreement_line_id{};
+    std::int64_t agreement_rate_minor{0};
+    std::int64_t agreement_quantity_scaled{0};
+
     std::int64_t added_at{0};
     std::string added_by{};
 };

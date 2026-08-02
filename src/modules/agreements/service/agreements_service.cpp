@@ -1,5 +1,6 @@
 #include "modules/agreements/service/agreements_service.hpp"
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -199,6 +200,30 @@ std::map<std::string, std::int64_t> consumed_so_far(const engine::Transaction& t
         consumed.emplace(line.id, line.consumed_scaled);
     }
     return consumed;
+}
+
+void protect_active_consumption(const engine::Transaction& transaction,
+                                const std::string& agreement_id,
+                                const std::vector<AgreementLine>& proposed) {
+    for (const AgreementLine& existing :
+         data::lines_for_agreement(transaction, agreement_id)) {
+        if (existing.consumed_scaled == 0) {
+            continue;
+        }
+
+        const auto replacement = std::find_if(
+            proposed.begin(), proposed.end(), [&](const AgreementLine& line) {
+                return line.id == existing.id;
+            });
+        if (replacement == proposed.end()) {
+            throw RuleViolation(
+                "An agreement line with active consumption cannot be removed.");
+        }
+        if (replacement->product_id != existing.product_id) {
+            throw RuleViolation(
+                "The product on a consumed agreement line cannot be changed.");
+        }
+    }
 }
 
 void write_lines(engine::Transaction& transaction, const std::vector<AgreementLine>& lines) {
@@ -427,6 +452,7 @@ void AgreementsService::update(engine::Transaction& transaction, const Call& cal
     if (restating_rates) {
         const std::map<std::string, std::int64_t> carried = consumed_so_far(transaction, id);
         const std::vector<AgreementLine> lines = read_lines(row, id, carried);
+        protect_active_consumption(transaction, id, lines);
         data::remove_lines_for_agreement(transaction, id);
         write_lines(transaction, lines);
     }

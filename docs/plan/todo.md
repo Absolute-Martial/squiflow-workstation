@@ -10,7 +10,7 @@ including mine.
 **Legend:** `[x]` done and verified · `[~]` written but not verifiable on this
 toolchain · `[ ]` not started
 
-**Count: 38 of 69 sub-phases done.**
+**Count: 39 of 69 sub-phases done.**
 
 | Phase | Sub-phases | Done |
 |---|---|---|
@@ -18,7 +18,7 @@ toolchain · `[ ]` not started
 | 2 - The engine's domain half | 7 | 7 |
 | 3 - The engine's storage half | 7 | 6 |
 | 4 - The twelve modules | 13 | 13 |
-| 5 - Workflows | 8 | 6 |
+| 5 - Workflows | 8 | 7 |
 | 6 - Platform and the application shell | 8 | 0 |
 | 7 - The interface | 6 | 0 |
 | 8 - The server | 8 | 0 |
@@ -94,8 +94,8 @@ than being counted here.
 - [x] 5.3 Order to jobs: one order line to one draft job by default, exact source-line provenance, selected subsets, frozen commercial snapshot, replay and rollback; 54 checks, 0 failed; direct jobs still need no order
 - [x] 5.4 Issue an invoice: issue an existing confirmed draft without repricing; persist and atomically consume a final number from the current device's server-reserved block; migration 23; 41 checks, 0 failed
 - [x] 5.5 Cancel and reissue: original retained and linked, values carried forward; active allocations released to unallocated money; no automatic reallocation; 44 checks, 0 failed
-- [ ] 5.6 Take a payment and allocate it, always by hand
-- [ ] 5.7 Consume an agreement's quantity cap, release it on cancellation
+- [x] 5.6 Take a payment and allocate it, always by hand; tracking/receipt evidence optional; 42 checks, 0 failed
+- [x] 5.7 Apply an agreement explicitly to a draft; consume its quantity cap on invoice issue and release it on cancellation; migration 24; 31 workflow checks, 0 failed
 - [ ] 5.8 Prepare a document for approval or email; nothing sends without a
       human pressing send
 
@@ -153,7 +153,7 @@ and each one blocks something.
 | D1 | **Oat++ has no current release.** 1.3.0 is the last one; 1.4.0 has been in development for years. Recommendation: pin a specific 1.4.0 commit through a vcpkg overlay port, never a branch | Phase 8 |
 | D2 | The storage seam is a **typed record store**, not prepare-bind-step SQL. A SQL-shaped seam cannot be faked, and nothing above it would be testable here | already built; reversible only now |
 | D3 | Is `jobs` really an Extra module? It currently requires nothing, which is unusual for something this central | 4.8 |
-| D4 | An agreement's quantity cap: consumed **at job creation and released on cancellation** (proposed), or at invoice | 5.7 |
+| D4 | **Decided:** consume an agreement quantity cap when the invoice is issued and release it when that invoice is cancelled; jobs do not consume caps | Done in 5.7 |
 | D5 | Emailed approvals: the shopkeeper **marks them approved by hand** (proposed), or the system reads replies | 5.8, 8.7 |
 
 ## Work that can only happen on your machine

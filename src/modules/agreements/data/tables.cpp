@@ -13,7 +13,13 @@ std::vector<engine::Migration> migrations() {
         store.define_table(kAgreement, "id");
         store.define_table(kLine, "id");
     };
-    return {first};
+    engine::Migration consumption;
+    consumption.number = kConsumptionMigration;
+    consumption.name = "agreement consumption evidence";
+    consumption.schema = [](engine::Store& store) {
+        store.define_table(kConsumption, "id");
+    };
+    return {first, consumption};
 }
 
 }  // namespace squiflow::modules::agreements::tables

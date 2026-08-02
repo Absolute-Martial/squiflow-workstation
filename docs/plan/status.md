@@ -48,14 +48,21 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 5 | 5.4 Issue invoice | QA approved | migration 23; persisted per-device number blocks; immutable draft snapshot; 41 workflow checks, 0 failed |
 | 5 | 5.5 Cancel and reissue | QA approved | original retained and linked; replacement draft; allocations released; 44 workflow checks, 0 failed |
 | 5 | 5.6 Take payment and manual allocation | QA approved | tracking and receipt optional; unnumbered cash/bank/cheque accepted; 42 workflow checks, 0 failed |
-| 5 | 5.7-5.8 Business workflows | Not started | Phase 5 is 6/8 complete |
+| 5 | 5.7 Agreement quantity caps | QA approved | apply on draft; consume at issue; release at cancellation; migration 24; 31 workflow checks |
+| 5 | 5.8 Document approval/email preparation | Not started | Phase 5 is 7/8 complete |
 | 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **247 files integrity-checked, 107 headers proven self-contained,
-3,552 assertions across 27 strict test programs, 0 failed.** The independent CMake
-lane passes 27/27 tests and verifies the complete module graph: 12 modules,
-acyclic, core closed. The schema is at migration 23. Overall progress is
-**38/69**; Phase 5 is **6/8**.
+Totals: **252 files integrity-checked, 109 headers proven self-contained,
+3,585 assertions across 28 strict test programs, 0 failed.** The independent CMake
+lane passes 28/28 tests and verifies the complete module graph: 12 modules,
+acyclic, core closed. The schema is at migration 24. Overall progress is
+**39/69**; Phase 5 is **7/8**.
+
+## 5.7 agreement quantity caps
+
+Agreement rates are explicitly applied to invoice drafts with exact agreement, agreement-line, frozen-rate, and frozen-quantity provenance. This staging step consumes nothing. Issuing the invoice atomically validates and consumes the exact quantity; cancelling it atomically releases that quantity and permanently records the release. Replacement drafts preserve provenance and consume again only if issued.
+
+Migration 24 adds the permanent consumption ledger. Active consumption protects agreement-line and product identity during amendment, while safe cap increases and future rate amendments retain the counter. The permanent workflow suite contributes 31 checks; agreements contributes 214 checks. The full strict lane passes 3,585 assertions across 28 programs, and CTest passes 28/28. Formal evidence is in `docs/qa/phase-5.7-agreement-cap-gate.md`.
 
 ## 5.6 take payment and manual allocation
 

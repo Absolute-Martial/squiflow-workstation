@@ -225,6 +225,22 @@ void validate(const InvoiceLine& line) {
         blank(line.rate_reason)) {
         throw RuleViolation("An agreed or manually changed price must keep its reason.");
     }
+    const bool agreement_origin = line.rate_origin == engine::RateOrigin::Agreement;
+    const bool has_agreement = !blank(line.agreement_id) &&
+                               !blank(line.agreement_line_id);
+    if (agreement_origin != has_agreement) {
+        throw RuleViolation("Agreement-priced invoice lines need exact agreement provenance.");
+    }
+    if (agreement_origin &&
+        (line.agreement_rate_minor != line.rate_minor ||
+         line.agreement_quantity_scaled != line.quantity_scaled)) {
+        throw RuleViolation("Agreement provenance must match the frozen invoice quantity and rate.");
+    }
+    if (!agreement_origin && (!line.agreement_id.empty() ||
+        !line.agreement_line_id.empty() || line.agreement_rate_minor != 0 ||
+        line.agreement_quantity_scaled != 0)) {
+        throw RuleViolation("Ordinary invoice rates cannot carry agreement provenance.");
+    }
 
     const engine::MoneyResult amount = calculate_amount(line);
     if (!amount.ok) {
@@ -293,6 +309,10 @@ engine::Row to_row(const InvoiceLine& line) {
     row.set("amount_minor", engine::Value::integer(line.amount_minor));
     row.set("rate_origin", engine::Value::integer(static_cast<std::int64_t>(line.rate_origin)));
     row.set("rate_reason", engine::Value::text(line.rate_reason));
+    row.set("agreement_id", engine::Value::text(line.agreement_id));
+    row.set("agreement_line_id", engine::Value::text(line.agreement_line_id));
+    row.set("agreement_rate_minor", engine::Value::integer(line.agreement_rate_minor));
+    row.set("agreement_quantity_scaled", engine::Value::integer(line.agreement_quantity_scaled));
     row.set("added_at", engine::Value::integer(line.added_at));
     row.set("added_by", engine::Value::text(line.added_by));
     return row;
@@ -310,6 +330,10 @@ InvoiceLine invoice_line_from_row(const engine::Row& row) {
     line.amount_minor = row.get("amount_minor").integer_or(0);
     line.rate_origin = rate_origin_from(row.get("rate_origin").integer_or(3));
     line.rate_reason = row.get("rate_reason").text_or({});
+    line.agreement_id = row.get("agreement_id").text_or({});
+    line.agreement_line_id = row.get("agreement_line_id").text_or({});
+    line.agreement_rate_minor = row.get("agreement_rate_minor").integer_or(0);
+    line.agreement_quantity_scaled = row.get("agreement_quantity_scaled").integer_or(0);
     line.added_at = row.get("added_at").integer_or(0);
     line.added_by = row.get("added_by").text_or({});
     return line;
