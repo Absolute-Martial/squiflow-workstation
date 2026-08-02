@@ -1,28 +1,137 @@
 #include "platform/logger.hpp"
 
+#include <memory>
+#include <mutex>
+#include <string>
 #include <utility>
+
+#include <spdlog/logger.h>
+#include <spdlog/sinks/sink.h>
+#include <spdlog/version.h>
 
 #include "platform/log_formatter.hpp"
 
 namespace squiflow::platform {
+namespace {
+
+spdlog::level::level_enum to_backend(LogLevel level) noexcept {
+    switch (level) {
+        case LogLevel::Debug:
+            return spdlog::level::debug;
+        case LogLevel::Info:
+            return spdlog::level::info;
+        case LogLevel::Warning:
+            return spdlog::level::warn;
+        case LogLevel::Error:
+            return spdlog::level::err;
+        case LogLevel::Fatal:
+            return spdlog::level::critical;
+    }
+    // A value from outside the enum is treated as the most serious thing that
+    // could have happened, never as something to quietly drop.
+    return spdlog::level::critical;
+}
+
+LogLevel from_backend(spdlog::level::level_enum level) noexcept {
+    switch (level) {
+        case spdlog::level::trace:
+        case spdlog::level::debug:
+            return LogLevel::Debug;
+        case spdlog::level::info:
+            return LogLevel::Info;
+        case spdlog::level::warn:
+            return LogLevel::Warning;
+        case spdlog::level::err:
+            return LogLevel::Error;
+        case spdlog::level::critical:
+        case spdlog::level::off:
+        case spdlog::level::n_levels:
+            return LogLevel::Fatal;
+    }
+    return LogLevel::Fatal;
+}
+
+// The bridge from spdlog to the SquiFlow sink interface.
+//
+// Deliberately not an spdlog formatter. The payload arriving here has already
+// been through SquiFlow's formatter, which is where escaping, credential
+// redaction and the length bounds live. Letting spdlog re-format would put an
+// unescaped pattern between those rules and the disk.
+class ApplicationSink final : public spdlog::sinks::sink {
+public:
+    explicit ApplicationSink(LogSink& target) : target_(target) {}
+
+    void log(const spdlog::details::log_msg& message) override {
+        const std::string_view line(message.payload.data(),
+                                    message.payload.size());
+        if (!target_.write_line(line)) {
+            refusals_ = refusals_ + 1;
+        }
+    }
+
+    void flush() override { target_.flush(); }
+
+    // SquiFlow decides the line shape, so a pattern from anywhere else is
+    // ignored rather than half-applied.
+    void set_pattern(const std::string&) override {}
+    void set_formatter(std::unique_ptr<spdlog::formatter>) override {}
+
+    std::uint64_t refusals() const noexcept { return refusals_; }
+
+private:
+    LogSink& target_;
+    std::uint64_t refusals_ = 0;
+};
+
+}  // namespace
+
+std::string_view logging_backend_version() noexcept {
+    static_assert(SPDLOG_VER_MAJOR == 1, "vendored spdlog major version moved");
+    static_assert(SPDLOG_VER_MINOR == 17, "vendored spdlog minor version moved");
+    static_assert(SPDLOG_VER_PATCH == 0, "vendored spdlog patch version moved");
+    return "spdlog 1.17.0";
+}
+
+class Logger::Impl {
+public:
+    Impl(LogSink& sink_target, const LogClock& clock_source,
+         LogLevel minimum_level)
+        : adapter(std::make_shared<ApplicationSink>(sink_target)),
+          backend("squiflow", adapter),
+          clock(clock_source) {
+        backend.set_level(to_backend(minimum_level));
+        // spdlog would otherwise print its own complaints to stderr, which on
+        // a shop machine nobody reads. Failures are counted instead.
+        backend.set_error_handler(
+            [this](const std::string&) { ++counters.sink_failures; });
+    }
+
+    std::shared_ptr<ApplicationSink> adapter;
+    spdlog::logger backend;
+    const LogClock& clock;
+    mutable std::mutex mutex;
+    LoggerCounters counters;
+    std::uint64_t seen_refusals = 0;
+};
 
 Logger::Logger(LogSink& sink, const LogClock& clock, LogLevel minimum_level)
-    : sink_(sink), clock_(clock), minimum_level_(minimum_level) {}
+    : impl_(std::make_unique<Impl>(sink, clock, minimum_level)) {}
+
+Logger::~Logger() = default;
 
 void Logger::set_minimum_level(LogLevel level) {
-    const std::lock_guard<std::mutex> guard(mutex_);
-    minimum_level_ = level;
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    impl_->backend.set_level(to_backend(level));
 }
 
 LogLevel Logger::minimum_level() const {
-    const std::lock_guard<std::mutex> guard(mutex_);
-    return minimum_level_;
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return from_backend(impl_->backend.level());
 }
 
 bool Logger::is_enabled(LogLevel level) const {
-    const std::lock_guard<std::mutex> guard(mutex_);
-    return static_cast<std::uint8_t>(level) >=
-           static_cast<std::uint8_t>(minimum_level_);
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return impl_->backend.should_log(to_backend(level));
 }
 
 void Logger::log(LogLevel level, std::string_view category,
@@ -31,11 +140,11 @@ void Logger::log(LogLevel level, std::string_view category,
     // little faster and would allow two threads to write lines in an order
     // that contradicts their timestamps, which is exactly the confusion a log
     // exists to prevent.
-    const std::lock_guard<std::mutex> guard(mutex_);
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
 
-    if (static_cast<std::uint8_t>(level) <
-        static_cast<std::uint8_t>(minimum_level_)) {
-        ++counters_.suppressed;
+    const spdlog::level::level_enum backend_level = to_backend(level);
+    if (!impl_->backend.should_log(backend_level)) {
+        ++impl_->counters.suppressed;
         return;
     }
 
@@ -44,17 +153,34 @@ void Logger::log(LogLevel level, std::string_view category,
     record.category.assign(category);
     record.message.assign(message);
     record.fields = std::move(fields);
-    record.timestamp_milliseconds = clock_.now_milliseconds();
+    record.timestamp_milliseconds = impl_->clock.now_milliseconds();
 
-    if (sink_.write_line(format_log_record(record))) {
-        ++counters_.emitted;
-    } else {
-        ++counters_.sink_failures;
+    try {
+        // The payload is passed as an argument, never as a format string: a
+        // message containing braces must not be interpreted as formatting.
+        impl_->backend.log(backend_level, "{}", format_log_record(record));
+    } catch (...) {
+        // spdlog turns sink trouble into its error handler, but formatting and
+        // allocation can still throw, and no caller of this class is prepared
+        // for an exception.
+        ++impl_->counters.sink_failures;
+        return;
     }
 
-    if (static_cast<std::uint8_t>(level) >=
-        static_cast<std::uint8_t>(LogLevel::Error)) {
-        sink_.flush();
+    const std::uint64_t refusals = impl_->adapter->refusals();
+    if (refusals != impl_->seen_refusals) {
+        impl_->seen_refusals = refusals;
+        ++impl_->counters.sink_failures;
+    } else {
+        ++impl_->counters.emitted;
+    }
+
+    if (level == LogLevel::Error || level == LogLevel::Fatal) {
+        try {
+            impl_->backend.flush();
+        } catch (...) {
+            ++impl_->counters.sink_failures;
+        }
     }
 }
 
@@ -84,13 +210,17 @@ void Logger::fatal(std::string_view category, std::string_view message,
 }
 
 void Logger::flush() {
-    const std::lock_guard<std::mutex> guard(mutex_);
-    sink_.flush();
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    try {
+        impl_->backend.flush();
+    } catch (...) {
+        ++impl_->counters.sink_failures;
+    }
 }
 
 LoggerCounters Logger::counters() const {
-    const std::lock_guard<std::mutex> guard(mutex_);
-    return counters_;
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return impl_->counters;
 }
 
 }  // namespace squiflow::platform

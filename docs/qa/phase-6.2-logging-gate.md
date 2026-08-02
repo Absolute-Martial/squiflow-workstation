@@ -61,13 +61,14 @@ shipper, so the log is not allowed to become the incident.
 
 | Level | Count | Where |
 | --- | --- | --- |
+| Unit: the pinned dispatcher version | 1 | `tests/platform/logging_test.cpp` |
 | Unit: levels, timestamps, escaping, redaction, line shape | 96 | `tests/platform/logging_test.cpp` |
 | Unit: logger behaviour and counters | 22 | same file |
 | Unit: policy correction and generation naming | 16 | same file |
 | Unit: rotation, hard cap, hostile storage, against the fake | 545 | same file |
 | Integration: real temporary directory, real files | 30 | same file |
 | Concurrency: eight-thread and four-thread runs | 7 | same file |
-| **Total for 6.2** | **716 checks, 0 failed** | |
+| **Total for 6.2** | **717 checks, 0 failed** | |
 
 Hostile cases included: a line larger than the entire log file; a log family
 inherited from an older version that already exceeds the cap; a budget too
@@ -82,10 +83,25 @@ leaves nothing outside the logs directory.
 ```text
 integrity            285 files checked, all pass
 headers              127 headers, 0 not self-contained
-strict suite         31 programs, 4,501 assertions, 0 failed
-CMake 4.4.2 lane     configure clean, build clean, CTest 31/31 passed, 0.53 s
+strict suite         31 programs, 4,502 assertions, 0 failed
+CMake 4.4.2 lane     configure clean, build clean, CTest 31/31 passed, 0.56 s
 git diff --check     clean
 ```
+
+## 5.1 Approved dependency revision
+
+After this gate first passed, the owner supplied spdlog 1.17.0 and chose it as
+the dispatcher. Quill 12.1.0 was supplied afterwards, evaluated, and rejected;
+both the choice and the rejection are argued in
+`docs/adr/0006-spdlog-is-the-logging-dispatcher.md`.
+
+The swap changed no public signature and no caller. Escaping, redaction, the
+length caps, rotation and the hard total budget remain SquiFlow code, because
+spdlog offers none of them. One check was added, pinning the vendored version
+through `logging_backend_version()` so an unreviewed upgrade fails the build.
+Three defects were found and fixed while wiring it, listed in section 6.
+
+Every gate above was re-run from scratch after the swap.
 
 ## 6. Defects found and fixed during the gate
 

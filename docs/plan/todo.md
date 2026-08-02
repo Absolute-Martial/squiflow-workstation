@@ -106,7 +106,7 @@ than being counted here.
       129 checks, 0 failed
 - [x] 6.2 Logging with levels, rotation and a hard total size cap; one line per
       record, credentials redacted, nothing thrown when the disk misbehaves;
-      716 checks, 0 failed
+      717 checks, 0 failed; spdlog 1.17.0 dispatches behind the platform door
 - [ ] 6.3 Crash handler and minidumps *(Windows, unverifiable here)*
 - [ ] 6.4 Single-instance lock, named *(Windows, unverifiable here)*
 - [ ] 6.5 Secrets via DPAPI, never plaintext *(Windows, unverifiable here)*

@@ -11,3 +11,4 @@ of the past stays readable.
 | 0003 | Qt is infrastructure, never domain | Accepted |
 | 0004 | Shop data lives in the machine-wide program-data location | Accepted |
 | 0005 | A directory probe seam sits between path resolution and the disk | Accepted |
+| 0006 | spdlog is the logging dispatcher, behind the platform door | Accepted |

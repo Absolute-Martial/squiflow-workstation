@@ -76,6 +76,13 @@ std::string filler(std::size_t length, char character) {
     return std::string(length, character);
 }
 
+void the_dispatcher_is_pinned() {
+    section("the dispatcher");
+
+    check(platform::logging_backend_version() == "spdlog 1.17.0",
+          "the vendored dispatcher is the reviewed version");
+}
+
 void levels_are_few_and_unambiguous() {
     section("levels");
 
@@ -713,6 +720,7 @@ void a_concurrent_file_stays_inside_its_budget() {
 }  // namespace
 
 int main() {
+    the_dispatcher_is_pinned();
     levels_are_few_and_unambiguous();
     timestamps_are_exact();
     a_message_cannot_forge_a_second_entry();

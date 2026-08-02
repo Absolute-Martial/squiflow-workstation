@@ -22,7 +22,7 @@ STD ?= c++23
 BUILD ?= build/sandbox
 PYTHON ?= python3
 
-INCLUDES := -Iexternal/protocol/include -Isrc -Itests
+INCLUDES := -Iexternal/protocol/include -isystem external/spdlog/include -Isrc -Itests
 
 WARNINGS := -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
             -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion \

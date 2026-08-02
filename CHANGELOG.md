@@ -17,8 +17,11 @@ gate that proved it.
   Control characters are escaped, so a message cannot forge a second entry, and
   fields that look like credentials are recorded with their value replaced. A
   refused write, a full volume, a locked file and an unreadable size are
-  counted and survived rather than thrown. Evidence:
-  `docs/qa/phase-6.2-logging-gate.md`.
+  counted and survived rather than thrown. The dispatch core is spdlog 1.17.0,
+  vendored and pinned behind the platform boundary, with no spdlog type in any
+  SquiFlow header; Quill was evaluated and rejected. Evidence:
+  `docs/qa/phase-6.2-logging-gate.md`,
+  `docs/adr/0006-spdlog-is-the-logging-dispatcher.md`.
 - **Phase 6.1 - application paths.** Records, logs, backups, crash dumps and
   the secrets store now resolve to one machine-wide location shared by every
   Windows account; only the cache is per account. Names and roots are validated

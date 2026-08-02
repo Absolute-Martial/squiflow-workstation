@@ -18,7 +18,13 @@ add_library(squiflow_platform STATIC
 
 add_library(squiflow::platform ALIAS squiflow_platform)
 
-target_include_directories(squiflow_platform PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_include_directories(squiflow_platform
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
+# The logging dispatcher. Private and SYSTEM: no target above the platform
+# boundary sees spdlog, and its headers never produce our warnings.
+target_include_directories(squiflow_platform SYSTEM
+    PRIVATE ${PROJECT_SOURCE_DIR}/external/spdlog/include)
 
 if(SQUIFLOW_WITH_QT)
     find_package(Qt6 REQUIRED COMPONENTS Core)
