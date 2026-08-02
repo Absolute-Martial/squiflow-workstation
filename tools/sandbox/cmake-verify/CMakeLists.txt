@@ -1,0 +1,93 @@
+# A verification lane for the real CMake files.
+#
+# The top-level CMakeLists.txt cannot be configured until every phase exists,
+# because it adds src/app, src/ui, src/shell and the rest. That would mean the
+# cmake/ helpers stay unexecuted until the last day of the project, which is
+# exactly when a mistake in them is most expensive.
+#
+# So this project includes the same helpers, from the same files, and adds the
+# real targets that exist today. It is deleted when the top-level file can be
+# configured on its own. It must never grow a copy of anything - if a rule is
+# defined here rather than included from cmake/, this lane is verifying itself
+# instead of the build.
+
+cmake_minimum_required(VERSION 3.26)
+
+get_filename_component(SQUIFLOW_REAL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
+set(SQUIFLOW_ROOT "${SQUIFLOW_REAL_ROOT}" CACHE INTERNAL "SquiFlow source root")
+
+list(APPEND CMAKE_MODULE_PATH "${SQUIFLOW_ROOT}/cmake")
+
+include(Version)
+
+project(SquiFlowVerify
+    VERSION ${SQUIFLOW_VERSION}
+    DESCRIPTION "Verification lane for the SquiFlow build files"
+    LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
+# The same warning, hardening, sanitizer, module and graph rules the real build
+# uses. Included, never copied.
+include(Warnings)
+include(Hardening)
+include(Sanitizers)
+include(SquiflowModule)
+include(ModuleGraph)
+
+option(SQUIFLOW_BUILD_TESTS "Build the test targets" ON)
+
+if(SQUIFLOW_BUILD_TESTS)
+    enable_testing()
+endif()
+
+# The test support header, as a target, so module tests can ask for
+# squiflow::testing exactly as SquiflowModule.cmake expects.
+add_library(squiflow_testing INTERFACE)
+add_library(squiflow::testing ALIAS squiflow_testing)
+target_include_directories(squiflow_testing INTERFACE ${SQUIFLOW_ROOT}/tests)
+
+add_subdirectory(${SQUIFLOW_ROOT}/external/protocol protocol)
+
+# This lane verifies protocol, engine mechanisms, modules and the real CMake
+# helpers on machines that do not carry the production SQLite toolchain. Keep
+# this as a default rather than FORCE: a caller with SQLite >= 3.51.3 may still
+# pass -DSQUIFLOW_WITH_SQLITE=ON and verify the persistent backing too. The
+# engine emits a visible warning when this is off, so this lane cannot be
+# mistaken for a shippable build.
+set(SQUIFLOW_WITH_SQLITE OFF CACHE BOOL
+    "Build SQLite in the non-shippable CMake verification lane")
+add_subdirectory(${SQUIFLOW_ROOT}/src/engine engine)
+
+if(EXISTS "${SQUIFLOW_ROOT}/src/modules/CMakeLists.txt")
+    add_subdirectory(${SQUIFLOW_ROOT}/src/modules modules)
+
+    # The graph check refuses a build with no modules, which is correct for the
+    # real build and wrong here while the framework exists and the modules do
+    # not yet. Once the first module is declared this runs on every configure.
+    get_property(_declared GLOBAL PROPERTY SQUIFLOW_MODULE_LIST)
+    if(_declared)
+        squiflow_check_module_graph()
+    endif()
+endif()
+
+if(EXISTS "${SQUIFLOW_ROOT}/src/workflows/CMakeLists.txt")
+    add_subdirectory(${SQUIFLOW_ROOT}/src/workflows workflows)
+endif()
+
+# The engine tests, which the real tests/CMakeLists.txt will own once it exists.
+if(SQUIFLOW_BUILD_TESTS)
+    foreach(t domain storage migration writer outbox sync)
+        set(_src "${SQUIFLOW_ROOT}/tests/engine/engine_${t}_test.cpp")
+        if(EXISTS "${_src}")
+            add_executable(engine_${t}_test "${_src}")
+            target_link_libraries(engine_${t}_test
+                PRIVATE squiflow::engine squiflow::testing
+                        squiflow::warnings squiflow::hardening squiflow::sanitizers)
+            add_test(NAME engine.${t} COMMAND engine_${t}_test)
+        endif()
+    endforeach()
+endif()

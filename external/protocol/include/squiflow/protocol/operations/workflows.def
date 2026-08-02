@@ -1,0 +1,13 @@
+// Cross-module sequences. They are operations like any other, so they carry a
+// right, an offline rule and an audit trail. The module named here is the one
+// whose right governs the act; the full set of modules a workflow needs is
+// declared in the workflow registry, not here.
+
+SQF_OPERATION(quote_to_order,      orders,      right_order_write,     Synchronizable, OfflineAllowed)
+SQF_OPERATION(order_to_jobs,       jobs,        right_job_write,       Synchronizable, OfflineAllowed)
+SQF_OPERATION(issue_invoice,       receivables, right_invoice_issue,   Synchronizable, OfflineAllowed)
+SQF_OPERATION(cancel_and_reissue,  receivables, right_invoice_cancel,  Synchronizable, OnlineOnly)
+SQF_OPERATION(apply_agreement,     agreements,  right_agreement_read,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(take_payment,        receivables, right_payment_record,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(counter_sale,        orders,      right_order_write,     Synchronizable, OfflineAllowed)
+SQF_OPERATION(record_purchase,     sourcing,    right_purchase_record, Synchronizable, OfflineAllowed)

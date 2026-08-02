@@ -1,0 +1,7 @@
+// Supplier directory and purchase logbook. Deliberately not stock, not
+// purchase orders, not a ledger.
+
+SQF_OPERATION(supplier_create,   sourcing, right_supplier_write,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(supplier_update,   sourcing, right_supplier_write,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(purchase_settle,   sourcing, right_purchase_settle, Synchronizable, OfflineAllowed)
+SQF_OPERATION(purchase_lookup,   sourcing, right_supplier_read,   LocalOnly,      OfflineAllowed)

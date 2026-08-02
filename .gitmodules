@@ -1,0 +1,4 @@
+[submodule "external/protocol"]
+	path = external/protocol
+	url = ../squiflow-protocol.git
+	branch = .

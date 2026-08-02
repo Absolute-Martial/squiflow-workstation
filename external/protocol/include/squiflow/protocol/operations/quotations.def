@@ -1,0 +1,8 @@
+// Quotations and their revisions. Issuing takes a number, so it is allowed
+// offline: the number comes from this device's reserved block.
+
+SQF_OPERATION(quotation_create,  quotations, right_quotation_write, Synchronizable, OfflineAllowed)
+SQF_OPERATION(quotation_revise,  quotations, right_quotation_write, Synchronizable, OfflineAllowed)
+SQF_OPERATION(quotation_issue,   quotations, right_quotation_issue, Synchronizable, OfflineAllowed)
+SQF_OPERATION(quotation_accept,  quotations, right_quotation_issue, Synchronizable, OfflineAllowed)
+SQF_OPERATION(quotation_expire,  quotations, right_quotation_write, Synchronizable, OfflineAllowed)

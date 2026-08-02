@@ -1,0 +1,8 @@
+// Customers and suppliers are one identity. Billing terms are per customer,
+// never a global mode.
+
+SQF_OPERATION(party_create,       parties, right_party_write,     Synchronizable, OfflineAllowed)
+SQF_OPERATION(party_update,       parties, right_party_write,     Synchronizable, OfflineAllowed)
+SQF_OPERATION(party_archive,      parties, right_party_write,     Synchronizable, OnlineOnly)
+SQF_OPERATION(party_terms_set,    parties, right_party_terms_set, Synchronizable, OnlineOnly)
+SQF_OPERATION(party_contact_add,  parties, right_party_write,     Synchronizable, OfflineAllowed)

@@ -1,0 +1,12 @@
+{
+  "name": "squiflow-workstation",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "sqlite3",
+    "msgpack-c",
+    "zstd",
+    "catch2"
+  ],
+  "builtin-baseline": "REPLACE_WITH_PINNED_BASELINE_COMMIT",
+  "overrides": []
+}

@@ -1,0 +1,14 @@
+# Build output, reproducible from source by tools/sandbox/Makefile.
+build/
+
+# Scratch objects from single-file compile checks.
+*.o
+*.a
+*.so
+
+# Editor and OS noise.
+*~
+.DS_Store
+
+# Large native-workstation build resources kept locally only (not committed, not in checkpoints)
+third_party/provided-build-sources/

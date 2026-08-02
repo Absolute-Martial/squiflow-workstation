@@ -1,0 +1,7 @@
+// What was agreed to be done. Several jobs may hang off one order, and a job
+// may exist with no order at all.
+
+SQF_OPERATION(order_create,     orders, right_order_write,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(order_update,     orders, right_order_write,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(order_line_add,   orders, right_order_write,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(order_cancel,     orders, right_order_cancel, Synchronizable, OnlineOnly)

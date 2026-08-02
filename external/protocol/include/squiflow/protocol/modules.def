@@ -1,0 +1,21 @@
+// The module list. Tier is core or extra.
+//
+// Core: the shop cannot complete a single counter sale without it, or another
+// core module depends on it. Core cannot be switched off.
+// Extra: switchable, per shop, at run time.
+//
+// SQF_MODULE(name, tier)
+
+SQF_MODULE(administration, Core)
+SQF_MODULE(parties,        Core)
+SQF_MODULE(catalog,        Core)
+SQF_MODULE(pricing,        Core)
+SQF_MODULE(orders,         Core)
+SQF_MODULE(receivables,    Core)
+
+SQF_MODULE(jobs,           Extra)
+SQF_MODULE(quotations,     Extra)
+SQF_MODULE(agreements,     Extra)
+SQF_MODULE(sourcing,       Extra)
+SQF_MODULE(companion,      Extra)
+SQF_MODULE(files,          Extra)

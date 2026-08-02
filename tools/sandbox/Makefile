@@ -1,0 +1,378 @@
+# Verification lane, not the build.
+#
+# The real build is CMake, Qt and the Windows compiler. This makefile exists so
+# the parts that depend on neither Qt nor SQLite can be compiled and executed
+# anywhere, including on a machine with nothing installed beyond a compiler.
+#
+# The language is C++23, the same as the real build. Note that a compiler can
+# accept -std=c++23 while shipping only part of the C++23 *library*; the
+# integrity pass refuses the library headers that are not available here, so
+# the two lanes cannot silently diverge.
+#
+#   make -f tools/sandbox/Makefile check      everything
+#   make -f tools/sandbox/Makefile tests      compile and run the test programs
+#   make -f tools/sandbox/Makefile headers    every header compiles alone
+#   make -f tools/sandbox/Makefile integrity  per-file checks
+
+.RECIPEPREFIX := >
+.DEFAULT_GOAL := check
+
+CXX ?= g++
+STD ?= c++23
+BUILD ?= build/sandbox
+PYTHON ?= python3
+
+INCLUDES := -Iexternal/protocol/include -Isrc -Itests
+
+WARNINGS := -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
+            -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion \
+            -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference \
+            -Woverloaded-virtual -Wunused -Werror
+
+# -pthread from here on: the writer gate is genuinely concurrent, and a test
+# of a queue that never starts a thread proves nothing.
+CXXFLAGS := -std=$(STD) -O1 -g -pthread $(WARNINGS) $(INCLUDES)
+
+PROTOCOL_SRC := external/protocol/src/module_graph.cpp \
+                external/protocol/src/operation_table.cpp \
+                external/protocol/src/workflow_table.cpp
+
+ENGINE_SRC := src/engine/records/identity.cpp \
+              src/engine/records/quantity.cpp \
+              src/engine/records/money.cpp \
+              src/engine/records/lifecycle.cpp \
+              src/engine/records/numbering.cpp \
+              src/engine/records/approval.cpp \
+              src/engine/identity/rights_set.cpp \
+              src/engine/identity/capability.cpp
+
+# The payload codec lives among the records but is built with storage: it turns
+# a Row into bytes, so it needs the row. Listing it with the pure records made
+# the domain test link against a store it does not use.
+PAYLOAD_SRC := src/engine/records/payload.cpp
+
+AUDIT_SRC := src/engine/audit/audit_log.cpp
+
+STORAGE_SRC := src/engine/storage/store.cpp \
+               src/engine/storage/memory_store.cpp \
+               src/engine/storage/migration_runner.cpp \
+               src/engine/storage/writer.cpp \
+               src/engine/storage/database.cpp
+
+SYNC_SRC := src/engine/sync/outbox.cpp \
+            src/engine/sync/cursor.cpp \
+            src/engine/sync/conflict.cpp
+
+MODULES_SRC := src/modules/registry.cpp $(AUDIT_SRC)
+
+CATALOG_SRC := src/modules/catalog/module.cpp \
+               src/modules/catalog/domain/product.cpp \
+               src/modules/catalog/data/tables.cpp \
+               src/modules/catalog/data/repository.cpp \
+               src/modules/catalog/service/catalog_service.cpp
+
+PRICING_SRC := src/modules/pricing/module.cpp \
+               src/modules/pricing/domain/rate.cpp \
+               src/modules/pricing/data/tables.cpp \
+               src/modules/pricing/data/repository.cpp \
+               src/modules/pricing/service/pricing_service.cpp
+
+ORDERS_SRC := src/modules/orders/module.cpp \
+              src/modules/orders/domain/order.cpp \
+              src/modules/orders/data/tables.cpp \
+              src/modules/orders/data/repository.cpp \
+              src/modules/orders/service/orders_service.cpp
+
+RECEIVABLES_SRC := src/modules/receivables/module.cpp \
+                   src/modules/receivables/domain/invoice.cpp \
+                   src/modules/receivables/domain/payment.cpp \
+                   src/modules/receivables/domain/credit_account.cpp \
+                   src/modules/receivables/domain/statement.cpp \
+                   src/modules/receivables/data/tables.cpp \
+                   src/modules/receivables/data/repository.cpp \
+                   src/modules/receivables/service/receivables_service.cpp
+
+JOBS_SRC := src/modules/jobs/module.cpp \
+            src/modules/jobs/domain/job.cpp \
+            src/modules/jobs/data/tables.cpp \
+            src/modules/jobs/data/repository.cpp \
+            src/modules/jobs/service/jobs_service.cpp
+
+QUOTATIONS_SRC := src/modules/quotations/module.cpp \
+                  src/modules/quotations/domain/quotation.cpp \
+                  src/modules/quotations/data/tables.cpp \
+                  src/modules/quotations/data/repository.cpp \
+                  src/modules/quotations/service/quotations_service.cpp
+
+AGREEMENTS_SRC := src/modules/agreements/module.cpp \
+                  src/modules/agreements/domain/agreement.cpp \
+                  src/modules/agreements/data/tables.cpp \
+                  src/modules/agreements/data/repository.cpp \
+                  src/modules/agreements/service/agreements_service.cpp
+
+SOURCING_SRC := src/modules/sourcing/module.cpp \
+                src/modules/sourcing/domain/sourcing.cpp \
+                src/modules/sourcing/data/tables.cpp \
+                src/modules/sourcing/data/repository.cpp \
+                src/modules/sourcing/service/sourcing_service.cpp
+
+COMPANION_SRC := src/modules/companion/module.cpp \
+                 src/modules/companion/domain/task.cpp \
+                 src/modules/companion/data/tables.cpp \
+                 src/modules/companion/data/repository.cpp \
+                 src/modules/companion/service/companion_service.cpp
+
+FILES_SRC := src/modules/files/module.cpp \
+             src/modules/files/domain/file_asset.cpp \
+             src/modules/files/data/tables.cpp \
+             src/modules/files/data/repository.cpp \
+             src/modules/files/service/files_service.cpp
+
+PARTIES_SRC := src/modules/parties/module.cpp \
+               src/modules/parties/domain/party.cpp \
+               src/modules/parties/data/tables.cpp \
+               src/modules/parties/data/repository.cpp \
+               src/modules/parties/service/parties_service.cpp
+
+ADMIN_SRC := src/modules/administration/module.cpp \
+             src/modules/administration/domain/person.cpp \
+             src/modules/administration/domain/device.cpp \
+             src/modules/administration/data/tables.cpp \
+             src/modules/administration/data/repository.cpp \
+             src/modules/administration/service/administration_service.cpp
+
+HEADERS := $(shell find external/protocol/include src -name '*.hpp' 2>/dev/null | sort)
+
+$(BUILD)/protocol_test: $(PROTOCOL_SRC) external/protocol/tests/protocol_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/engine_test: $(PROTOCOL_SRC) $(ENGINE_SRC) tests/engine/engine_domain_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/storage_test: $(STORAGE_SRC) tests/engine/engine_storage_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/migration_test: $(STORAGE_SRC) tests/engine/engine_migration_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/writer_test: $(STORAGE_SRC) tests/engine/engine_writer_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/outbox_test: $(PROTOCOL_SRC) $(STORAGE_SRC) $(SYNC_SRC) tests/engine/engine_outbox_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/sync_test: $(PROTOCOL_SRC) $(STORAGE_SRC) $(SYNC_SRC) tests/engine/engine_sync_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/payload_test: $(STORAGE_SRC) src/engine/records/payload.cpp \
+                       tests/engine/engine_payload_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/framework_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                         $(MODULES_SRC) tests/modules/module_framework_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/workflow_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                        $(MODULES_SRC) tests/workflows/workflow_framework_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/administration_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                              $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
+                              src/modules/administration/tests/administration_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/parties_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                       $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) \
+                       src/modules/parties/tests/parties_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/catalog_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                       $(PAYLOAD_SRC) $(MODULES_SRC) $(CATALOG_SRC) \
+                       src/modules/catalog/tests/catalog_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/pricing_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                       $(PAYLOAD_SRC) $(MODULES_SRC) $(PRICING_SRC) \
+                       src/modules/pricing/tests/pricing_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/orders_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                      $(PAYLOAD_SRC) $(MODULES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
+                      src/modules/orders/tests/orders_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/receivables_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                          $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) \
+                          $(PRICING_SRC) $(RECEIVABLES_SRC) \
+                          src/modules/receivables/tests/receivables_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/jobs_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                   $(PAYLOAD_SRC) $(MODULES_SRC) $(JOBS_SRC) \
+                   src/modules/jobs/tests/jobs_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/quotations_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                         $(PAYLOAD_SRC) $(MODULES_SRC) $(QUOTATIONS_SRC) \
+                         src/modules/quotations/tests/quotations_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/agreements_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                         $(PAYLOAD_SRC) $(MODULES_SRC) $(AGREEMENTS_SRC) \
+                         src/modules/agreements/tests/agreements_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/sourcing_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                       $(PAYLOAD_SRC) $(MODULES_SRC) $(SOURCING_SRC) \
+                       src/modules/sourcing/tests/sourcing_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/companion_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                        $(PAYLOAD_SRC) $(MODULES_SRC) $(COMPANION_SRC) \
+                        src/modules/companion/tests/companion_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/files_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                    $(PAYLOAD_SRC) $(MODULES_SRC) $(FILES_SRC) \
+                    src/modules/files/tests/files_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+.PHONY: check tests headers integrity standard clean
+
+check: standard integrity headers tests
+
+standard:
+>@echo '== language =='
+>@mkdir -p $(BUILD)
+>@printf '#include <version>\n#include <cstdio>\nint main(){std::printf("__cplusplus %%ld\\n",(long)__cplusplus);}\n' > $(BUILD)/.std.cpp
+>@$(CXX) -std=$(STD) $(BUILD)/.std.cpp -o $(BUILD)/.std && ./$(BUILD)/.std
+>@echo "compiler   $$($(CXX) --version | head -1)"
+>@echo "standard   $(STD)"
+>@echo
+
+# Every header must compile on its own, with nothing included before it, and
+# must survive being included twice. A header that only works because some
+# other header came first is a trap for whoever includes it next.
+headers:
+>@echo '== header self-containment =='
+>@mkdir -p $(BUILD)
+>@count=0; bad=0; \
+> for header in $(HEADERS); do \
+>   count=$$((count+1)); \
+>   printf '#include "%s"\n#include "%s"\n' "$$header" "$$header" > $(BUILD)/.selftest.cpp; \
+>   if ! $(CXX) $(CXXFLAGS) -I. -fsyntax-only $(BUILD)/.selftest.cpp 2> $(BUILD)/.selftest.log; then \
+>     echo "  FAIL $$header"; sed 's/^/        /' $(BUILD)/.selftest.log | head -6; \
+>     bad=$$((bad+1)); \
+>   fi; \
+> done; \
+> echo "  $$count headers, $$bad not self-contained"; \
+> echo; \
+> test $$bad -eq 0
+
+integrity:
+>@echo '== integrity =='
+>@$(PYTHON) tools/sandbox/integrity.py
+>@echo
+
+tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+       $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
+       $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
+       $(BUILD)/workflow_test \
+       $(BUILD)/administration_test $(BUILD)/parties_test \
+       $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
+       $(BUILD)/receivables_test $(BUILD)/jobs_test \
+       $(BUILD)/quotations_test \
+       $(BUILD)/agreements_test \
+       $(BUILD)/sourcing_test \
+       $(BUILD)/companion_test \
+       $(BUILD)/files_test
+>@echo '== protocol =='
+>./$(BUILD)/protocol_test
+>@echo
+>@echo '== engine =='
+>./$(BUILD)/engine_test
+>@echo
+>@echo '== storage =='
+>./$(BUILD)/storage_test
+>@echo
+>@echo '== migrations =='
+>./$(BUILD)/migration_test
+>@echo
+>@echo '== writer gate =='
+>./$(BUILD)/writer_test
+>@echo
+>@echo '== outbox =='
+>./$(BUILD)/outbox_test
+>@echo
+>@echo '== cursor and conflict =='
+>./$(BUILD)/sync_test
+>@echo
+>@echo '== call payloads =='
+>./$(BUILD)/payload_test
+>@echo
+>@echo '== module framework =='
+>./$(BUILD)/framework_test
+>@echo
+>@echo '== workflow framework =='
+>./$(BUILD)/workflow_test
+>@echo
+>@echo '== administration =='
+>./$(BUILD)/administration_test
+>@echo
+>@echo '== parties =='
+>./$(BUILD)/parties_test
+>@echo
+>@echo '== catalog =='
+>./$(BUILD)/catalog_test
+>@echo
+>@echo '== pricing =='
+>./$(BUILD)/pricing_test
+>@echo
+>@echo '== orders =='
+>./$(BUILD)/orders_test
+>@echo
+>@echo '== receivables =='
+>./$(BUILD)/receivables_test
+>@echo
+>@echo '== jobs =='
+>./$(BUILD)/jobs_test
+>@echo
+>@echo '== quotations =='
+>./$(BUILD)/quotations_test
+>@echo
+>@echo '== agreements =='
+>./$(BUILD)/agreements_test
+>@echo
+>@echo '== sourcing =='
+>./$(BUILD)/sourcing_test
+>@echo
+>@echo '== companion =='
+>./$(BUILD)/companion_test
+>@echo
+>@echo '== files =='
+>./$(BUILD)/files_test
+
+clean:
+>rm -rf $(BUILD)

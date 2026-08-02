@@ -1,0 +1,6 @@
+// Tasks and reminders, attachable to anything through the generic reference.
+
+SQF_OPERATION(task_create,    companion, right_task_write, Synchronizable, OfflineAllowed)
+SQF_OPERATION(task_update,    companion, right_task_write, Synchronizable, OfflineAllowed)
+SQF_OPERATION(task_complete,  companion, right_task_write, Synchronizable, OfflineAllowed)
+SQF_OPERATION(task_snooze,    companion, right_task_write, Synchronizable, OfflineAllowed)

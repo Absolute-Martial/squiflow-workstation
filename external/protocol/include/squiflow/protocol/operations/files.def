@@ -1,0 +1,7 @@
+// Design-file identity and search. The files themselves never leave the shop
+// volumes; only their identity and index are recorded.
+
+SQF_OPERATION(file_index_scan,  files, right_file_index,  LocalOnly,      OfflineAllowed)
+SQF_OPERATION(file_search,      files, right_file_search, LocalOnly,      OfflineAllowed)
+SQF_OPERATION(file_link,        files, right_file_index,  Synchronizable, OfflineAllowed)
+SQF_OPERATION(file_forget,      files, right_file_index,  Synchronizable, OfflineAllowed)

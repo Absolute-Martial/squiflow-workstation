@@ -1,0 +1,61 @@
+// Every right in the system. A right is granted to a person directly; there
+// are no roles. Retired rights are never reused, so an old grant can never
+// silently become a grant of something else.
+//
+// SQF_RIGHT(name, module)
+
+SQF_RIGHT(right_person_manage,         administration)
+SQF_RIGHT(right_rights_grant,          administration)
+SQF_RIGHT(right_device_manage,         administration)
+SQF_RIGHT(right_shop_settings,         administration)
+SQF_RIGHT(right_module_activate,       administration)
+SQF_RIGHT(right_audit_read,            administration)
+
+SQF_RIGHT(right_party_read,            parties)
+SQF_RIGHT(right_party_write,           parties)
+SQF_RIGHT(right_party_terms_set,       parties)
+
+SQF_RIGHT(right_product_read,          catalog)
+SQF_RIGHT(right_product_write,         catalog)
+
+SQF_RIGHT(right_rate_read,             pricing)
+SQF_RIGHT(right_rate_write,            pricing)
+SQF_RIGHT(right_rate_override,         pricing)
+
+SQF_RIGHT(right_order_read,            orders)
+SQF_RIGHT(right_order_write,           orders)
+SQF_RIGHT(right_order_cancel,          orders)
+
+SQF_RIGHT(right_invoice_read,          receivables)
+SQF_RIGHT(right_invoice_draft,         receivables)
+SQF_RIGHT(right_invoice_issue,         receivables)
+SQF_RIGHT(right_invoice_cancel,        receivables)
+SQF_RIGHT(right_payment_record,        receivables)
+SQF_RIGHT(right_payment_allocate,      receivables)
+SQF_RIGHT(right_credit_account_manage, receivables)
+SQF_RIGHT(right_credit_hold_override,  receivables)
+SQF_RIGHT(right_statement_send,        receivables)
+SQF_RIGHT(right_document_print,        receivables)
+
+SQF_RIGHT(right_job_read,              jobs)
+SQF_RIGHT(right_job_write,             jobs)
+SQF_RIGHT(right_job_state_change,      jobs)
+
+SQF_RIGHT(right_quotation_read,        quotations)
+SQF_RIGHT(right_quotation_write,       quotations)
+SQF_RIGHT(right_quotation_issue,       quotations)
+
+SQF_RIGHT(right_agreement_read,        agreements)
+SQF_RIGHT(right_agreement_write,       agreements)
+SQF_RIGHT(right_agreement_close,       agreements)
+
+SQF_RIGHT(right_supplier_read,         sourcing)
+SQF_RIGHT(right_supplier_write,        sourcing)
+SQF_RIGHT(right_purchase_record,       sourcing)
+SQF_RIGHT(right_purchase_settle,       sourcing)
+
+SQF_RIGHT(right_task_read,             companion)
+SQF_RIGHT(right_task_write,            companion)
+
+SQF_RIGHT(right_file_search,           files)
+SQF_RIGHT(right_file_index,            files)

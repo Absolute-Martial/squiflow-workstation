@@ -1,0 +1,14 @@
+// Administration. Almost everything here is online-only on purpose: a rights
+// change made on a disconnected machine could contradict one made elsewhere,
+// and the losing side would be a person silently keeping access.
+
+SQF_OPERATION(person_create,          administration, right_person_manage,   OnlineRequired, OnlineOnly)
+SQF_OPERATION(person_update,          administration, right_person_manage,   OnlineRequired, OnlineOnly)
+SQF_OPERATION(person_disable,         administration, right_person_manage,   OnlineRequired, OnlineOnly)
+SQF_OPERATION(right_grant,            administration, right_rights_grant,    OnlineRequired, OnlineOnly)
+SQF_OPERATION(right_revoke,           administration, right_rights_grant,    OnlineRequired, OnlineOnly)
+SQF_OPERATION(device_register,        administration, right_device_manage,   OnlineRequired, OnlineOnly)
+SQF_OPERATION(device_retire,          administration, right_device_manage,   OnlineRequired, OnlineOnly)
+SQF_OPERATION(shop_setting_update,    administration, right_shop_settings,   Synchronizable, OnlineOnly)
+SQF_OPERATION(module_activation_set,  administration, right_module_activate, OnlineRequired, OnlineOnly)
+SQF_OPERATION(audit_export,           administration, right_audit_read,      LocalOnly,      OfflineAllowed)

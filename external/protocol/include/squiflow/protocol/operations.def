@@ -1,0 +1,23 @@
+// Every operation in the system, gathered from the modules.
+//
+// This is an X-macro list. A consumer defines SQF_OPERATION, includes this
+// file, then undefines it. Five consumers exist: the operation enum, the
+// rights binding, the offline capability table, the sync router, and the
+// completeness test. Adding a line here reaches all five at once, and
+// forgetting one becomes a compile error rather than a silent gap.
+//
+// SQF_OPERATION(name, module, right, sync_class, offline_rule)
+
+#include <squiflow/protocol/operations/administration.def>
+#include <squiflow/protocol/operations/parties.def>
+#include <squiflow/protocol/operations/catalog.def>
+#include <squiflow/protocol/operations/pricing.def>
+#include <squiflow/protocol/operations/orders.def>
+#include <squiflow/protocol/operations/receivables.def>
+#include <squiflow/protocol/operations/jobs.def>
+#include <squiflow/protocol/operations/quotations.def>
+#include <squiflow/protocol/operations/agreements.def>
+#include <squiflow/protocol/operations/sourcing.def>
+#include <squiflow/protocol/operations/companion.def>
+#include <squiflow/protocol/operations/files.def>
+#include <squiflow/protocol/operations/workflows.def>

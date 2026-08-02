@@ -1,0 +1,16 @@
+// The strongest boundary in the system.
+//
+// Issuing and cancelling are workflows rather than module operations, because
+// both cross into pricing and orders. They live in workflows.def.
+//
+// A draft is freely editable, including lines that are not in the catalog at
+// all. Once issued, nothing is editable: correction is cancel and reissue.
+
+SQF_OPERATION(invoice_draft_create,   receivables, right_invoice_draft,         Synchronizable, OfflineAllowed)
+SQF_OPERATION(invoice_draft_update,   receivables, right_invoice_draft,         Synchronizable, OfflineAllowed)
+SQF_OPERATION(invoice_draft_discard,  receivables, right_invoice_draft,         Synchronizable, OfflineAllowed)
+SQF_OPERATION(payment_allocate,       receivables, right_payment_allocate,      Synchronizable, OfflineAllowed)
+SQF_OPERATION(credit_account_set,     receivables, right_credit_account_manage, OnlineRequired, OnlineOnly)
+SQF_OPERATION(statement_prepare,      receivables, right_statement_send,        LocalOnly,      OfflineAllowed)
+SQF_OPERATION(statement_send,         receivables, right_statement_send,        OnlineRequired, OnlineOnly)
+SQF_OPERATION(document_print,         receivables, right_document_print,        LocalOnly,      OfflineAllowed)

@@ -1,0 +1,30 @@
+// One edge per line: the first module requires the second.
+//
+// Rules checked by both the build and the test suite:
+//   - a core module may never require an extra
+//   - the graph must be acyclic
+//   - extra may require extra; that is allowed, and drives deactivation closure
+//
+// SQF_REQUIRES(dependent, dependency)
+
+SQF_REQUIRES(pricing,     catalog)
+SQF_REQUIRES(pricing,     parties)
+
+SQF_REQUIRES(orders,      catalog)
+SQF_REQUIRES(orders,      pricing)
+SQF_REQUIRES(orders,      parties)
+
+SQF_REQUIRES(receivables, pricing)
+SQF_REQUIRES(receivables, parties)
+
+SQF_REQUIRES(quotations,  catalog)
+SQF_REQUIRES(quotations,  pricing)
+SQF_REQUIRES(quotations,  parties)
+
+SQF_REQUIRES(agreements,  parties)
+SQF_REQUIRES(agreements,  pricing)
+
+SQF_REQUIRES(sourcing,    parties)
+
+// jobs deliberately requires nothing: a job may exist with no order at all.
+// The order-to-jobs link is a workflow, not a module dependency.

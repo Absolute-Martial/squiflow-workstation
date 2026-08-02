@@ -1,0 +1,273 @@
+== language ==
+__cplusplus 202100
+compiler   g++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5)
+standard   c++23
+
+== integrity ==
+integrity: 140 files checked
+integrity: all files pass
+
+== header self-containment ==
+  59 headers, 0 not self-contained
+
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp external/protocol/tests/protocol_test.cpp -o build/sandbox/protocol_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/records/identity.cpp src/engine/records/quantity.cpp src/engine/records/money.cpp src/engine/records/lifecycle.cpp src/engine/records/numbering.cpp src/engine/records/approval.cpp src/engine/identity/rights_set.cpp src/engine/identity/capability.cpp tests/engine/engine_domain_test.cpp -o build/sandbox/engine_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp tests/engine/engine_storage_test.cpp -o build/sandbox/storage_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp tests/engine/engine_migration_test.cpp -o build/sandbox/migration_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp tests/engine/engine_writer_test.cpp -o build/sandbox/writer_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp tests/engine/engine_outbox_test.cpp -o build/sandbox/outbox_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp tests/engine/engine_sync_test.cpp -o build/sandbox/sync_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/records/payload.cpp tests/engine/engine_payload_test.cpp -o build/sandbox/payload_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/records/identity.cpp src/engine/records/quantity.cpp src/engine/records/money.cpp src/engine/records/lifecycle.cpp src/engine/records/numbering.cpp src/engine/records/approval.cpp src/engine/identity/rights_set.cpp src/engine/identity/capability.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp src/modules/registry.cpp tests/modules/module_framework_test.cpp -o build/sandbox/framework_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/records/identity.cpp src/engine/records/quantity.cpp src/engine/records/money.cpp src/engine/records/lifecycle.cpp src/engine/records/numbering.cpp src/engine/records/approval.cpp src/engine/identity/rights_set.cpp src/engine/identity/capability.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp src/engine/records/payload.cpp src/modules/registry.cpp src/modules/administration/module.cpp src/modules/administration/domain/person.cpp src/modules/administration/domain/device.cpp src/modules/administration/data/tables.cpp src/modules/administration/data/repository.cpp src/modules/administration/service/administration_service.cpp src/modules/administration/tests/administration_test.cpp -o build/sandbox/administration_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/records/identity.cpp src/engine/records/quantity.cpp src/engine/records/money.cpp src/engine/records/lifecycle.cpp src/engine/records/numbering.cpp src/engine/records/approval.cpp src/engine/identity/rights_set.cpp src/engine/identity/capability.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp src/engine/records/payload.cpp src/modules/registry.cpp src/modules/parties/module.cpp src/modules/parties/domain/party.cpp src/modules/parties/data/tables.cpp src/modules/parties/data/repository.cpp src/modules/parties/service/parties_service.cpp src/modules/parties/tests/parties_test.cpp -o build/sandbox/parties_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/records/identity.cpp src/engine/records/quantity.cpp src/engine/records/money.cpp src/engine/records/lifecycle.cpp src/engine/records/numbering.cpp src/engine/records/approval.cpp src/engine/identity/rights_set.cpp src/engine/identity/capability.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp src/engine/records/payload.cpp src/modules/registry.cpp src/modules/catalog/module.cpp src/modules/catalog/domain/product.cpp src/modules/catalog/data/tables.cpp src/modules/catalog/data/repository.cpp src/modules/catalog/service/catalog_service.cpp src/modules/catalog/tests/catalog_test.cpp -o build/sandbox/catalog_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/records/identity.cpp src/engine/records/quantity.cpp src/engine/records/money.cpp src/engine/records/lifecycle.cpp src/engine/records/numbering.cpp src/engine/records/approval.cpp src/engine/identity/rights_set.cpp src/engine/identity/capability.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp src/engine/records/payload.cpp src/modules/registry.cpp src/modules/pricing/module.cpp src/modules/pricing/domain/rate.cpp src/modules/pricing/data/tables.cpp src/modules/pricing/data/repository.cpp src/modules/pricing/service/pricing_service.cpp src/modules/pricing/tests/pricing_test.cpp -o build/sandbox/pricing_test
+g++ -std=c++23 -O1 -g -pthread -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference -Woverloaded-virtual -Wunused -Werror -Iexternal/protocol/include -Isrc -Itests external/protocol/src/module_graph.cpp external/protocol/src/operation_table.cpp src/engine/records/identity.cpp src/engine/records/quantity.cpp src/engine/records/money.cpp src/engine/records/lifecycle.cpp src/engine/records/numbering.cpp src/engine/records/approval.cpp src/engine/identity/rights_set.cpp src/engine/identity/capability.cpp src/engine/storage/store.cpp src/engine/storage/memory_store.cpp src/engine/storage/migration_runner.cpp src/engine/storage/writer.cpp src/engine/storage/database.cpp src/engine/sync/outbox.cpp src/engine/sync/cursor.cpp src/engine/sync/conflict.cpp src/engine/records/payload.cpp src/modules/registry.cpp src/modules/pricing/module.cpp src/modules/pricing/domain/rate.cpp src/modules/pricing/data/tables.cpp src/modules/pricing/data/repository.cpp src/modules/pricing/service/pricing_service.cpp src/modules/orders/module.cpp src/modules/orders/domain/order.cpp src/modules/orders/data/tables.cpp src/modules/orders/data/repository.cpp src/modules/orders/service/orders_service.cpp src/modules/orders/tests/orders_test.cpp -o build/sandbox/orders_test
+== protocol ==
+./build/sandbox/protocol_test
+module graph
+dependents mirror requirements
+activation closure
+values from outside this build
+the graph checks, against graphs built to break them
+deactivation closure, transitively
+rights
+operation table
+lookup by name
+staff offline exceptions
+enum text
+
+summary
+  wire version   0.1
+  modules        12
+  rights         43
+  operations     67
+  usable offline 44 of 67
+  core modules   6, extra 6
+
+1649 checks, 0 failed
+
+== engine ==
+./build/sandbox/engine_test
+record identity
+quantity
+money
+document lifecycle
+numbering
+signatures and approvals
+rights
+capability
+staff offline exceptions
+
+93 checks, 0 failed
+
+== storage ==
+./build/sandbox/storage_test
+values
+rows
+table definition
+writes
+replace
+rollback
+single writer
+queries
+
+76 checks, 0 failed
+
+== migrations ==
+./build/sandbox/migration_test
+registration
+first run
+running twice
+upgrading an existing database
+an edited migration
+an out-of-order migration
+a database from a newer build
+a migration that fails
+idempotent schema steps
+
+43 checks, 0 failed
+
+== writer gate ==
+./build/sandbox/writer_test
+a closed database
+a database that will not open
+no lost updates under contention
+no starvation
+a write that throws
+giving up rather than waiting
+concurrent reads
+commit is not the caller's job
+
+37 checks, 0 failed
+
+== outbox ==
+./build/sandbox/outbox_test
+what may be queued
+enqueuing twice
+claiming a batch
+one record, in order
+the ordinary path
+backoff
+giving up
+a conflict
+recovery after a crash
+pruning
+
+82 checks, 0 failed
+
+== cursor and conflict ==
+./build/sandbox/sync_test
+a new device
+moving forward
+a failed pull
+asking for everything again
+the rule itself
+the server's version stands
+this device's version stands
+a person has to decide
+what resolution refuses
+
+50 checks, 0 failed
+
+== call payloads ==
+./build/sandbox/payload_test
+a row survives the round trip
+the same row encodes to the same bytes
+empty things are still things
+awkward text
+damaged input is refused, not guessed at
+every byte pattern is safe to feed it
+the one-field convenience
+
+29 checks, 0 failed
+
+== module framework ==
+./build/sandbox/framework_test
+a module registers the operations it owns
+a module cannot handle another module's operation
+one operation, one handler
+a module cannot be registered twice
+handlers can only be registered while installing
+migration numbering is global, and the engine owns the low numbers
+the engine's own tables exist without any module creating them
+the rules are checked before the handler runs
+a change that will be sent is queued in the same transaction
+a change that rolls back is not left queued
+a synchronised change needs a record and a key
+a read runs against the store and returns rows
+a switched-off module looks absent, not forbidden
+staff are read-only offline, and the framework enforces it
+
+50 checks, 0 failed
+
+== administration ==
+./build/sandbox/administration_test
+the first person created is the owner, and holds everything
+a shop has one owner, and usernames are not shared
+a person with no name, no username or no password is refused
+nobody can give away a permission they do not hold
+the shop cannot be locked out of itself
+machines
+settings are sent to the other machine, and people are not
+switching parts of the application off
+every administrative act is in the log, and the log can be read
+a refused change leaves nothing behind
+a damaged request is refused in words
+
+57 checks, 0 failed
+
+== parties ==
+./build/sandbox/parties_test
+a party is created and can be found
+a party cannot be created twice, but a replay is fine
+a party with no name is refused
+neither customer nor supplier is refused
+a party can be updated, but not when archived
+billing terms are per customer
+contact information is stored per party
+an unknown party is refused on every operation
+
+37 checks, 0 failed
+
+== catalog ==
+./build/sandbox/catalog_test
+a product is created and persisted
+several products can be created independently
+creating the same id twice is refused, but a replay is accepted
+a product with a blank or missing name is refused
+a product can be updated and its history is correct
+updating a product with a blank name is refused
+updating or archiving a product that does not exist is refused
+archiving a product stops it from being updated
+a caller with no write right is refused at the gate
+a damaged payload is refused with a clear message
+
+46 checks, 0 failed
+
+== pricing ==
+./build/sandbox/pricing_test
+nothing found stays nothing found
+the more specific rate wins
+a party rate alone does not serve a walk-in at all
+the window is half-open
+open-ended bounds mean what they say
+two rates of equal specificity resolve the same way every time
+candidates that do not apply are ignored, not resolved
+the default sits behind everything
+every source can be named, including one from outside this build
+a rate must be a price somebody could actually charge
+a rate window must be able to contain a moment
+a price change must be explainable
+a standard price is checked too
+a rate is set and can then be resolved
+an unknown product has no price rather than a price of zero
+a price sent as text is refused, not quietly turned into zero
+correcting a rate keeps its history; moving it does not happen
+removing a rate that is not there is not a complaint
+the standard price is the last resort
+an override prices a line, even one with no rate at all
+an override sits on top of the rate it replaces
+the last override wins, and the earlier ones are kept
+a recorded price change is never rewritten
+an override still needs a reason when it comes off the wire
+a replay is accepted once and flagged
+the rights are enforced at the gate
+a damaged payload is refused with a clear message
+a request that names no record never reaches this module
+many rates for one product do not confuse resolution
+
+146 checks, 0 failed
+
+== orders ==
+./build/sandbox/orders_test
+order states are small and explicit
+line and order arithmetic is checked
+order validation rejects impossible records
+line validation closes refund and overflow doors
+row mappings preserve snapshots and tame unknown enum values
+next position refuses the signed-integer boundary
+equal positions have deterministic id order
+migration 14 creates both order tables
+an order is created once and keeps its creation evidence
+optional create fields are optional, not weakly typed
+explicit null is not silently treated as absent
+Unicode, special characters and long text round-trip exactly
+walk-in orders are first-class, not fake customers
+updates are partial and cannot move customer money
+a line snapshots the resolved price once
+a party rate is resolved against the order customer
+no price means no line, never a free line
+a recorded override prices an off-catalog line
+bad and duplicate lines roll back completely
+cancellation freezes the order and preserves its first reason
+concurrent line additions serialize without duplicates or gaps
+write and cancel are separate permissions
+an unsigned session is refused even with every right bit
+offline rules are enforced before the handler
+an idempotency replay does not create a second order
+damaged payloads fail without partial rows
+a missing record id is a loud wiring error
+
+181 checks, 0 failed

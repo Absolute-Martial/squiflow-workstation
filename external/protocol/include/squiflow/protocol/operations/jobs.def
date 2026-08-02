@@ -1,0 +1,7 @@
+// Job tickets. Own number block, own states. The link to an order is optional
+// and one-way.
+
+SQF_OPERATION(job_create,        jobs, right_job_write,        Synchronizable, OfflineAllowed)
+SQF_OPERATION(job_update,        jobs, right_job_write,        Synchronizable, OfflineAllowed)
+SQF_OPERATION(job_state_change,  jobs, right_job_state_change, Synchronizable, OfflineAllowed)
+SQF_OPERATION(job_cancel,        jobs, right_job_state_change, Synchronizable, OnlineOnly)

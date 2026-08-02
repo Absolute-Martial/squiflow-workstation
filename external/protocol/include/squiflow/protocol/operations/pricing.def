@@ -1,0 +1,7 @@
+// Rate resolution has exactly one owner. A rate is a relation between product,
+// party, agreement and time, not an attribute of a product.
+
+SQF_OPERATION(rate_set,          pricing, right_rate_write,    Synchronizable, OfflineAllowed)
+SQF_OPERATION(rate_remove,       pricing, right_rate_write,    Synchronizable, OnlineOnly)
+SQF_OPERATION(rate_override,     pricing, right_rate_override, Synchronizable, OfflineAllowed)
+SQF_OPERATION(rate_default_set,  pricing, right_rate_write,    Synchronizable, OnlineOnly)

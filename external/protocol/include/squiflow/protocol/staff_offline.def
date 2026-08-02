@@ -1,0 +1,18 @@
+// The narrow list of operations a staff member may still perform while this
+// device has no connection.
+//
+// Staff are read-only offline. That rule exists so two people cannot both
+// change the same record while unable to see each other. These are the
+// exceptions, and the reason each one is an exception is that refusing it
+// would mean turning away a paying customer standing at the counter.
+//
+// Every entry here must also be marked OfflineAllowed in its operations file.
+// A test enforces that, so this list cannot quietly contradict the other.
+//
+// SQF_STAFF_OFFLINE(operation)
+
+SQF_STAFF_OFFLINE(counter_sale)
+SQF_STAFF_OFFLINE(take_payment)
+SQF_STAFF_OFFLINE(document_print)
+SQF_STAFF_OFFLINE(purchase_lookup)
+SQF_STAFF_OFFLINE(file_search)

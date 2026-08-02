@@ -1,0 +1,5 @@
+// What the shop sells. Product identity is the name, as the shop uses it.
+
+SQF_OPERATION(product_create,   catalog, right_product_write, Synchronizable, OfflineAllowed)
+SQF_OPERATION(product_update,   catalog, right_product_write, Synchronizable, OfflineAllowed)
+SQF_OPERATION(product_archive,  catalog, right_product_write, Synchronizable, OnlineOnly)

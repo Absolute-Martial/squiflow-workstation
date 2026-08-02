@@ -1,0 +1,8 @@
+// Rate agreements: a period, agreed rates, and optionally a quantity cap.
+// Closing is online-only because a closed agreement changes what every later
+// invoice is allowed to charge.
+
+SQF_OPERATION(agreement_create,  agreements, right_agreement_write, Synchronizable, OnlineOnly)
+SQF_OPERATION(agreement_update,  agreements, right_agreement_write, Synchronizable, OnlineOnly)
+SQF_OPERATION(agreement_close,   agreements, right_agreement_close, OnlineRequired, OnlineOnly)
+SQF_OPERATION(agreement_reopen,  agreements, right_agreement_close, OnlineRequired, OnlineOnly)
