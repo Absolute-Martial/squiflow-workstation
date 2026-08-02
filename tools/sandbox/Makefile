@@ -66,6 +66,7 @@ SYNC_SRC := src/engine/sync/outbox.cpp \
 MODULES_SRC := src/modules/registry.cpp $(AUDIT_SRC)
 
 QUOTE_TO_ORDER_SRC := src/workflows/quote_to_order.cpp
+ORDER_TO_JOBS_SRC := src/workflows/order_to_jobs.cpp
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
@@ -195,6 +196,13 @@ $(BUILD)/quote_to_order_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYN
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/order_to_jobs_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                             $(PAYLOAD_SRC) $(MODULES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
+                             $(JOBS_SRC) $(ORDER_TO_JOBS_SRC) \
+                             tests/workflows/order_to_jobs_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/administration_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                               $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
                               src/modules/administration/tests/administration_test.cpp
@@ -309,7 +317,7 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
-       $(BUILD)/administration_test $(BUILD)/parties_test \
+       $(BUILD)/order_to_jobs_test $(BUILD)/administration_test $(BUILD)/parties_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
        $(BUILD)/quotations_test \
@@ -349,6 +357,9 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
 >@echo
 >@echo '== quote to order workflow =='
 >./$(BUILD)/quote_to_order_test
+>@echo
+>@echo '== order to jobs workflow =='
+>./$(BUILD)/order_to_jobs_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test

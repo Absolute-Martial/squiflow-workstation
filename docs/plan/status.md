@@ -44,13 +44,23 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 4 | 4.13 files | Done | 81 checks, 0 failed; migration 21; all four operations; four tables |
 | 5 | 5.1 Workflow framework | Done | migration 22; 54 checks; one execution door, transaction, audit row, outbox row and refusal path |
 | 5 | 5.2 Quotation to order | Done | exact accepted revision snapshot; immutable provenance; 21 workflow checks, 0 failed |
-| 5 | 5.3-5.8 Business workflows | Not started | Phase 5 is 2/8 complete |
+| 5 | 5.3 Order to jobs | QA approved | one line to one draft job; exact source-line provenance; 54 workflow checks, 0 failed |
+| 5 | 5.4-5.8 Business workflows | Not started | Phase 5 is 3/8 complete |
 | 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **233 files integrity-checked, 102 headers proven self-contained,
-3,363 assertions across 23 strict test programs, 0 failed.** The independent CMake
-lane verifies the complete module graph: 12 modules, acyclic, core closed. The
-schema is at migration 22. Overall progress is **34/69**; Phase 5 is **2/8**.
+Totals: **236 files integrity-checked, 103 headers proven self-contained,
+3,425 assertions across 24 strict test programs, 0 failed.** The independent CMake
+lane passes 24/24 tests and verifies the complete module graph: 12 modules,
+acyclic, core closed. The schema is at migration 22. Overall progress is
+**35/69**; Phase 5 is **3/8**.
+
+## 5.3 order to jobs
+
+One open order now creates one draft job per line by default, or one job per line in an explicit non-empty subset. Every job retains the source order, exact source line, and upstream quotation when present. Quantity, price, total, and rate-origin evidence copy from the frozen order line with no pricing lookup or repricing. Direct jobs remain valid without an order.
+
+Same-key retries replay before the handler. Different-key duplicates are refused by exact order-and-line provenance. Derived ids are deterministic 128-bit values from the conversion identity and source line. A later target collision rolls back earlier inserted jobs together with audit and outbox rows. The permanent suite contributes 54 checks covering normal and multi-line conversion, subsets, malformed and cancelled sources, Unicode/large text, offline operation, audit/outbox counts, rollback, unchanged source orders, and direct jobs.
+
+The quality gate also repaired missing `src/CMakeLists.txt` and `tests/CMakeLists.txt` aggregators inherited from the Phase 5.2 checkpoint. The clean strict lane passes 3,425 assertions; independent CMake configures, builds, and passes 24/24 tests. Formal evidence is in `docs/qa/phase-5.3-order-to-jobs-gate.md`.
 
 ## 5.2 quotation to order
 
