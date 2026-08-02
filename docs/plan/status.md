@@ -45,14 +45,23 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 5 | 5.1 Workflow framework | Done | migration 22; 54 checks; one execution door, transaction, audit row, outbox row and refusal path |
 | 5 | 5.2 Quotation to order | Done | exact accepted revision snapshot; immutable provenance; 21 workflow checks, 0 failed |
 | 5 | 5.3 Order to jobs | QA approved | one line to one draft job; exact source-line provenance; 54 workflow checks, 0 failed |
-| 5 | 5.4-5.8 Business workflows | Not started | Phase 5 is 3/8 complete |
+| 5 | 5.4 Issue invoice | QA approved | migration 23; persisted per-device number blocks; immutable draft snapshot; 41 workflow checks, 0 failed |
+| 5 | 5.5-5.8 Business workflows | Not started | Phase 5 is 4/8 complete |
 | 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **236 files integrity-checked, 103 headers proven self-contained,
-3,425 assertions across 24 strict test programs, 0 failed.** The independent CMake
-lane passes 24/24 tests and verifies the complete module graph: 12 modules,
-acyclic, core closed. The schema is at migration 22. Overall progress is
-**35/69**; Phase 5 is **3/8**.
+Totals: **241 files integrity-checked, 105 headers proven self-contained,
+3,466 assertions across 25 strict test programs, 0 failed.** The independent CMake
+lane passes 25/25 tests and verifies the complete module graph: 12 modules,
+acyclic, core closed. The schema is at migration 23. Overall progress is
+**36/69**; Phase 5 is **4/8**.
+
+## 5.4 issue invoice
+
+An existing non-empty invoice draft can now be issued through the shared workflow transaction. The request confirms its expected line count and total, so a stale screen cannot issue changed commercial evidence. Every line and amount is revalidated, but no current pricing is queried and no line is rewritten. Issuance locks the exact draft, records who issued it and when, and derives customer due dates from stored credit terms when present.
+
+Migration 23 adds persisted invoice-number blocks keyed by document kind, series, and device. The caller never supplies a final number. The current device consumes the lowest available reserved range in the same transaction as the invoice, audit entry, and outbox row. Overlapping ranges, exhausted or wrong-device blocks, duplicate final numbers, and numeric-boundary errors fail closed. A duplicate-number fault after persisted consumption proves transaction rollback restores both the block and draft.
+
+The permanent suite contributes 41 checks. The clean strict lane passes 3,466 assertions across 25 programs; integrity covers 241 files and 105 self-contained headers. Independent CMake configures, builds, and passes 25/25 tests. Formal evidence is in `docs/qa/phase-5.4-issue-invoice-gate.md`.
 
 ## 5.3 order to jobs
 

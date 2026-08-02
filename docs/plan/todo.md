@@ -10,7 +10,7 @@ including mine.
 **Legend:** `[x]` done and verified · `[~]` written but not verifiable on this
 toolchain · `[ ]` not started
 
-**Count: 35 of 69 sub-phases done.**
+**Count: 36 of 69 sub-phases done.**
 
 | Phase | Sub-phases | Done |
 |---|---|---|
@@ -18,7 +18,7 @@ toolchain · `[ ]` not started
 | 2 - The engine's domain half | 7 | 7 |
 | 3 - The engine's storage half | 7 | 6 |
 | 4 - The twelve modules | 13 | 13 |
-| 5 - Workflows | 8 | 3 |
+| 5 - Workflows | 8 | 4 |
 | 6 - Platform and the application shell | 8 | 0 |
 | 7 - The interface | 6 | 0 |
 | 8 - The server | 8 | 0 |
@@ -92,7 +92,7 @@ than being counted here.
   - [x] 5.1C migration 22, permanent harsh tests, rollback and concurrency coverage, and final framework gate
 - [x] 5.2 Quotation to order: exact accepted revision snapshot, immutable provenance, one order per revision, transactional audit/outbox, replay and rollback; 21 workflow checks, 0 failed
 - [x] 5.3 Order to jobs: one order line to one draft job by default, exact source-line provenance, selected subsets, frozen commercial snapshot, replay and rollback; 54 checks, 0 failed; direct jobs still need no order
-- [ ] 5.4 Issue an invoice: snapshot lines and rates, burn a number
+- [x] 5.4 Issue an invoice: issue an existing confirmed draft without repricing; persist and atomically consume a final number from the current device's server-reserved block; migration 23; 41 checks, 0 failed
 - [ ] 5.5 Cancel and reissue: original retained and linked, values carried forward
 - [ ] 5.6 Take a payment and allocate it, always by hand
 - [ ] 5.7 Consume an agreement's quantity cap, release it on cancellation
