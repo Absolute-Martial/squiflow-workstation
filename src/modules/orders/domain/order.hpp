@@ -53,6 +53,14 @@ struct Order {
     std::string party_id{};
     OrderState state{OrderState::Open};
 
+    // Empty together for a direct order. When populated, these three fields
+    // identify the exact frozen quotation revision this order was copied
+    // from. They are evidence, not live links: nothing reads the quotation to
+    // price or render the order after conversion.
+    std::string source_quotation_id{};
+    std::string source_revision_id{};
+    std::int64_t source_revision{0};
+
     // What the customer was told, as an instant. Zero means nothing was
     // promised, which is honest; a default of "today" would be a promise the
     // shop never made.

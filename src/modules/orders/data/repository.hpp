@@ -85,6 +85,23 @@ std::vector<Order> orders_for_party(const Reader& reader, const std::string& par
     return result;
 }
 
+// The order created from one accepted quotation revision. The writer gate
+// serializes conversion, so checking and saving in one transaction closes the
+// door even when two devices use different idempotency keys.
+template <typename Reader>
+std::optional<Order> order_for_revision(const Reader& reader,
+                                        const std::string& quotation_id,
+                                        const std::string& revision_id) {
+    engine::Query query{tables::kOrder};
+    query.where_equals("source_quotation_id", engine::Value::text(quotation_id));
+    query.where_equals("source_revision_id", engine::Value::text(revision_id));
+    query.order_by("id");
+    for (const engine::Row& row : reader.select(query)) {
+        return order_from_row(row);
+    }
+    return std::nullopt;
+}
+
 // The total of an order as it currently stands, computed from its lines every
 // time rather than stored on the order. A stored total is a second copy of a
 // fact, and the two copies drift the first time anything writes one without

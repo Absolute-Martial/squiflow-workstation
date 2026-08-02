@@ -73,6 +73,14 @@ void validate(const Order& order) {
     if (blank(order.created_by)) {
         throw RuleViolation("An order must record who created it.");
     }
+    const bool direct = order.source_quotation_id.empty() &&
+                        order.source_revision_id.empty() && order.source_revision == 0;
+    const bool converted = !order.source_quotation_id.empty() &&
+                           !order.source_revision_id.empty() && order.source_revision > 0;
+    if (!direct && !converted) {
+        throw RuleViolation(
+            "A quotation source must identify one quotation and one exact revision.");
+    }
 
     switch (order.state) {
         case OrderState::Open:
@@ -167,6 +175,9 @@ engine::Row to_row(const Order& order) {
     engine::Row row;
     row.set("id", engine::Value::text(order.id));
     row.set("party_id", engine::Value::text(order.party_id));
+    row.set("source_quotation_id", engine::Value::text(order.source_quotation_id));
+    row.set("source_revision_id", engine::Value::text(order.source_revision_id));
+    row.set("source_revision", engine::Value::integer(order.source_revision));
     row.set("state", engine::Value::integer(static_cast<std::int64_t>(order.state)));
     row.set("promised_at", engine::Value::integer(order.promised_at));
     row.set("note", engine::Value::text(order.note));
@@ -182,6 +193,9 @@ Order order_from_row(const engine::Row& row) {
     Order order;
     order.id = row.get("id").text_or({});
     order.party_id = row.get("party_id").text_or({});
+    order.source_quotation_id = row.get("source_quotation_id").text_or({});
+    order.source_revision_id = row.get("source_revision_id").text_or({});
+    order.source_revision = row.get("source_revision").integer_or(0);
     // Fail closed. Only the exact value for Open is editable; an unknown value
     // from a newer build or damaged row is treated as cancelled so this older
     // build cannot rewrite evidence it does not understand.

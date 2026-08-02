@@ -397,6 +397,39 @@ int main() {
               "a type-legal overflowing product is refused");
     }
 
+    section("quotation provenance is complete, optional, and frozen in the order row");
+    {
+        orders::Order direct = make_order();
+        check(!refused([&] { orders::validate(direct); }),
+              "a direct order deliberately has no quotation source");
+
+        orders::Order converted = make_order();
+        converted.source_quotation_id = "47000000000000000000000000000001";
+        converted.source_revision_id = "47000000000000000000000000000002";
+        converted.source_revision = 7;
+        check(!refused([&] { orders::validate(converted); }),
+              "one exact quotation revision is valid provenance");
+
+        const orders::Order restored = orders::order_from_row(orders::to_row(converted));
+        check(restored.source_quotation_id == converted.source_quotation_id,
+              "the quotation identity survives storage");
+        check(restored.source_revision_id == converted.source_revision_id,
+              "the revision identity survives storage");
+        check(restored.source_revision == 7,
+              "the accepted revision number survives storage");
+
+        orders::Order partial = make_order();
+        partial.source_quotation_id = converted.source_quotation_id;
+        check(refused([&] { orders::validate(partial); }),
+              "a quotation without a revision is refused");
+        partial.source_revision_id = converted.source_revision_id;
+        check(refused([&] { orders::validate(partial); }),
+              "source identities without a positive revision number are refused");
+        partial.source_revision = -1;
+        check(refused([&] { orders::validate(partial); }),
+              "a negative source revision is refused");
+    }
+
     section("row mappings preserve snapshots and tame unknown enum values");
     {
         orders::Order order = make_order();
