@@ -65,6 +65,8 @@ SYNC_SRC := src/engine/sync/outbox.cpp \
 
 MODULES_SRC := src/modules/registry.cpp $(AUDIT_SRC)
 
+QUOTE_TO_ORDER_SRC := src/workflows/quote_to_order.cpp
+
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
                src/modules/catalog/data/tables.cpp \
