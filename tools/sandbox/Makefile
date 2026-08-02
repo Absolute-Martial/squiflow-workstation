@@ -67,6 +67,7 @@ MODULES_SRC := src/modules/registry.cpp $(AUDIT_SRC)
 
 QUOTE_TO_ORDER_SRC := src/workflows/quote_to_order.cpp
 ORDER_TO_JOBS_SRC := src/workflows/order_to_jobs.cpp
+ISSUE_INVOICE_SRC := src/workflows/issue_invoice.cpp
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
@@ -90,6 +91,7 @@ RECEIVABLES_SRC := src/modules/receivables/module.cpp \
                    src/modules/receivables/domain/invoice.cpp \
                    src/modules/receivables/domain/payment.cpp \
                    src/modules/receivables/domain/credit_account.cpp \
+                   src/modules/receivables/domain/document_number_block.cpp \
                    src/modules/receivables/domain/statement.cpp \
                    src/modules/receivables/data/tables.cpp \
                    src/modules/receivables/data/repository.cpp \
@@ -200,6 +202,13 @@ $(BUILD)/order_to_jobs_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC
                              $(PAYLOAD_SRC) $(MODULES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
                              $(JOBS_SRC) $(ORDER_TO_JOBS_SRC) \
                              tests/workflows/order_to_jobs_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/issue_invoice_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                             $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
+                             $(RECEIVABLES_SRC) $(ISSUE_INVOICE_SRC) \
+                             tests/workflows/issue_invoice_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -318,6 +327,7 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
        $(BUILD)/order_to_jobs_test $(BUILD)/administration_test $(BUILD)/parties_test \
+       $(BUILD)/issue_invoice_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
        $(BUILD)/quotations_test \
@@ -360,6 +370,9 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
 >@echo
 >@echo '== order to jobs workflow =='
 >./$(BUILD)/order_to_jobs_test
+>@echo
+>@echo '== issue invoice workflow =='
+>./$(BUILD)/issue_invoice_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test
