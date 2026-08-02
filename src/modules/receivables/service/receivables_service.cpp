@@ -130,10 +130,16 @@ std::vector<StatementEntry> all_statement_events(const engine::Store& store,
     }
     for (const Payment& payment : data::payments_for_party(store, party_id)) {
         validate(payment);
+        std::string payment_reference = payment.external_reference;
+        if (blank(payment_reference) && payment.receipt_number != 0) {
+            payment_reference = payment.receipt_series + "-" +
+                                std::to_string(payment.receipt_number);
+        }
+        if (blank(payment_reference)) {
+            payment_reference = payment.method + " payment";
+        }
         result.push_back(event(statement_id, StatementEntryKind::PaymentReceived,
-                               payment.id, payment.paid_at,
-                               payment.receipt_series + "-" +
-                                   std::to_string(payment.receipt_number),
+                               payment.id, payment.paid_at, payment_reference,
                                "Payment received", payment.amount_minor));
         for (const PaymentAllocation& allocation :
              data::allocations_for_payment(store, payment.id)) {

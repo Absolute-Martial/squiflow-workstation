@@ -73,10 +73,13 @@ void validate(const Payment& payment) {
     if (blank(payment.method)) {
         throw RuleViolation("A payment must record its method.");
     }
-    if (blank(payment.receipt_series) || payment.receipt_number == 0 ||
+    const bool has_receipt_series = !blank(payment.receipt_series);
+    const bool has_receipt_number = payment.receipt_number != 0;
+    if (has_receipt_series != has_receipt_number ||
         payment.receipt_number > static_cast<std::uint64_t>(
                                      std::numeric_limits<std::int64_t>::max())) {
-        throw RuleViolation("A payment must carry a usable final receipt number.");
+        throw RuleViolation(
+            "Optional receipt evidence must contain both a series and a usable number.");
     }
     if (blank(payment.recorded_by)) {
         throw RuleViolation("A payment must record who entered it.");

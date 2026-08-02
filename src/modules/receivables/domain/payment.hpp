@@ -32,9 +32,11 @@ struct Payment {
     std::string external_reference{};
     std::string note{};
 
-    // Receipt numbering is final evidence, allocated by the take-payment
-    // workflow. Reserved offline blocks may leave gaps; a number is never
-    // reused. These fields make every receipt reproducible later.
+    // Optional visible receipt evidence. Most shops identify a payment by its
+    // customer, date, amount and method, so neither field is required. When a
+    // shop enters a receipt reference, both fields form one coherent pair.
+    // external_reference remains the free-form place for a cheque number,
+    // bank transaction id, handwritten receipt reference, or similar evidence.
     std::string receipt_series{};
     std::uint64_t receipt_number{0};
 
