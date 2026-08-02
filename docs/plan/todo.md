@@ -10,7 +10,7 @@ including mine.
 **Legend:** `[x]` done and verified · `[~]` written but not verifiable on this
 toolchain · `[ ]` not started
 
-**Count: 37 of 69 sub-phases done.**
+**Count: 38 of 69 sub-phases done.**
 
 | Phase | Sub-phases | Done |
 |---|---|---|
@@ -18,7 +18,7 @@ toolchain · `[ ]` not started
 | 2 - The engine's domain half | 7 | 7 |
 | 3 - The engine's storage half | 7 | 6 |
 | 4 - The twelve modules | 13 | 13 |
-| 5 - Workflows | 8 | 5 |
+| 5 - Workflows | 8 | 6 |
 | 6 - Platform and the application shell | 8 | 0 |
 | 7 - The interface | 6 | 0 |
 | 8 - The server | 8 | 0 |

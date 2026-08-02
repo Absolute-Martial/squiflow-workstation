@@ -47,14 +47,21 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 5 | 5.3 Order to jobs | QA approved | one line to one draft job; exact source-line provenance; 54 workflow checks, 0 failed |
 | 5 | 5.4 Issue invoice | QA approved | migration 23; persisted per-device number blocks; immutable draft snapshot; 41 workflow checks, 0 failed |
 | 5 | 5.5 Cancel and reissue | QA approved | original retained and linked; replacement draft; allocations released; 44 workflow checks, 0 failed |
-| 5 | 5.6-5.8 Business workflows | Not started | Phase 5 is 5/8 complete |
+| 5 | 5.6 Take payment and manual allocation | QA approved | tracking and receipt optional; unnumbered cash/bank/cheque accepted; 42 workflow checks, 0 failed |
+| 5 | 5.7-5.8 Business workflows | Not started | Phase 5 is 6/8 complete |
 | 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **244 files integrity-checked, 106 headers proven self-contained,
-3,510 assertions across 26 strict test programs, 0 failed.** The independent CMake
-lane passes 26/26 tests and verifies the complete module graph: 12 modules,
+Totals: **247 files integrity-checked, 107 headers proven self-contained,
+3,552 assertions across 27 strict test programs, 0 failed.** The independent CMake
+lane passes 27/27 tests and verifies the complete module graph: 12 modules,
 acyclic, core closed. The schema is at migration 23. Overall progress is
-**37/69**; Phase 5 is **5/8**.
+**38/69**; Phase 5 is **6/8**.
+
+## 5.6 take payment and manual allocation
+
+The low-overhead payment workflow now records customer money using only customer, positive amount, paid time, and a simple method. Cash, bank, cheque, and wallet payments need no tracking or receipt number. Optional free-text external evidence and an optional coherent manual receipt pair are preserved when supplied; the system never invents a payment tracking number.
+
+Every payment begins entirely unallocated. Allocation remains a separate authorized manual action, so valid incoming money is not blocked when an invoice has not been selected. Statements and printable payment records support unnumbered money without rendering a fake `-0` reference. The permanent suite contributes 42 checks; the full strict lane passes 3,552 assertions across 27 programs and CTest passes 27/27. Formal evidence is in `docs/qa/phase-5.6-take-payment-gate.md`.
 
 ## 5.5 cancel and reissue
 
