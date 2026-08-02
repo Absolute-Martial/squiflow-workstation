@@ -8,7 +8,7 @@
 namespace squiflow::engine {
 namespace {
 
-const std::string kTable = "audit_entry";
+const std::string kTable = "workflow_audit_entry";
 
 bool blank(const std::string& text) noexcept {
     for (const char c : text) {
