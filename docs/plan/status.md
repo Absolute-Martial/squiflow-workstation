@@ -46,14 +46,21 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 5 | 5.2 Quotation to order | Done | exact accepted revision snapshot; immutable provenance; 21 workflow checks, 0 failed |
 | 5 | 5.3 Order to jobs | QA approved | one line to one draft job; exact source-line provenance; 54 workflow checks, 0 failed |
 | 5 | 5.4 Issue invoice | QA approved | migration 23; persisted per-device number blocks; immutable draft snapshot; 41 workflow checks, 0 failed |
-| 5 | 5.5-5.8 Business workflows | Not started | Phase 5 is 4/8 complete |
+| 5 | 5.5 Cancel and reissue | QA approved | original retained and linked; replacement draft; allocations released; 44 workflow checks, 0 failed |
+| 5 | 5.6-5.8 Business workflows | Not started | Phase 5 is 5/8 complete |
 | 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **241 files integrity-checked, 105 headers proven self-contained,
-3,466 assertions across 25 strict test programs, 0 failed.** The independent CMake
-lane passes 25/25 tests and verifies the complete module graph: 12 modules,
+Totals: **244 files integrity-checked, 106 headers proven self-contained,
+3,510 assertions across 26 strict test programs, 0 failed.** The independent CMake
+lane passes 26/26 tests and verifies the complete module graph: 12 modules,
 acyclic, core closed. The schema is at migration 23. Overall progress is
-**36/69**; Phase 5 is **4/8**.
+**37/69**; Phase 5 is **5/8**.
+
+## 5.5 cancel and reissue
+
+The only post-issue correction now cancels permanent evidence, retains its original number, releases active invoice allocations to visible unallocated money, and creates an editable unnumbered replacement draft from the exact frozen lines and rates. Nothing reprices, refunds, creates a credit note, or automatically reallocates money.
+
+The replacement draft points to its source. When Phase 5.4 later issues it with a new reserved number, the source atomically becomes `Replaced` and records the permanent reverse link. Discarded replacement attempts remain historical evidence and allow another attempt without rewriting cancellation facts. The permanent suite contributes 44 checks; the full strict lane passes 3,510 assertions across 26 programs and CTest passes 26/26. Formal evidence is in `docs/qa/phase-5.5-cancel-and-reissue-gate.md`.
 
 ## 5.4 issue invoice
 
