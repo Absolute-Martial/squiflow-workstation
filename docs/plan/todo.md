@@ -10,7 +10,7 @@ including mine.
 **Legend:** `[x]` done and verified · `[~]` written but not verifiable on this
 toolchain · `[ ]` not started
 
-**Count: 32 of 69 sub-phases done.**
+**Count: 34 of 69 sub-phases done.**
 
 | Phase | Sub-phases | Done |
 |---|---|---|
@@ -18,7 +18,7 @@ toolchain · `[ ]` not started
 | 2 - The engine's domain half | 7 | 7 |
 | 3 - The engine's storage half | 7 | 6 |
 | 4 - The twelve modules | 13 | 13 |
-| 5 - Workflows | 8 | 0 |
+| 5 - Workflows | 8 | 2 |
 | 6 - Platform and the application shell | 8 | 0 |
 | 7 - The interface | 6 | 0 |
 | 8 - The server | 8 | 0 |
@@ -90,7 +90,7 @@ than being counted here.
   - [x] 5.1A protocol workflow classification and engine audit persistence; direct probes, full strict gate, and independent CMake build passed
   - [x] 5.1B workflow definition and registry integration; one execution door, canonical requirements, replay, one transaction, one audit row, and one outbox row
   - [x] 5.1C migration 22, permanent harsh tests, rollback and concurrency coverage, and final framework gate
-- [ ] 5.2 Quotation to order, any step skippable
+- [x] 5.2 Quotation to order: exact accepted revision snapshot, immutable provenance, one order per revision, transactional audit/outbox, replay and rollback; 21 workflow checks, 0 failed
 - [ ] 5.3 Order to jobs, and a job with no order
 - [ ] 5.4 Issue an invoice: snapshot lines and rates, burn a number
 - [ ] 5.5 Cancel and reissue: original retained and linked, values carried forward

@@ -43,13 +43,20 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 4 | 4.12 companion | Done | 91 checks, 0 failed; migration 20; all four operations; two tables |
 | 4 | 4.13 files | Done | 81 checks, 0 failed; migration 21; all four operations; four tables |
 | 5 | 5.1 Workflow framework | Done | migration 22; 54 checks; one execution door, transaction, audit row, outbox row and refusal path |
-| 5 | 5.2-5.8 Business workflows | Not started | Phase 5 is 1/8 complete |
+| 5 | 5.2 Quotation to order | Done | exact accepted revision snapshot; immutable provenance; 21 workflow checks, 0 failed |
+| 5 | 5.3-5.8 Business workflows | Not started | Phase 5 is 2/8 complete |
 | 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **230 files integrity-checked, 101 headers proven self-contained,
-3,342 assertions across 22 strict test programs, 0 failed.** The independent CMake
+Totals: **233 files integrity-checked, 102 headers proven self-contained,
+3,363 assertions across 23 strict test programs, 0 failed.** The independent CMake
 lane verifies the complete module graph: 12 modules, acyclic, core closed. The
-schema is at migration 22. Overall progress is **33/69**; Phase 5 is **1/8**.
+schema is at migration 22. Overall progress is **34/69**; Phase 5 is **2/8**.
+
+## 5.2 quotation to order
+
+An order now records the source quotation, exact accepted revision identity, and revision number. The conversion runs through the shared workflow registry in one serialized writer transaction. It validates that the requested revision is the issued revision actually accepted, revalidates every frozen line and total, rejects target and source-revision duplicates, copies the snapshot without calling current pricing, and emits the order audit subject plus one outbox row. Rate origins map conservatively: catalog and party rates retain normal source semantics; agreement, manual, and off-catalog evidence is retained as an explicit override reason.
+
+The permanent workflow program contributes 21 strict checks covering exact snapshot/provenance copying, escaped UTF-8, current-price independence, totals, audit/outbox creation, same-key replay, different-key business uniqueness, wrong state/revision refusal, line identity collision, and atomic rollback. Formal evidence is in `docs/qa/phase-5.2-quote-to-order-gate.md`.
 
 ## 5.1 workflow framework
 
