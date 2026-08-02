@@ -70,6 +70,10 @@ struct Job {
     // Optional one-way upstream links. These are recorded strings so the job
     // module does not depend on orders or quotations.
     std::string source_order_id{};
+    // Populated only when an order workflow derives this job from one exact
+    // order line. Direct jobs leave it empty. This is provenance evidence and
+    // the cross-idempotency duplicate key; it is not a live module link.
+    std::string source_order_line_id{};
     std::string source_quotation_id{};
 
     JobState state{JobState::Draft};

@@ -239,6 +239,7 @@ engine::Row to_row(const Job& job) {
     row.set("id", engine::Value::text(job.id));
     row.set("party_id", engine::Value::text(job.party_id));
     row.set("source_order_id", engine::Value::text(job.source_order_id));
+    row.set("source_order_line_id", engine::Value::text(job.source_order_line_id));
     row.set("source_quotation_id", engine::Value::text(job.source_quotation_id));
     row.set("state", engine::Value::integer(static_cast<std::int64_t>(job.state)));
     row.set("ticket_series", engine::Value::text(job.ticket_series));
@@ -285,6 +286,7 @@ Job job_from_row(const engine::Row& row) {
     job.id = row.get("id").text_or({});
     job.party_id = row.get("party_id").text_or({});
     job.source_order_id = row.get("source_order_id").text_or({});
+    job.source_order_line_id = row.get("source_order_line_id").text_or({});
     job.source_quotation_id = row.get("source_quotation_id").text_or({});
     const std::int64_t state = row.get("state").integer_or(3);
     job.state = state == 0 ? JobState::Draft

@@ -17,6 +17,20 @@ std::optional<Job> find_job(const Reader& reader, const std::string& id) {
 }
 
 template <typename Reader>
+std::optional<Job> job_for_order_line(const Reader& reader,
+                                      const std::string& order_id,
+                                      const std::string& order_line_id) {
+    engine::Query query{tables::kJob};
+    query.where_equals("source_order_id", engine::Value::text(order_id));
+    query.where_equals("source_order_line_id", engine::Value::text(order_line_id));
+    query.order_by("id");
+    for (const engine::Row& row : reader.select(query)) {
+        return job_from_row(row);
+    }
+    return std::nullopt;
+}
+
+template <typename Reader>
 std::vector<Job> jobs_for_party(const Reader& reader, const std::string& party_id) {
     engine::Query query{tables::kJob};
     query.where_equals("party_id", engine::Value::text(party_id));
