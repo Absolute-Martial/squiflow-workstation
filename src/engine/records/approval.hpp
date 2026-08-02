@@ -35,9 +35,9 @@ struct Approval {
     std::string note;
     std::optional<Signature> signature;
 
-    // Sent for approval by email, and the reply is expected on paper or in
-    // person. Nothing reads a mailbox and marks things approved by itself: a
-    // person confirms, always.
+    // A remote backend may deliver the request by email. Transport acceptance
+    // never means approval: a valid signed or explicitly recorded customer
+    // decision is still required.
     bool sent_for_approval = false;
     Timestamp sent_at;
 };

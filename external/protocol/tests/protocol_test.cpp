@@ -640,7 +640,7 @@ void test_closure_against_synthetic_graphs() {
 void test_rights() {
     std::cout << "rights\n";
 
-    check(kRightCount == 44U, "there are forty-four rights");
+    check(kRightCount == 45U, "there are forty-five rights");
 
     std::vector<std::string_view> names;
     for (std::size_t i = 0; i < kRightCount; ++i) {
@@ -665,7 +665,7 @@ void test_rights() {
 void test_operations() {
     std::cout << "operation table\n";
 
-    check(kOperationCount == 67U, "there are sixty-seven operations");
+    check(kOperationCount == 69U, "there are sixty-nine operations");
 
     // The table and the enum must stay in the same order, or every lookup by
     // identifier silently returns the wrong operation.

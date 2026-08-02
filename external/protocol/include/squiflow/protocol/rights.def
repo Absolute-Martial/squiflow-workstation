@@ -36,6 +36,7 @@ SQF_RIGHT(right_credit_account_manage, receivables)
 SQF_RIGHT(right_credit_hold_override,  receivables)
 SQF_RIGHT(right_statement_send,        receivables)
 SQF_RIGHT(right_document_print,        receivables)
+SQF_RIGHT(right_document_send,         receivables)
 
 SQF_RIGHT(right_job_read,              jobs)
 SQF_RIGHT(right_job_write,             jobs)

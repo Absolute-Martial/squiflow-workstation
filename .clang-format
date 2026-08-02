@@ -1,0 +1,30 @@
+# SquiFlow formatting rules.
+#
+# The whole repository is already written in this shape by hand; this file
+# exists so that a machine with clang-format installed reproduces it instead of
+# rewriting every file the first time someone runs the tool. It is deliberately
+# close to the LLVM defaults, because an unusual style is a maintenance cost.
+---
+Language: Cpp
+BasedOnStyle: Google
+Standard: c++20
+ColumnLimit: 80
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+BreakBeforeBraces: Attach
+FixNamespaceComments: true
+NamespaceIndentation: None
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+SeparateDefinitionBlocks: Always
+InsertNewlineAtEOF: true
+KeepEmptyLinesAtTheStartOfBlocks: false

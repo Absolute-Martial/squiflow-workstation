@@ -5,7 +5,7 @@ proves it. It does not get edited to match what the plan hoped would happen;
 it gets edited to match what running `make -f tools/sandbox/Makefile check`
 actually printed.
 
-Last verified: 2026-08-02, GCC 11.5.0, `-std=c++23`.
+Last verified: 2026-08-03, GCC 11.5.0, `-std=c++23`.
 
 ## Verified state
 
@@ -50,13 +50,15 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 5 | 5.6 Take payment and manual allocation | QA approved | tracking and receipt optional; unnumbered cash/bank/cheque accepted; 42 workflow checks, 0 failed |
 | 5 | 5.7 Agreement quantity caps | QA approved | apply on draft; consume at issue; release at cancellation; migration 24; 31 workflow checks |
 | 5 | 5.8 Document approval/email preparation | Not started | Phase 5 is 7/8 complete |
-| 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
+| 6 | 6.1 Paths - machine-wide data, per-account cache | QA approved | 129 checks, 0 failed; every directory created and proven writable; no schema change |
+| 6 | 6.2-6.8 Logging, crash, lock, secrets, network, services, startup | Not started | Interfaces planned, fakes required before a second caller |
+| 7-9 | UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **252 files integrity-checked, 109 headers proven self-contained,
-3,585 assertions across 28 strict test programs, 0 failed.** The independent CMake
-lane passes 28/28 tests and verifies the complete module graph: 12 modules,
-acyclic, core closed. The schema is at migration 24. Overall progress is
-**39/69**; Phase 5 is **7/8**.
+Totals: **267 files integrity-checked, 116 headers proven self-contained,
+3,785 assertions across 30 strict test programs, 0 failed.** The independent CMake
+lane passes 30/30 tests and verifies the complete module graph: 12 modules,
+acyclic, core closed. The schema is at migration 25. Overall progress is
+**41/69**; Phase 5 is **8/8**; Phase 6 is **1/8**.
 
 ## 5.7 agreement quantity caps
 
@@ -717,3 +719,26 @@ integrity: all files pass
 == pricing ==      146 checks, 0 failed
 == orders ==       181 checks, 0 failed
 ```
+
+## Phase 6.1 - where the shop's files live
+
+The platform boundary exists. Records, logs, backups, crash dumps, and the
+secrets store resolve under the machine-wide program-data location; only the
+cache is per account, because a cache is disposable and a record is not. Two
+Windows accounts on the same machine resolve to the same database and to
+different caches, which is the whole point of the decision recorded in
+`docs/adr/0004-machine-wide-data-root.md`.
+
+Every directory is created if missing and then proven writable by an actual
+write. A file sitting where a directory belongs, a parent that will not answer,
+a creation that fails, and a folder that refuses writes each stop startup with
+a named fault and the offending path, at startup rather than at the first
+invoice. An unusable per-account cache is a warning and a fallback, never a
+refusal.
+
+The filesystem sits behind a three-method probe with a real implementation and
+an in-memory fake, so the failures that matter are unit tests rather than
+administrative setup. Discovery of the two roots is the only Windows-specific
+part and lives in `path_environment_qt.cpp`, which this machine cannot compile;
+the gate says so plainly. 129 checks, 0 failed. Formal evidence is in
+`docs/qa/phase-6.1-paths-gate.md`.

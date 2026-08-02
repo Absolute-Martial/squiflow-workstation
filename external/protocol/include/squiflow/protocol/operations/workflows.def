@@ -11,3 +11,5 @@ SQF_OPERATION(apply_agreement,     agreements,  right_agreement_read,  Synchroni
 SQF_OPERATION(take_payment,        receivables, right_payment_record,  Synchronizable, OfflineAllowed)
 SQF_OPERATION(counter_sale,        orders,      right_order_write,     Synchronizable, OfflineAllowed)
 SQF_OPERATION(record_purchase,     sourcing,    right_purchase_record, Synchronizable, OfflineAllowed)
+SQF_OPERATION(prepare_document_delivery, receivables, right_document_send, Synchronizable, OfflineAllowed)
+SQF_OPERATION(request_document_delivery, receivables, right_document_send, Synchronizable, OnlineOnly)

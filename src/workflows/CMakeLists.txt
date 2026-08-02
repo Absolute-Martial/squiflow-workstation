@@ -4,7 +4,8 @@ add_library(squiflow_workflows STATIC
     issue_invoice.cpp
     cancel_and_reissue.cpp
     take_payment.cpp
-    apply_agreement.cpp)
+    apply_agreement.cpp
+    document_delivery.cpp)
 add_library(squiflow::workflows ALIAS squiflow_workflows)
 target_include_directories(squiflow_workflows PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(squiflow_workflows
@@ -40,6 +41,11 @@ if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/apply_agree
     add_executable(apply_agreement_test "${SQUIFLOW_ROOT}/tests/workflows/apply_agreement_test.cpp")
     target_link_libraries(apply_agreement_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME workflows.apply_agreement COMMAND apply_agreement_test)
+endif()
+if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/document_delivery_test.cpp")
+    add_executable(document_delivery_test "${SQUIFLOW_ROOT}/tests/workflows/document_delivery_test.cpp")
+    target_link_libraries(document_delivery_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME workflows.document_delivery COMMAND document_delivery_test)
 endif()
 if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/quote_to_order_test.cpp")
     add_executable(quote_to_order_test "${SQUIFLOW_ROOT}/tests/workflows/quote_to_order_test.cpp")

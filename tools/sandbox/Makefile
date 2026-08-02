@@ -37,6 +37,10 @@ PROTOCOL_SRC := external/protocol/src/module_graph.cpp \
                 external/protocol/src/operation_table.cpp \
                 external/protocol/src/workflow_table.cpp
 
+PLATFORM_SRC := src/platform/paths.cpp \
+                src/platform/local_directory_probe.cpp \
+                src/platform/path_environment_posix.cpp
+
 ENGINE_SRC := src/engine/records/identity.cpp \
               src/engine/records/quantity.cpp \
               src/engine/records/money.cpp \
@@ -71,6 +75,7 @@ ISSUE_INVOICE_SRC := src/workflows/issue_invoice.cpp
 CANCEL_REISSUE_SRC := src/workflows/cancel_and_reissue.cpp
 TAKE_PAYMENT_SRC := src/workflows/take_payment.cpp
 APPLY_AGREEMENT_SRC := src/workflows/apply_agreement.cpp
+DOCUMENT_DELIVERY_SRC := src/workflows/document_delivery.cpp
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
@@ -95,6 +100,7 @@ RECEIVABLES_SRC := src/modules/receivables/module.cpp \
                    src/modules/receivables/domain/payment.cpp \
                    src/modules/receivables/domain/credit_account.cpp \
                    src/modules/receivables/domain/document_number_block.cpp \
+                   src/modules/receivables/domain/document_delivery.cpp \
                    src/modules/receivables/domain/statement.cpp \
                    src/modules/receivables/data/tables.cpp \
                    src/modules/receivables/data/repository.cpp \
@@ -151,6 +157,10 @@ ADMIN_SRC := src/modules/administration/module.cpp \
              src/modules/administration/service/administration_service.cpp
 
 HEADERS := $(shell find external/protocol/include src -name '*.hpp' 2>/dev/null | sort)
+
+$(BUILD)/platform_paths_test: $(PLATFORM_SRC) tests/platform/paths_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(BUILD)/protocol_test: $(PROTOCOL_SRC) external/protocol/tests/protocol_test.cpp
 >@mkdir -p $(BUILD)
@@ -235,6 +245,13 @@ $(BUILD)/apply_agreement_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SY
                               $(RECEIVABLES_SRC) $(AGREEMENTS_SRC) $(ISSUE_INVOICE_SRC) \
                               $(CANCEL_REISSUE_SRC) $(APPLY_AGREEMENT_SRC) \
                               tests/workflows/apply_agreement_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/document_delivery_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                 $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) \
+                                 $(RECEIVABLES_SRC) $(QUOTATIONS_SRC) $(AGREEMENTS_SRC) \
+                                 $(DOCUMENT_DELIVERY_SRC) tests/workflows/document_delivery_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -348,7 +365,7 @@ integrity:
 >@$(PYTHON) tools/sandbox/integrity.py
 >@echo
 
-tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -357,6 +374,7 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/cancel_and_reissue_test \
        $(BUILD)/take_payment_test \
        $(BUILD)/apply_agreement_test \
+       $(BUILD)/document_delivery_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
        $(BUILD)/quotations_test \
@@ -364,6 +382,9 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/sourcing_test \
        $(BUILD)/companion_test \
        $(BUILD)/files_test
+>@echo '== platform paths =='
+>./$(BUILD)/platform_paths_test
+>@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test
 >@echo
@@ -411,6 +432,9 @@ tests: $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
 >@echo
 >@echo '== apply agreement workflow =='
 >./$(BUILD)/apply_agreement_test
+>@echo
+>@echo '== document delivery workflow =='
+>./$(BUILD)/document_delivery_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test

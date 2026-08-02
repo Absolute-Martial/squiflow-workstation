@@ -11,11 +11,20 @@
 #include "modules/receivables/data/tables.hpp"
 #include "modules/receivables/domain/credit_account.hpp"
 #include "modules/receivables/domain/document_number_block.hpp"
+#include "modules/receivables/domain/document_delivery.hpp"
 #include "modules/receivables/domain/invoice.hpp"
 #include "modules/receivables/domain/payment.hpp"
 #include "modules/receivables/domain/statement.hpp"
 
 namespace squiflow::modules::receivables::data {
+
+template <typename Reader>
+std::optional<DocumentDelivery> find_document_delivery(
+    const Reader& reader, const std::string& id) {
+    const auto row = reader.find(tables::kDocumentDelivery, id);
+    return row ? std::optional<DocumentDelivery>{document_delivery_from_row(*row)}
+               : std::nullopt;
+}
 
 template <typename Reader>
 std::optional<Invoice> find_invoice(const Reader& reader, const std::string& id) {
@@ -269,5 +278,7 @@ void save_statement(engine::Transaction& transaction, const Statement& statement
 void save_statement_entry(engine::Transaction& transaction, const StatementEntry& entry);
 void save_statement_delivery(engine::Transaction& transaction,
                              const StatementDelivery& delivery);
+void save_document_delivery(engine::Transaction& transaction,
+                            const DocumentDelivery& delivery);
 
 }  // namespace squiflow::modules::receivables::data

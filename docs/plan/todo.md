@@ -101,7 +101,9 @@ than being counted here.
 
 ## Phase 6 - Platform and the application shell
 
-- [ ] 6.1 Paths - `ProgramData` for data, per-user for cache
+- [x] 6.1 Paths - machine-wide program data for records, per-account for cache;
+      validated, created and proven writable at startup; probe seam with a fake;
+      129 checks, 0 failed
 - [ ] 6.2 Logging with rotation
 - [ ] 6.3 Crash handler and minidumps *(Windows, unverifiable here)*
 - [ ] 6.4 Single-instance lock, named *(Windows, unverifiable here)*

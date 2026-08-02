@@ -24,7 +24,13 @@ std::vector<engine::Migration> migrations() {
     number_blocks.schema = [](engine::Store& store) {
         store.define_table(kNumberBlock, "id");
     };
-    return {first, number_blocks};
+    engine::Migration document_delivery;
+    document_delivery.number = kDocumentDeliveryMigration;
+    document_delivery.name = "prepared remote document deliveries";
+    document_delivery.schema = [](engine::Store& store) {
+        store.define_table(kDocumentDelivery, "id");
+    };
+    return {first, number_blocks, document_delivery};
 }
 
 }  // namespace squiflow::modules::receivables::tables

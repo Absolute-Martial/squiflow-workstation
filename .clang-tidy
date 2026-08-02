@@ -1,0 +1,60 @@
+# SquiFlow static analysis rules.
+#
+# This machine has no clang-tidy, so this file is configuration for the Windows
+# development lane and for CI, and the quality gates say plainly that it has
+# not been run here. The selection targets the mistakes that actually hurt a
+# long-lived desktop application: ownership, lifetime, narrowing, and silent
+# failure. Style-only checks that fight the committed formatting are off.
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readability-magic-numbers
+
+WarningsAsErrors: >
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  performance-*
+
+HeaderFilterRegex: '^(src|tests|external/protocol/include)/.*\\.hpp$'
+FormatStyle: file
+
+CheckOptions:
+  - key: readability-function-size.LineThreshold
+    value: '80'
+  - key: readability-function-size.StatementThreshold
+    value: '120'
+  - key: readability-function-size.NestingThreshold
+    value: '5'
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: 'k'

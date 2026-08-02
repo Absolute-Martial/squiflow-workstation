@@ -12,7 +12,7 @@ constexpr OperationId kWorkflowOperations[] = {
 #undef SQF_OPERATION
 };
 
-static_assert(std::size(kWorkflowOperations) == 8,
+static_assert(std::size(kWorkflowOperations) == 10,
               "the workflow protocol surface changed; review the framework contract");
 
 }  // namespace

@@ -27,6 +27,8 @@ std::vector<protocol::ModuleId> required_modules(protocol::OperationId operation
     case O::take_payment:return {M::receivables,M::parties};
     case O::counter_sale:return {M::orders,M::pricing,M::receivables};
     case O::record_purchase:return {M::sourcing};
+    case O::prepare_document_delivery:return {M::parties,M::receivables,M::quotations,M::agreements};
+    case O::request_document_delivery:return {M::parties,M::receivables,M::quotations,M::agreements};
     default:return {};
     }
 }

@@ -21,3 +21,14 @@ squiflow_add_engine_test(engine_writer_test engine/engine_writer_test.cpp)
 squiflow_add_engine_test(engine_outbox_test engine/engine_outbox_test.cpp)
 squiflow_add_engine_test(engine_sync_test engine/engine_sync_test.cpp)
 squiflow_add_engine_test(engine_payload_test engine/engine_payload_test.cpp)
+
+function(squiflow_add_platform_test name source)
+    add_executable(${name} "${source}")
+    target_link_libraries(${name}
+        PRIVATE squiflow::platform squiflow::testing
+                squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    set_target_properties(${name} PROPERTIES FOLDER "tests/platform")
+    add_test(NAME "platform.${name}" COMMAND ${name})
+endfunction()
+
+squiflow_add_platform_test(platform_paths_test platform/paths_test.cpp)

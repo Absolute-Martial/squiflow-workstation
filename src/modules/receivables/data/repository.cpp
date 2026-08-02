@@ -84,4 +84,10 @@ void save_statement_delivery(engine::Transaction& transaction,
     upsert(transaction, tables::kStatementDelivery, delivery.id, to_row(delivery));
 }
 
+void save_document_delivery(engine::Transaction& transaction,
+                            const DocumentDelivery& delivery) {
+    validate(delivery);
+    upsert(transaction, tables::kDocumentDelivery, delivery.id, to_row(delivery));
+}
+
 }  // namespace squiflow::modules::receivables::data
