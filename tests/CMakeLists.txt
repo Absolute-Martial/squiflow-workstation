@@ -32,3 +32,4 @@ function(squiflow_add_platform_test name source)
 endfunction()
 
 squiflow_add_platform_test(platform_paths_test platform/paths_test.cpp)
+squiflow_add_platform_test(platform_logging_test platform/logging_test.cpp)

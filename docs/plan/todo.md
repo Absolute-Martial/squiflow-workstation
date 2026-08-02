@@ -104,7 +104,9 @@ than being counted here.
 - [x] 6.1 Paths - machine-wide program data for records, per-account for cache;
       validated, created and proven writable at startup; probe seam with a fake;
       129 checks, 0 failed
-- [ ] 6.2 Logging with rotation
+- [x] 6.2 Logging with levels, rotation and a hard total size cap; one line per
+      record, credentials redacted, nothing thrown when the disk misbehaves;
+      716 checks, 0 failed
 - [ ] 6.3 Crash handler and minidumps *(Windows, unverifiable here)*
 - [ ] 6.4 Single-instance lock, named *(Windows, unverifiable here)*
 - [ ] 6.5 Secrets via DPAPI, never plaintext *(Windows, unverifiable here)*

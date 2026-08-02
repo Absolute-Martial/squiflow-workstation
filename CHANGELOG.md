@@ -11,6 +11,14 @@ gate that proved it.
 
 ### Added
 
+- **Phase 6.2 - logging.** Structured records with five levels, written one
+  line at a time to a rotating file whose whole family obeys a hard total byte
+  budget, so the log can never fill the disk the shop's database lives on.
+  Control characters are escaped, so a message cannot forge a second entry, and
+  fields that look like credentials are recorded with their value replaced. A
+  refused write, a full volume, a locked file and an unreadable size are
+  counted and survived rather than thrown. Evidence:
+  `docs/qa/phase-6.2-logging-gate.md`.
 - **Phase 6.1 - application paths.** Records, logs, backups, crash dumps and
   the secrets store now resolve to one machine-wide location shared by every
   Windows account; only the cache is per account. Names and roots are validated
@@ -46,8 +54,8 @@ gate that proved it.
 ### Changed
 
 - The verification lane now builds a dedicated `squiflow::platform` library and
-  registers `platform.platform_paths_test`, taking the independent CMake run to
-  30 of 30 tests.
+  registers `platform.platform_paths_test` and `platform.platform_logging_test`,
+  taking the independent CMake run to 31 of 31 tests.
 
 ### Security
 

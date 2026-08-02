@@ -41,6 +41,15 @@ PLATFORM_SRC := src/platform/paths.cpp \
                 src/platform/local_directory_probe.cpp \
                 src/platform/path_environment_posix.cpp
 
+# The log lane is a separate list: nothing above the platform boundary should
+# have to link path resolution in order to write a log line.
+LOGGING_SRC := src/platform/log_record.cpp \
+               src/platform/log_clock.cpp \
+               src/platform/log_formatter.cpp \
+               src/platform/local_log_storage.cpp \
+               src/platform/rotating_log_file.cpp \
+               src/platform/logger.cpp
+
 ENGINE_SRC := src/engine/records/identity.cpp \
               src/engine/records/quantity.cpp \
               src/engine/records/money.cpp \
@@ -159,6 +168,10 @@ ADMIN_SRC := src/modules/administration/module.cpp \
 HEADERS := $(shell find external/protocol/include src -name '*.hpp' 2>/dev/null | sort)
 
 $(BUILD)/platform_paths_test: $(PLATFORM_SRC) tests/platform/paths_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/platform_logging_test: $(LOGGING_SRC) tests/platform/logging_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -365,7 +378,7 @@ integrity:
 >@$(PYTHON) tools/sandbox/integrity.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -384,6 +397,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/protocol_test $(BUILD)/engine_test 
        $(BUILD)/files_test
 >@echo '== platform paths =='
 >./$(BUILD)/platform_paths_test
+>@echo
+>@echo '== platform logging =='
+>./$(BUILD)/platform_logging_test
 >@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test

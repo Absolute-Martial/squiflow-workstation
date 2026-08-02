@@ -51,14 +51,15 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 5 | 5.7 Agreement quantity caps | QA approved | apply on draft; consume at issue; release at cancellation; migration 24; 31 workflow checks |
 | 5 | 5.8 Document approval/email preparation | Not started | Phase 5 is 7/8 complete |
 | 6 | 6.1 Paths - machine-wide data, per-account cache | QA approved | 129 checks, 0 failed; every directory created and proven writable; no schema change |
-| 6 | 6.2-6.8 Logging, crash, lock, secrets, network, services, startup | Not started | Interfaces planned, fakes required before a second caller |
+| 6 | 6.2 Logging with rotation and a hard total cap | QA approved | 716 checks, 0 failed; secrets redacted; one line per record; family capped on a real disk |
+| 6 | 6.3-6.8 Crash, lock, secrets, network, services, startup | Not started | Interfaces planned, fakes required before a second caller |
 | 7-9 | UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **267 files integrity-checked, 116 headers proven self-contained,
-3,785 assertions across 30 strict test programs, 0 failed.** The independent CMake
-lane passes 30/30 tests and verifies the complete module graph: 12 modules,
+Totals: **285 files integrity-checked, 127 headers proven self-contained,
+4,501 assertions across 31 strict test programs, 0 failed.** The independent CMake
+lane passes 31/31 tests and verifies the complete module graph: 12 modules,
 acyclic, core closed. The schema is at migration 25. Overall progress is
-**41/69**; Phase 5 is **8/8**; Phase 6 is **1/8**.
+**42/69**; Phase 5 is **8/8**; Phase 6 is **2/8**.
 
 ## 5.7 agreement quantity caps
 
@@ -719,6 +720,30 @@ integrity: all files pass
 == pricing ==      146 checks, 0 failed
 == orders ==       181 checks, 0 failed
 ```
+
+## Phase 6.2 - the log
+
+The application now has a log it can keep on a machine nobody administers. A
+record is structured rather than a sentence: a level, the part of the
+application speaking, a short fixed message, and named fields, which is what
+makes a log searchable months later during a disputed invoice.
+
+Three properties are enforced rather than encouraged. One record is always one
+line, because every control character is escaped and a message containing a
+newline cannot forge a second entry. A credential never reaches the file,
+because fields whose names look like passwords, tokens, secrets or keys are
+written with the value replaced instead of relying on every future caller to
+remember the rule. And the whole log family - the live file and its numbered
+generations - obeys a hard total byte budget, enforced after every rotation by
+deleting the oldest files, because a log that fills the disk the shop's
+database lives on has stopped being a diagnostic.
+
+Generations are numbered, never dated, since a shop machine's clock moves
+backwards when it syncs. Nothing in the path throws: a refused append, a full
+volume, a file held open so it cannot be renamed, a delete that is refused and
+a size that cannot be read are each detected, counted and survived. Eight
+threads logging at once produce whole, uninterleaved lines. 716 checks, 0
+failed. Formal evidence is in `docs/qa/phase-6.2-logging-gate.md`.
 
 ## Phase 6.1 - where the shop's files live
 

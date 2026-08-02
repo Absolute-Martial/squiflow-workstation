@@ -8,7 +8,13 @@
 
 add_library(squiflow_platform STATIC
     paths.cpp
-    local_directory_probe.cpp)
+    local_directory_probe.cpp
+    log_record.cpp
+    log_clock.cpp
+    log_formatter.cpp
+    local_log_storage.cpp
+    rotating_log_file.cpp
+    logger.cpp)
 
 add_library(squiflow::platform ALIAS squiflow_platform)
 
