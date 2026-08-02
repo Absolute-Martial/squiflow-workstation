@@ -10,6 +10,7 @@
 #include "engine/storage/store.hpp"
 #include "modules/receivables/data/tables.hpp"
 #include "modules/receivables/domain/credit_account.hpp"
+#include "modules/receivables/domain/document_number_block.hpp"
 #include "modules/receivables/domain/invoice.hpp"
 #include "modules/receivables/domain/payment.hpp"
 #include "modules/receivables/domain/statement.hpp"
@@ -26,6 +27,65 @@ template <typename Reader>
 std::optional<InvoiceLine> find_invoice_line(const Reader& reader, const std::string& id) {
     const auto row = reader.find(tables::kInvoiceLine, id);
     return row ? std::optional<InvoiceLine>{invoice_line_from_row(*row)} : std::nullopt;
+}
+
+template <typename Reader>
+std::optional<DocumentNumberBlock> find_number_block(const Reader& reader,
+                                                     const std::string& id) {
+    const auto row = reader.find(tables::kNumberBlock, id);
+    return row ? std::optional<DocumentNumberBlock>{
+                     document_number_block_from_row(*row)}
+               : std::nullopt;
+}
+
+template <typename Reader>
+std::vector<DocumentNumberBlock> number_blocks(const Reader& reader,
+                                                NumberedDocumentKind kind,
+                                                const std::string& series,
+                                                const std::string& device_id) {
+    engine::Query query{tables::kNumberBlock};
+    query.where_equals("document_kind",
+                       engine::Value::integer(static_cast<std::int64_t>(kind)));
+    query.where_equals("series", engine::Value::text(series));
+    query.where_equals("device_id", engine::Value::text(device_id));
+    query.order_by("first_number");
+    query.order_by("id");
+    std::vector<DocumentNumberBlock> result;
+    for (const engine::Row& row : reader.select(query)) {
+        result.push_back(document_number_block_from_row(row));
+    }
+    return result;
+}
+
+template <typename Reader>
+std::optional<DocumentNumberBlock> available_number_block(
+    const Reader& reader, NumberedDocumentKind kind, const std::string& series,
+    const std::string& device_id) {
+    for (const DocumentNumberBlock& block :
+         number_blocks(reader, kind, series, device_id)) {
+        validate(block);
+        if (!block.exhausted) return block;
+    }
+    return std::nullopt;
+}
+
+template <typename Reader>
+std::optional<Invoice> invoice_by_number(const Reader& reader,
+                                         const std::string& series,
+                                         std::uint64_t number) {
+    if (number == 0 ||
+        number > static_cast<std::uint64_t>(
+                     std::numeric_limits<std::int64_t>::max())) {
+        return std::nullopt;
+    }
+    engine::Query query{tables::kInvoice};
+    query.where_equals("number_series", engine::Value::text(series));
+    query.where_equals("number",
+                       engine::Value::integer(static_cast<std::int64_t>(number)));
+    query.order_by("id");
+    const std::vector<engine::Row> rows = reader.select(query);
+    return rows.empty() ? std::nullopt
+                        : std::optional<Invoice>{invoice_from_row(rows.front())};
 }
 
 template <typename Reader>
@@ -182,6 +242,8 @@ std::vector<StatementEntry> entries_for_statement(const Reader& reader,
 }
 
 void save_invoice(engine::Transaction& transaction, const Invoice& invoice);
+void save_number_block(engine::Transaction& transaction,
+                       const DocumentNumberBlock& block);
 void save_invoice_line(engine::Transaction& transaction, const InvoiceLine& line);
 bool remove_invoice_line(engine::Transaction& transaction, const std::string& id);
 void save_payment(engine::Transaction& transaction, const Payment& payment);
