@@ -42,11 +42,40 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 4 | 4.11 sourcing | Done | 160 checks, 0 failed; migration 19; all four operations; three tables |
 | 4 | 4.12 companion | Done | 91 checks, 0 failed; migration 20; all four operations; two tables |
 | 4 | 4.13 files | Done | 81 checks, 0 failed; migration 21; all four operations; four tables |
-| 5-9 | Workflows, platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
+| 5 | 5.1 Workflow framework | Done | migration 22; 54 checks; one execution door, transaction, audit row, outbox row and refusal path |
+| 5 | 5.2-5.8 Business workflows | Not started | Phase 5 is 1/8 complete |
+| 6-9 | Platform/shell, UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **224 files integrity-checked, 98 headers proven self-contained,
-3288 assertions across 21 strict test programs, 0 failed.** The independent CMake
-lane verifies the complete module graph: 12 modules, acyclic, core closed.
+Totals: **230 files integrity-checked, 101 headers proven self-contained,
+3,342 assertions across 22 strict test programs, 0 failed.** The independent CMake
+lane verifies the complete module graph: 12 modules, acyclic, core closed. The
+schema is at migration 22. Overall progress is **33/69**; Phase 5 is **1/8**.
+
+## 5.1 workflow framework
+
+Migration 22 completes the shared workflow execution framework. The protocol
+classifies exactly eight workflow operations. Each definition names its owning
+operation, canonical module requirements, and transaction-bound handler.
+`Registry::run()` remains the only execution door: capability and module gates,
+idempotency replay, the handler, exactly one workflow audit row, and exactly one
+outbox row share one writer transaction. A refusal after a business write rolls
+all three tables back and leaves the writer reusable.
+
+The permanent workflow program contributes 54 harsh checks covering exact
+classification, ownership and duplicate registration, missing and inactive
+requirements, online-only requirements, malformed audit results, replay before
+handler entry, duplicate concurrent attempts, atomic audit/outbox persistence,
+rollback, and migration 21-to-22 upgrade. The full clean strict lane passes at
+3,342 assertions across 22 programs with zero failures. Integrity covers 230
+files and 101 self-contained headers; the module graph remains 12 modules,
+acyclic, with the core closed. The independent CMake lane also passes with
+warnings treated as errors.
+
+The clean whole-project gate found a genuine historical schema collision:
+administration migration 10 already owns `audit_entry`. The workflow audit table
+was renamed to `workflow_audit_entry`; isolated workflow and administration
+suites and the subsequent clean full gate all pass. The formal evidence and
+regression record are in `docs/qa/phase-5.1-workflow-framework-gate.md`.
 
 ## 4.7 receivables
 

@@ -86,10 +86,10 @@ than being counted here.
 
 ## Phase 5 - Workflows
 
-- [ ] 5.1 Workflow framework: one transaction, one audit entry, one refusal path
+- [x] 5.1 Workflow framework: one transaction, one audit entry, one refusal path; migration 22; 54 checks, 0 failed
   - [x] 5.1A protocol workflow classification and engine audit persistence; direct probes, full strict gate, and independent CMake build passed
-  - [ ] 5.1B workflow definition and registry integration
-  - [ ] 5.1C migration 22, permanent harsh tests, and final framework gate
+  - [x] 5.1B workflow definition and registry integration; one execution door, canonical requirements, replay, one transaction, one audit row, and one outbox row
+  - [x] 5.1C migration 22, permanent harsh tests, rollback and concurrency coverage, and final framework gate
 - [ ] 5.2 Quotation to order, any step skippable
 - [ ] 5.3 Order to jobs, and a job with no order
 - [ ] 5.4 Issue an invoice: snapshot lines and rates, burn a number
