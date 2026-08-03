@@ -74,6 +74,12 @@ BACKGROUND_SERVICES_SRC := src/platform/background_service.cpp \
                            src/platform/background_executor.cpp \
                            src/platform/background_supervisor.cpp
 
+APP_STARTUP_SRC := src/app/startup.cpp \
+                   src/app/startup_sequence.cpp \
+                   src/app/activation_controller.cpp \
+                   src/app/qt_message_mapping.cpp \
+                   src/platform/log_record.cpp
+
 ENGINE_SRC := src/engine/records/identity.cpp \
               src/engine/records/quantity.cpp \
               src/engine/records/money.cpp \
@@ -226,6 +232,10 @@ $(BUILD)/platform_network_state_test: $(NETWORK_STATE_SRC) tests/platform/networ
 $(BUILD)/platform_background_services_test: $(BACKGROUND_SERVICES_SRC) tests/platform/background_services_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_startup_test: $(APP_STARTUP_SRC) tests/app/startup_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
 $(BUILD)/protocol_test: $(PROTOCOL_SRC) external/protocol/tests/protocol_test.cpp
 >@mkdir -p $(BUILD)
@@ -430,7 +440,7 @@ integrity:
 >@$(PYTHON) tools/sandbox/integrity.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -467,6 +477,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== platform background services =='
 >./$(BUILD)/platform_background_services_test
+>@echo
+>@echo '== application startup =='
+>./$(BUILD)/app_startup_test
 >@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test

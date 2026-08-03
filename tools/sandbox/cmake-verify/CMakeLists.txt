@@ -86,6 +86,10 @@ if(EXISTS "${SQUIFLOW_ROOT}/src/workflows/CMakeLists.txt")
     add_subdirectory(${SQUIFLOW_ROOT}/src/workflows workflows)
 endif()
 
+if(EXISTS "${SQUIFLOW_ROOT}/src/app/CMakeLists.txt")
+    add_subdirectory(${SQUIFLOW_ROOT}/src/app app)
+endif()
+
 # The engine tests, which the real tests/CMakeLists.txt will own once it exists.
 if(SQUIFLOW_BUILD_TESTS)
     add_executable(platform_single_instance_test
@@ -122,6 +126,14 @@ if(SQUIFLOW_BUILD_TESTS)
         PRIVATE squiflow::platform squiflow::testing
                 squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME platform.background_services COMMAND platform_background_services_test)
+
+
+    add_executable(app_startup_test
+        ${SQUIFLOW_ROOT}/tests/app/startup_test.cpp)
+    target_link_libraries(app_startup_test
+        PRIVATE squiflow::app squiflow::testing
+                squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME app.startup COMMAND app_startup_test)
 
     foreach(t domain storage migration writer outbox sync)
         set(_src "${SQUIFLOW_ROOT}/tests/engine/engine_${t}_test.cpp")
