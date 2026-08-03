@@ -22,7 +22,7 @@ STD ?= c++23
 BUILD ?= build/sandbox
 PYTHON ?= python3
 
-INCLUDES := -Iexternal/protocol/include -isystem external/spdlog/include -Isrc -Itests
+INCLUDES := -Iexternal/protocol/include -isystem external/spdlog/include -isystem external/crashcatch/include -Isrc -Itests
 
 WARNINGS := -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
             -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion \
@@ -53,6 +53,9 @@ LOGGING_SRC := src/platform/log_record.cpp \
                src/platform/local_log_storage.cpp \
                src/platform/rotating_log_file.cpp \
                src/platform/logger.cpp
+
+CRASH_SRC := src/platform/crash_breadcrumb.cpp \
+             src/platform/crash_handler_posix.cpp
 
 ENGINE_SRC := src/engine/records/identity.cpp \
               src/engine/records/quantity.cpp \
@@ -176,6 +179,10 @@ $(BUILD)/platform_paths_test: $(PLATFORM_SRC) tests/platform/paths_test.cpp
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(BUILD)/platform_logging_test: $(LOGGING_SRC) tests/platform/logging_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/platform_crash_test: $(LOGGING_SRC) $(CRASH_SRC) tests/platform/crash_handler_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -382,7 +389,7 @@ integrity:
 >@$(PYTHON) tools/sandbox/integrity.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -404,6 +411,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/prot
 >@echo
 >@echo '== platform logging =='
 >./$(BUILD)/platform_logging_test
+>@echo
+>@echo '== platform crash handling =='
+>./$(BUILD)/platform_crash_test
 >@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test
