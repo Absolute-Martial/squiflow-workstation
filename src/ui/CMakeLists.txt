@@ -1,0 +1,8 @@
+if(SQUIFLOW_WITH_QT)
+find_package(Qt6 6.11.1 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
+qt_standard_project_setup(REQUIRES 6.11.1)
+target_compile_definitions(squiflow_workstation PRIVATE SQUIFLOW_WITH_QT=1)
+target_link_libraries(squiflow_workstation PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 squiflow::shell)
+qt_add_qml_module(squiflow_workstation URI SquiFlow VERSION 1.0 QML_FILES Main.qml Theme.qml common/DataList.qml RESOURCE_PREFIX /qt/qml)
+qt_add_resources(squiflow_workstation squiflow_ui_config PREFIX "/" FILES qtquickcontrols2.conf)
+endif()

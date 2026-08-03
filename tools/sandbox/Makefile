@@ -448,6 +448,7 @@ architecture:
 >@echo '== QML architecture boundary =='
 >@$(PYTHON) tools/sandbox/check_qml_boundary.py
 >@$(PYTHON) tools/sandbox/test_qml_boundary.py
+>@$(PYTHON) tools/sandbox/check_ui_resources.py
 >@echo
 
 tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
