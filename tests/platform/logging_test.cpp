@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <fstream>
 #include <string>
 #include <system_error>
@@ -27,6 +28,7 @@
 #include "platform/log_formatter.hpp"
 #include "platform/log_level_policy.hpp"
 #include "platform/log_record.hpp"
+#include "platform/log_throttle.hpp"
 #include "platform/logger.hpp"
 #include "platform/rotating_log_file.hpp"
 #include "platform/testing/fake_log_storage.hpp"
@@ -38,6 +40,11 @@ namespace {
 
 namespace platform = squiflow::platform;
 using platform::CategoryLevelRule;
+using platform::LogThrottle;
+using platform::LogThrottlePolicy;
+using platform::RepeatSummary;
+using platform::ThrottleDecision;
+using platform::kMaxThrottledEvents;
 using platform::LevelConfigurationResult;
 using platform::LogField;
 using platform::LogLevelPolicy;
@@ -1129,12 +1136,289 @@ void the_logger_obeys_the_policy() {
     }
 }
 
+void repetition_is_held_back() {
+    section("the throttle");
+
+    // Off by default, and remembering nothing while off. A feature nobody
+    // switched on must not quietly accumulate state for every message the
+    // application has ever written.
+    {
+        LogThrottle throttle;
+        check(!throttle.policy().engaged(), "throttling is off by default");
+        for (int index = 0; index < 100; ++index) {
+            const ThrottleDecision decision =
+                throttle.consider(LogLevel::Info, "sync", "same thing", 0);
+            check(decision.emit, "every record passes while it is off");
+        }
+        check(throttle.watched_event_count() == 0, "and nothing is remembered");
+        check(throttle.counters().held_back == 0, "nothing was held back");
+    }
+
+    // The interval rule.
+    {
+        LogThrottle throttle(LogThrottlePolicy{1000, 0});
+        check(throttle.policy().engaged(), "an interval engages the throttle");
+
+        const ThrottleDecision first =
+            throttle.consider(LogLevel::Error, "sync", "refused", 0);
+        check(first.emit, "the first sighting is always written");
+        check(first.suppressed_since_last == 0, "and stands for itself alone");
+
+        check(!throttle.consider(LogLevel::Error, "sync", "refused", 500).emit,
+              "a repeat inside the interval is held");
+        check(!throttle.consider(LogLevel::Error, "sync", "refused", 999).emit,
+              "and so is one at the last instant of it");
+
+        const ThrottleDecision released =
+            throttle.consider(LogLevel::Error, "sync", "refused", 1000);
+        check(released.emit, "the interval ends inclusively");
+        check(released.suppressed_since_last == 2,
+              "and the released record accounts for both held records");
+        check(throttle.counters().held_back == 2, "the counter agrees");
+
+        check(!throttle.consider(LogLevel::Error, "sync", "refused", 1001).emit,
+              "the interval restarts from the record written");
+    }
+
+    // The count rule, which exists so that a fast loop still reports progress
+    // even when the interval would keep it silent for a long time.
+    {
+        LogThrottle throttle(LogThrottlePolicy{10000, 3});
+        check(throttle.consider(LogLevel::Info, "sync", "attempt", 0).emit,
+              "the first is written");
+        check(!throttle.consider(LogLevel::Info, "sync", "attempt", 0).emit,
+              "the second is held");
+        check(!throttle.consider(LogLevel::Info, "sync", "attempt", 0).emit,
+              "the third is held");
+        const ThrottleDecision third =
+            throttle.consider(LogLevel::Info, "sync", "attempt", 0);
+        check(third.emit,
+              "every third occurrence since the last written one speaks");
+        check(third.suppressed_since_last == 2, "carrying the two it stands for");
+    }
+
+    // A count of one would mean "every occurrence", which is the same as no
+    // rule; it must not be mistaken for "hold everything".
+    {
+        LogThrottle throttle(LogThrottlePolicy{0, 1});
+        check(!throttle.policy().engaged(), "a count of one is not a rule");
+        for (int index = 0; index < 10; ++index) {
+            check(throttle.consider(LogLevel::Info, "sync", "attempt", 0).emit,
+                  "so everything is written");
+        }
+    }
+
+    // A negative interval is nonsense arriving from a settings file. It must
+    // not switch throttling on, and above all must not silence the log.
+    {
+        LogThrottle throttle(LogThrottlePolicy{-5000, 0});
+        check(!throttle.policy().engaged(), "a negative interval is not a rule");
+        check(throttle.policy().minimum_interval_milliseconds == 0,
+              "and is normalised away at the door");
+        check(throttle.consider(LogLevel::Info, "sync", "attempt", 0).emit,
+              "nothing is silenced by it");
+    }
+
+    // Fatal is the last thing the application ever says. It is never held.
+    {
+        LogThrottle throttle(LogThrottlePolicy{60000, 0});
+        for (int index = 0; index < 5; ++index) {
+            check(throttle.consider(LogLevel::Fatal, "boot", "dying", 0).emit,
+                  "fatal is never held back");
+        }
+        check(throttle.watched_event_count() == 0, "and is not even remembered");
+    }
+
+    // Identity is level, category and message together. Anything else would
+    // fold together records that mean different things.
+    {
+        LogThrottle throttle(LogThrottlePolicy{1000, 0});
+        check(throttle.consider(LogLevel::Info, "sync", "same", 0).emit, "first");
+        check(throttle.consider(LogLevel::Warning, "sync", "same", 0).emit,
+              "a different level is a different event");
+        check(throttle.consider(LogLevel::Info, "storage", "same", 0).emit,
+              "a different category is a different event");
+        check(throttle.consider(LogLevel::Info, "sync", "other", 0).emit,
+              "a different message is a different event");
+        check(throttle.watched_event_count() == 4, "four events are watched");
+        check(!throttle.consider(LogLevel::Info, "sync", "same", 1).emit,
+              "and each throttles only itself");
+    }
+
+    // The shop machine syncs its clock and the time jumps backwards. Being a
+    // little too talkative afterwards is a nuisance; being silent until the
+    // clock catches up could cost an afternoon of evidence.
+    {
+        LogThrottle throttle(LogThrottlePolicy{1000, 0});
+        check(throttle.consider(LogLevel::Error, "sync", "refused", 10000).emit,
+              "written at the later time");
+        check(throttle.consider(LogLevel::Error, "sync", "refused", 5000).emit,
+              "a backwards clock releases rather than silences");
+    }
+
+    // The table is bounded. A program logging endlessly varied messages must
+    // not turn the throttle into a record of every line it ever wrote.
+    {
+        LogThrottle throttle(LogThrottlePolicy{60000, 0});
+        check(throttle.consider(LogLevel::Warning, "sync", "oldest", 0).emit,
+              "the event that will be evicted is written once");
+        check(!throttle.consider(LogLevel::Warning, "sync", "oldest", 1).emit,
+              "and then owes one held record");
+
+        std::optional<RepeatSummary> evicted;
+        for (std::size_t index = 0; index < kMaxThrottledEvents; ++index) {
+            const ThrottleDecision decision = throttle.consider(
+                LogLevel::Warning, "sync", "distinct " + std::to_string(index),
+                static_cast<std::int64_t>(10 + index));
+            check(decision.emit, "each new event is written");
+            if (decision.evicted.has_value()) {
+                check(!evicted.has_value(), "only one event is evicted");
+                evicted = decision.evicted;
+            }
+        }
+
+        check(throttle.watched_event_count() == kMaxThrottledEvents,
+              "the table never exceeds its bound");
+        check(evicted.has_value(), "the quietest event was pushed out");
+        check(evicted.has_value() && evicted->message == "oldest",
+              "and it was the one that had been quiet longest");
+        check(evicted.has_value() && evicted->suppressed == 1,
+              "its held record is handed back rather than lost");
+        check(throttle.counters().evictions == 1, "one eviction is counted");
+    }
+
+    // Draining settles every outstanding debt exactly once.
+    {
+        LogThrottle throttle(LogThrottlePolicy{60000, 0});
+        throttle.consider(LogLevel::Error, "sync", "refused", 0);
+        throttle.consider(LogLevel::Error, "sync", "refused", 1);
+        throttle.consider(LogLevel::Error, "sync", "refused", 2);
+        throttle.consider(LogLevel::Info, "jobs", "queued", 3);
+
+        const std::vector<RepeatSummary> owed = throttle.drain();
+        check(owed.size() == 1, "only events with something outstanding report");
+        check(owed.size() == 1 && owed[0].suppressed == 2, "with the right count");
+        check(owed.size() == 1 && owed[0].level == LogLevel::Error,
+              "at the level the held records had");
+
+        check(throttle.drain().empty(), "a second drain owes nothing");
+    }
+}
+
+void the_logger_holds_back_repetition() {
+    section("the logger and repetition");
+
+    // The flood this was built for: a retry loop writing the same error faster
+    // than anyone could read it.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_throttle_policy(LogThrottlePolicy{1000, 0});
+        check(logger.throttle_policy().minimum_interval_milliseconds == 1000,
+              "the policy is readable back");
+
+        logger.warning("sync", "connection refused");
+        check(sink.lines().size() == 1, "the first report is written");
+
+        for (int index = 0; index < 500; ++index) {
+            logger.warning("sync", "connection refused");
+        }
+        check(sink.lines().size() == 1, "five hundred repeats add nothing");
+        check(logger.counters().rate_limited == 500,
+              "and all of them are counted");
+
+        clock.advance(1000);
+        logger.warning("sync", "connection refused");
+        check(sink.lines().size() == 2, "the interval releases one line");
+        check(sink.lines()[1].find("repeated=\"500\"") != std::string::npos,
+              "which states how many it stands for");
+    }
+
+    // A gap must never outlive the run that caused it.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_throttle_policy(LogThrottlePolicy{60000, 0});
+
+        logger.error("sync", "refused");
+        logger.error("sync", "refused");
+        logger.error("sync", "refused");
+        check(sink.lines().size() == 1, "two repeats are held");
+
+        logger.flush();
+        check(sink.lines().size() == 2, "flushing reports what is owed");
+        check(sink.lines()[1].find("throttled=\"summary\"") != std::string::npos,
+              "marked as a summary rather than a fresh occurrence");
+        check(sink.lines()[1].find("repeated=\"2\"") != std::string::npos,
+              "with the count it is accounting for");
+
+        logger.flush();
+        check(sink.lines().size() == 2, "a second flush owes nothing");
+    }
+
+    // Shutdown is the last chance to be honest about the gap.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        {
+            Logger logger(sink, clock, LogLevel::Info);
+            logger.set_throttle_policy(LogThrottlePolicy{60000, 0});
+            logger.warning("sync", "refused");
+            logger.warning("sync", "refused");
+            check(sink.lines().size() == 1, "one held back while running");
+        }
+        check(sink.lines().size() == 2, "and reported as the logger shuts down");
+        check(sink.lines()[1].find("repeated=\"1\"") != std::string::npos,
+              "with the outstanding count");
+    }
+
+    // Changing the policy must not carry a debt across into a rule it was
+    // never measured under.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_throttle_policy(LogThrottlePolicy{60000, 0});
+        logger.warning("sync", "refused");
+        logger.warning("sync", "refused");
+
+        logger.set_throttle_policy(LogThrottlePolicy{});
+        check(sink.lines().size() == 2, "the debt is settled at the change");
+        check(!logger.throttle_policy().engaged(), "and throttling is now off");
+
+        logger.warning("sync", "refused");
+        logger.warning("sync", "refused");
+        check(sink.lines().size() == 4, "after which nothing is held");
+    }
+
+    // Throttling must not interfere with what the logger already promised.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_throttle_policy(LogThrottlePolicy{60000, 0});
+
+        logger.fatal("boot", "cannot continue");
+        logger.fatal("boot", "cannot continue");
+        check(sink.lines().size() == 2, "fatal is never held back");
+
+        logger.debug("sync", "detail");
+        check(logger.counters().suppressed == 1, "the level filter still counts");
+        check(logger.counters().rate_limited == 0,
+              "and a level-filtered record never reaches the throttle");
+    }
+}
+
 }  // namespace
 
 int main() {
     the_dispatcher_is_pinned();
     verbosity_is_chosen_per_category();
     the_logger_obeys_the_policy();
+    repetition_is_held_back();
+    the_logger_holds_back_repetition();
     levels_are_few_and_unambiguous();
     timestamps_are_exact();
     a_message_cannot_forge_a_second_entry();
