@@ -67,6 +67,9 @@ SECRETS_SRC := src/platform/secret_buffer.cpp \
                src/platform/secret_identity.cpp \
                src/platform/secret_envelope.cpp
 
+NETWORK_STATE_SRC := src/platform/network_state.cpp \
+                     src/platform/network_monitor.cpp
+
 ENGINE_SRC := src/engine/records/identity.cpp \
               src/engine/records/quantity.cpp \
               src/engine/records/money.cpp \
@@ -211,6 +214,10 @@ $(SODIUM_LIB): external/dist/libsodium-1.0.22.tar.gz
 $(BUILD)/platform_secrets_test: $(SECRETS_SRC) tests/platform/secrets_test.cpp $(SODIUM_LIB)
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $(SECRETS_SRC) tests/platform/secrets_test.cpp $(SODIUM_LIB) -o $@
+
+$(BUILD)/platform_network_state_test: $(NETWORK_STATE_SRC) tests/platform/network_state_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(BUILD)/protocol_test: $(PROTOCOL_SRC) external/protocol/tests/protocol_test.cpp
 >@mkdir -p $(BUILD)
@@ -415,7 +422,7 @@ integrity:
 >@$(PYTHON) tools/sandbox/integrity.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -446,6 +453,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== platform secrets =='
 >./$(BUILD)/platform_secrets_test
+>@echo
+>@echo '== platform network state =='
+>./$(BUILD)/platform_network_state_test
 >@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test

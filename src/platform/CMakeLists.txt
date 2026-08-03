@@ -23,7 +23,9 @@ add_library(squiflow_platform STATIC
     single_instance_name.cpp
     secret_buffer.cpp
     secret_identity.cpp
-    secret_envelope.cpp)
+    secret_envelope.cpp
+    network_state.cpp
+    network_monitor.cpp)
 
 add_library(squiflow::platform ALIAS squiflow_platform)
 
@@ -59,9 +61,9 @@ else()
 endif()
 
 if(SQUIFLOW_WITH_QT)
-    find_package(Qt6 REQUIRED COMPONENTS Core)
-    target_sources(squiflow_platform PRIVATE path_environment_qt.cpp)
-    target_link_libraries(squiflow_platform PRIVATE Qt6::Core)
+    find_package(Qt6 REQUIRED COMPONENTS Core Network)
+    target_sources(squiflow_platform PRIVATE path_environment_qt.cpp network_state_qt.cpp)
+    target_link_libraries(squiflow_platform PRIVATE Qt6::Core Qt6::Network)
 else()
     target_sources(squiflow_platform PRIVATE path_environment_posix.cpp)
     message(STATUS
