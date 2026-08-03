@@ -27,6 +27,7 @@
 #include "platform/local_log_storage.hpp"
 #include "platform/log_formatter.hpp"
 #include "platform/log_level_policy.hpp"
+#include "platform/log_backtrace.hpp"
 #include "platform/log_record.hpp"
 #include "platform/log_throttle.hpp"
 #include "platform/logger.hpp"
@@ -40,6 +41,10 @@ namespace {
 
 namespace platform = squiflow::platform;
 using platform::CategoryLevelRule;
+using platform::LogBacktrace;
+using platform::LogBacktraceCounters;
+using platform::LogBacktracePolicy;
+using platform::kMaxBacktraceCapacity;
 using platform::LogThrottle;
 using platform::LogThrottlePolicy;
 using platform::RepeatSummary;
@@ -1411,6 +1416,321 @@ void the_logger_holds_back_repetition() {
     }
 }
 
+namespace {
+
+LogRecord made_record(LogLevel level, std::string category, std::string message,
+                      std::int64_t timestamp_milliseconds) {
+    LogRecord record;
+    record.level = level;
+    record.category = std::move(category);
+    record.message = std::move(message);
+    record.timestamp_milliseconds = timestamp_milliseconds;
+    return record;
+}
+
+}  // namespace
+
+void the_run_up_is_kept() {
+    section("the backtrace ring");
+
+    // Off by default, and keeping nothing while off. The feature costs memory,
+    // so it is switched on deliberately or not at all.
+    {
+        LogBacktrace ring;
+        check(!ring.enabled(), "the ring is off by default");
+        ring.remember(made_record(LogLevel::Debug, "sync", "detail", 10));
+        check(ring.held() == 0, "and remembers nothing");
+        check(ring.take().empty(), "so there is nothing to release");
+        check(!ring.triggers_on(LogLevel::Fatal),
+              "and nothing can trigger a release");
+        check(ring.counters().remembered == 0, "nothing was counted");
+    }
+
+    // The ordinary case: a few records held, then released oldest first.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 4, LogLevel::Error});
+        ring.remember(made_record(LogLevel::Debug, "sync", "first", 10));
+        ring.remember(made_record(LogLevel::Debug, "sync", "second", 20));
+        check(ring.held() == 2, "two records are held");
+
+        const std::vector<LogRecord> released = ring.take();
+        check(released.size() == 2, "and both are released");
+        check(released.size() == 2 && released[0].message == "first",
+              "oldest first, so the file reads in the order things happened");
+        check(released.size() == 2 && released[1].message == "second",
+              "then the newer one");
+        check(released.size() == 2 && released[0].timestamp_milliseconds == 10,
+              "carrying the time it actually happened, not the time of release");
+
+        check(ring.held() == 0, "the ring is emptied by taking");
+        check(ring.take().empty(), "so a second release yields nothing");
+        check(ring.counters().released == 2, "the release is counted");
+    }
+
+    // Wrapping. The ring is a bound, and the bound is the point: it must lose
+    // the oldest and keep the newest, which are the ones nearest the failure.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 3, LogLevel::Error});
+        for (int index = 1; index <= 5; ++index) {
+            ring.remember(made_record(LogLevel::Debug, "sync",
+                                      "step " + std::to_string(index),
+                                      index * 10));
+        }
+        check(ring.held() == 3, "the ring never exceeds its capacity");
+        check(ring.counters().overwritten == 2,
+              "and says how many records it had to push out");
+
+        const std::vector<LogRecord> released = ring.take();
+        check(released.size() == 3, "three survive");
+        check(released.size() == 3 && released[0].message == "step 3",
+              "the oldest survivor is the third record");
+        check(released.size() == 3 && released[2].message == "step 5",
+              "and the newest is the last one seen");
+    }
+
+    // Wrapping repeatedly must not corrupt the order. A circular buffer that
+    // reads correctly once and wrongly on the second lap is a classic defect,
+    // so this laps it several times.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 3, LogLevel::Error});
+        for (int index = 1; index <= 31; ++index) {
+            ring.remember(made_record(LogLevel::Debug, "sync",
+                                      "step " + std::to_string(index),
+                                      index));
+        }
+        const std::vector<LogRecord> released = ring.take();
+        check(released.size() == 3, "still exactly the capacity");
+        check(released.size() == 3 && released[0].message == "step 29" &&
+                  released[1].message == "step 30" &&
+                  released[2].message == "step 31",
+              "and still in order after ten laps of the buffer");
+    }
+
+    // A capacity of zero is a configuration mistake, not an instruction to
+    // keep nothing while claiming to be enabled.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 0, LogLevel::Error});
+        check(ring.policy().capacity == 1, "zero is raised to one");
+        ring.remember(made_record(LogLevel::Debug, "sync", "only", 10));
+        check(ring.held() == 1, "and the single slot works");
+    }
+
+    // An absurd capacity from a settings file must not become an unbounded
+    // memory cost.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 1000000, LogLevel::Error});
+        check(ring.policy().capacity == kMaxBacktraceCapacity,
+              "an absurd capacity is clamped to the documented maximum");
+    }
+
+    // Only the trigger level and above release the ring.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 4, LogLevel::Error});
+        check(!ring.triggers_on(LogLevel::Debug), "debug does not trigger");
+        check(!ring.triggers_on(LogLevel::Warning), "nor does warning");
+        check(ring.triggers_on(LogLevel::Error), "error triggers");
+        check(ring.triggers_on(LogLevel::Fatal), "and so does fatal");
+    }
+
+    // Shrinking keeps the newest records, because those are the ones closest
+    // to whatever is about to go wrong.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 5, LogLevel::Error});
+        for (int index = 1; index <= 5; ++index) {
+            ring.remember(made_record(LogLevel::Debug, "sync",
+                                      "step " + std::to_string(index),
+                                      index));
+        }
+        const LogBacktraceCounters before = ring.counters();
+
+        ring.set_policy(LogBacktracePolicy{true, 2, LogLevel::Error});
+        check(ring.held() == 2, "only what fits is kept");
+
+        const std::vector<LogRecord> released = ring.take();
+        check(released.size() == 2 && released[0].message == "step 4" &&
+                  released[1].message == "step 5",
+              "and it is the newest that survive, in order");
+
+        check(before.remembered == 5,
+              "the records were counted once when first seen");
+    }
+
+    // Reshaping the ring is not an event. It must not be reported as records
+    // arriving or being released, or the counters would lie about the run.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 4, LogLevel::Error});
+        ring.remember(made_record(LogLevel::Debug, "sync", "one", 1));
+        ring.remember(made_record(LogLevel::Debug, "sync", "two", 2));
+        const LogBacktraceCounters before = ring.counters();
+
+        ring.set_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+        const LogBacktraceCounters after = ring.counters();
+        check(after.remembered == before.remembered,
+              "re-seating does not count the records again");
+        check(after.released == before.released,
+              "and does not count them as released");
+        check(ring.held() == 2, "while the records themselves are still held");
+    }
+
+    // Switching the feature off discards what is held. Those records were
+    // rejected by the level filter; releasing them after being asked for
+    // silence would be the opposite of what was asked.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 4, LogLevel::Error});
+        ring.remember(made_record(LogLevel::Debug, "sync", "one", 1));
+        ring.set_policy(LogBacktracePolicy{});
+        check(!ring.enabled(), "the ring is off");
+        check(ring.held() == 0, "and what it held is gone");
+        check(ring.take().empty(), "with nothing to release later");
+    }
+
+    // Clearing forgets without pretending anything was delivered.
+    {
+        LogBacktrace ring(LogBacktracePolicy{true, 4, LogLevel::Error});
+        ring.remember(made_record(LogLevel::Debug, "sync", "one", 1));
+        ring.clear();
+        check(ring.held() == 0, "clearing empties the ring");
+        check(ring.counters().released == 0,
+              "without counting the records as released");
+    }
+}
+
+void the_logger_keeps_the_run_up() {
+    section("the logger and the run-up");
+
+    // The whole point, end to end: a machine running at Info explains a
+    // failure using the Debug lines it never wrote.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_backtrace_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+
+        logger.debug("sync", "opening connection");
+        clock.advance(5);
+        logger.debug("sync", "sending request");
+        clock.advance(5);
+        check(sink.lines().empty(), "nothing is written while all is well");
+        check(logger.counters().suppressed == 2,
+              "the records are still counted as filtered");
+
+        logger.error("sync", "connection refused");
+        check(sink.lines().size() == 3,
+              "the failure arrives with the two lines that led to it");
+        check(sink.lines()[0].find("opening connection") != std::string::npos,
+              "the run-up comes first, in the order it happened");
+        check(sink.lines()[1].find("sending request") != std::string::npos,
+              "then the second held record");
+        check(sink.lines()[2].find("connection refused") != std::string::npos,
+              "and the failure itself last");
+        check(sink.lines()[0].find("backtrace=\"1\"") != std::string::npos,
+              "released records are marked as such");
+        check(sink.lines()[2].find("backtrace=") == std::string::npos,
+              "and the failure itself is not");
+        check(sink.lines()[0].find("DEBUG") != std::string::npos,
+              "a released record keeps the level it was written at");
+        check(logger.counters().backtrace_released == 2, "both are counted");
+    }
+
+    // The ring is emptied by a release, so a second failure does not repeat
+    // the run-up of the first.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_backtrace_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+
+        logger.debug("sync", "detail");
+        logger.error("sync", "first failure");
+        check(sink.lines().size() == 2, "one held record and the failure");
+
+        logger.error("sync", "second failure");
+        check(sink.lines().size() == 3,
+              "the second failure does not repeat the first run-up");
+    }
+
+    // Below the trigger, nothing is released. A warning is not a failure.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_backtrace_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+
+        logger.debug("sync", "detail");
+        logger.warning("sync", "slow");
+        check(sink.lines().size() == 1, "the warning is written alone");
+        check(logger.counters().backtrace_released == 0, "nothing released");
+
+        logger.error("sync", "failed");
+        check(sink.lines().size() == 3,
+              "and the run-up is still there when a real failure arrives");
+    }
+
+    // Records the level filter accepted are written immediately and are not
+    // duplicated into the ring.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_backtrace_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+
+        logger.info("sync", "routine");
+        check(sink.lines().size() == 1, "an accepted record is written at once");
+        logger.error("sync", "failed");
+        check(sink.lines().size() == 2,
+              "and is not written a second time by the release");
+    }
+
+    // Off by default: the same sequence produces only the failure.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        check(!logger.backtrace_policy().enabled, "the ring is off by default");
+
+        logger.debug("sync", "detail");
+        logger.error("sync", "failed");
+        check(sink.lines().size() == 1, "so only the failure is written");
+    }
+
+    // A raised category and the ring must not fight each other. The category
+    // rule writes the record immediately; the ring is for what was rejected.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_backtrace_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+        check(logger.set_category_level("sync", LogLevel::Debug),
+              "one category is turned up");
+
+        logger.debug("sync", "written now");
+        logger.debug("storage", "held back");
+        check(sink.lines().size() == 1, "the raised category speaks at once");
+
+        logger.error("jobs", "failed");
+        check(sink.lines().size() == 3,
+              "and only the rejected record is released with the failure");
+        check(sink.lines()[1].find("held back") != std::string::npos,
+              "which is the one the filter refused");
+    }
+
+    // Switching the ring off must also lower the dispatcher floor again,
+    // otherwise the filter would stay wide open for the rest of the run.
+    {
+        RecordingLogSink sink;
+        ManualLogClock clock(1000);
+        Logger logger(sink, clock, LogLevel::Info);
+        logger.set_backtrace_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+        logger.debug("sync", "held");
+        logger.set_backtrace_policy(LogBacktracePolicy{});
+
+        logger.error("sync", "failed");
+        check(sink.lines().size() == 1,
+              "the discarded run-up is not released after the ring is off");
+        check(logger.counters().backtrace_released == 0, "and none is counted");
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -1419,6 +1739,8 @@ int main() {
     the_logger_obeys_the_policy();
     repetition_is_held_back();
     the_logger_holds_back_repetition();
+    the_run_up_is_kept();
+    the_logger_keeps_the_run_up();
     levels_are_few_and_unambiguous();
     timestamps_are_exact();
     a_message_cannot_forge_a_second_entry();
