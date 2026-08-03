@@ -33,3 +33,10 @@ endfunction()
 
 squiflow_add_platform_test(platform_paths_test platform/paths_test.cpp)
 squiflow_add_platform_test(platform_logging_test platform/logging_test.cpp)
+
+add_executable(app_contracts_test app/contracts_test.cpp)
+target_link_libraries(app_contracts_test
+    PRIVATE squiflow::app squiflow::testing
+            squiflow::warnings squiflow::hardening squiflow::sanitizers)
+set_target_properties(app_contracts_test PROPERTIES FOLDER "tests/app")
+add_test(NAME app.contracts COMMAND app_contracts_test)

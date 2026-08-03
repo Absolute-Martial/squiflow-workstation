@@ -237,6 +237,10 @@ $(BUILD)/app_startup_test: $(APP_STARTUP_SRC) tests/app/startup_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
+$(BUILD)/app_contracts_test: tests/app/contracts_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/protocol_test: $(PROTOCOL_SRC) external/protocol/tests/protocol_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -403,9 +407,9 @@ $(BUILD)/files_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
-.PHONY: check tests headers integrity standard clean
+.PHONY: check tests headers integrity architecture standard clean
 
-check: standard integrity headers tests
+check: standard integrity architecture headers tests
 
 standard:
 >@echo '== language =='
@@ -440,7 +444,13 @@ integrity:
 >@$(PYTHON) tools/sandbox/integrity.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+architecture:
+>@echo '== QML architecture boundary =='
+>@$(PYTHON) tools/sandbox/check_qml_boundary.py
+>@$(PYTHON) tools/sandbox/test_qml_boundary.py
+>@echo
+
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -480,6 +490,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== application startup =='
 >./$(BUILD)/app_startup_test
+>@echo
+>@echo '== application contracts =='
+>./$(BUILD)/app_contracts_test
 >@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test
