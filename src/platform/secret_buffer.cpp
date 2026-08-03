@@ -1,7 +1,7 @@
 #include "platform/secrets.hpp"
 #include <algorithm>
 namespace squiflow::platform {
-namespace {void erase_bytes(std::vector<std::byte>& value)noexcept{volatile std::byte* p=value.data();for(std::size_t i=0;i<value.size();++i)p[i]=std::byte{0};value.clear();value.shrink_to_fit();}}
+namespace {void erase_bytes(std::vector<std::byte>& value)noexcept{volatile std::byte* p=value.data();for(std::size_t i=0;i<value.size();++i)p[i]=std::byte{0};value.clear();}}
 SecretBuffer::SecretBuffer(std::span<const std::byte> value):value_(value.begin(),value.end()){}
 SecretBuffer::SecretBuffer(SecretBuffer&& other)noexcept:value_(std::move(other.value_)){}
 SecretBuffer& SecretBuffer::operator=(SecretBuffer&& other)noexcept{if(this!=&other){clear();value_=std::move(other.value_);}return *this;}
