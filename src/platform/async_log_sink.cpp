@@ -1,6 +1,7 @@
 #include "platform/async_log_sink.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <string>
 #include <utility>
 
@@ -17,12 +18,22 @@ std::size_t clamped_depth(std::size_t requested) {
     return std::min(requested, kMaxAsyncQueueDepth);
 }
 
+std::int64_t clamped_interval(std::int64_t requested) {
+    if (requested <= 0) {
+        // Off. A caller who says zero means zero, not "use the default".
+        return 0;
+    }
+    return std::min(requested, kMaxFlushIntervalMilliseconds);
+}
+
 }  // namespace
 
 AsyncLogSink::AsyncLogSink(LogSink& target, const LogClock& clock,
                            AsyncLogPolicy policy)
     : target_(target), clock_(clock), policy_(policy) {
     policy_.queue_depth = clamped_depth(policy_.queue_depth);
+    policy_.flush_interval_milliseconds =
+        clamped_interval(policy_.flush_interval_milliseconds);
     writer_ = std::thread([this] { run(); });
 }
 
@@ -118,15 +129,35 @@ void AsyncLogSink::run() {
         std::string line;
         bool have_line = false;
         bool do_flush = false;
+        bool periodic = false;
         std::uint64_t gap = 0;
 
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            work_.wait(lock, [this] {
+            const auto ready = [this] {
                 return !queue_.empty() || flush_wanted_ || stopping_;
-            });
+            };
 
-            if (!queue_.empty()) {
+            if (!ready()) {
+                if (unflushed_ && policy_.flush_interval_milliseconds > 0) {
+                    // Something is sitting in the target's buffer. Give the
+                    // machine one interval of quiet, then put it on the disk.
+                    const std::chrono::milliseconds interval(
+                        policy_.flush_interval_milliseconds);
+                    if (!work_.wait_for(lock, interval, ready)) {
+                        periodic = true;
+                    }
+                } else {
+                    // Nothing pending, so nothing to wake up for. An idle
+                    // machine costs no wake-ups at all.
+                    work_.wait(lock, ready);
+                }
+            }
+
+            if (periodic) {
+                do_flush = true;
+                unflushed_ = false;
+            } else if (!queue_.empty()) {
                 // The queue is moving again, so this is the moment to admit
                 // what was lost. The declaration goes out before the line that
                 // follows the gap, which is where a reader would look for it.
@@ -140,6 +171,7 @@ void AsyncLogSink::run() {
             } else if (flush_wanted_) {
                 do_flush = true;
                 flush_wanted_ = false;
+                unflushed_ = false;
             } else {
                 // Nothing queued and no flush wanted: only stopping brings us
                 // here, and the queue is already empty.
@@ -167,6 +199,7 @@ void AsyncLogSink::run() {
             const std::lock_guard<std::mutex> guard(mutex_);
             if (reported) {
                 ++counters_.gap_reports;
+                unflushed_ = true;
             } else {
                 // The declaration itself could not be written. Put the debt
                 // back rather than losing the fact that there was a gap.
@@ -187,6 +220,7 @@ void AsyncLogSink::run() {
             const std::lock_guard<std::mutex> guard(mutex_);
             if (written) {
                 ++counters_.written;
+                unflushed_ = true;
             }
             continue;
         }
@@ -197,6 +231,16 @@ void AsyncLogSink::run() {
             } catch (...) {
                 // Nothing useful can be done here, and the waiter is released
                 // either way: a failing disk must not hang the application.
+            }
+
+            if (periodic) {
+                // Nobody asked for this one, so it must not advance the flush
+                // generation: doing so could release a caller inside flush()
+                // whose own lines are still sitting in the queue.
+                const std::lock_guard<std::mutex> guard(mutex_);
+                ++counters_.flushes;
+                ++counters_.periodic_flushes;
+                continue;
             }
 
             bool finished = false;

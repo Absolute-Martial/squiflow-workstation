@@ -13,7 +13,7 @@
 // actually touches the disk, and that wrapped sink is only ever used from the
 // writer thread: the sinks underneath do not have to be thread-safe.
 //
-// Three decisions worth stating plainly, because they are the ones that hurt
+// Four decisions worth stating plainly, because they are the ones that hurt
 // if they are wrong:
 //
 //  - The queue is bounded. An unbounded queue turns a logging storm into an
@@ -27,6 +27,12 @@
 //  - No gap is ever silent. Dropped lines are counted and, as soon as the
 //    pressure clears, a line is written saying how many were lost. A log that
 //    quietly omits records is worse than no log, because it is believed.
+//
+//  - Delivered lines are flushed after a quiet interval. A shop machine that
+//    logs something and then sits idle for an hour before losing power must
+//    not lose that line to a buffer, and waiting for the next Error to push it
+//    out is not good enough. The interval only runs when there is something
+//    unflushed, so an idle machine costs no wake-ups at all.
 //
 // `flush()` blocks until everything queued before it has reached the wrapped
 // sink and that sink has itself been flushed. The logger already flushes
@@ -58,9 +64,20 @@ namespace squiflow::platform {
 inline constexpr std::size_t kMaxAsyncQueueDepth = 65536;
 inline constexpr std::size_t kDefaultAsyncQueueDepth = 1024;
 
+// Two seconds of unflushed work is a small enough loss to accept on a power
+// cut and long enough that a busy machine is not flushing constantly. The
+// ceiling keeps a mistyped configuration from meaning "effectively never".
+inline constexpr std::int64_t kDefaultFlushIntervalMilliseconds = 2000;
+inline constexpr std::int64_t kMaxFlushIntervalMilliseconds = 300000;
+
 struct AsyncLogPolicy {
     // Clamped into [1, kMaxAsyncQueueDepth] when applied.
     std::size_t queue_depth = kDefaultAsyncQueueDepth;
+
+    // How long delivered-but-unflushed lines may sit before the writer thread
+    // flushes them of its own accord. Zero, or anything negative, turns
+    // periodic flushing off entirely. Clamped to kMaxFlushIntervalMilliseconds.
+    std::int64_t flush_interval_milliseconds = kDefaultFlushIntervalMilliseconds;
 };
 
 struct AsyncLogCounters {
@@ -71,6 +88,10 @@ struct AsyncLogCounters {
     // Lines written to declare a gap once the pressure cleared.
     std::uint64_t gap_reports = 0;
     std::uint64_t flushes = 0;
+    // The subset of flushes the writer thread decided on by itself, rather
+    // than being asked for. Useful for telling a quiet machine apart from a
+    // machine whose flushes are all being forced by errors.
+    std::uint64_t periodic_flushes = 0;
     // The deepest the queue has ever been, which is what tells an operator
     // whether the configured depth is anywhere near enough.
     std::uint64_t peak_depth = 0;
@@ -122,10 +143,15 @@ private:
     // Lines dropped since the last gap report was written.
     std::uint64_t dropped_since_report_ = 0;
     // Counts completed flushes of the target, so a waiter can tell its own
-    // flush apart from one another thread asked for.
+    // flush apart from one another thread asked for. Only flushes that were
+    // asked for advance it: a periodic flush must never release a waiter
+    // whose lines have not been delivered yet.
     std::uint64_t flush_generation_ = 0;
     bool flush_wanted_ = false;
     bool stopping_ = false;
+    // True when lines have reached the target since the last flush, which is
+    // the only condition under which the periodic interval is armed.
+    bool unflushed_ = false;
 
     AsyncLogCounters counters_;
 
