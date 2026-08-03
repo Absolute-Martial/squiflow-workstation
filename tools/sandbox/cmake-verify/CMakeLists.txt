@@ -51,6 +51,7 @@ add_library(squiflow::testing ALIAS squiflow_testing)
 target_include_directories(squiflow_testing INTERFACE ${SQUIFLOW_ROOT}/tests)
 
 add_subdirectory(${SQUIFLOW_ROOT}/external/protocol protocol)
+add_subdirectory(${SQUIFLOW_ROOT}/src/platform platform)
 
 # This lane verifies protocol, engine mechanisms, modules and the real CMake
 # helpers on machines that do not carry the production SQLite toolchain. Keep
@@ -80,6 +81,13 @@ endif()
 
 # The engine tests, which the real tests/CMakeLists.txt will own once it exists.
 if(SQUIFLOW_BUILD_TESTS)
+    add_executable(platform_single_instance_test
+        ${SQUIFLOW_ROOT}/tests/platform/single_instance_test.cpp)
+    target_link_libraries(platform_single_instance_test
+        PRIVATE squiflow::platform squiflow::testing
+                squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME platform.single_instance COMMAND platform_single_instance_test)
+
     foreach(t domain storage migration writer outbox sync)
         set(_src "${SQUIFLOW_ROOT}/tests/engine/engine_${t}_test.cpp")
         if(EXISTS "${_src}")

@@ -30,12 +30,12 @@ target_include_directories(squiflow_platform
 # The logging dispatcher. Private and SYSTEM: no target above the platform
 # boundary sees spdlog, and its headers never produce our warnings.
 target_include_directories(squiflow_platform SYSTEM
-    PRIVATE ${PROJECT_SOURCE_DIR}/external/spdlog/include
-            ${PROJECT_SOURCE_DIR}/external/crashcatch/include)
+    PRIVATE ${SQUIFLOW_ROOT}/external/spdlog/include
+            ${SQUIFLOW_ROOT}/external/crashcatch/include)
 
 if(WIN32)
     target_sources(squiflow_platform PRIVATE crash_handler_win.cpp single_instance_win.cpp)
-    target_link_libraries(squiflow_platform PRIVATE DbgHelp User32)
+    target_link_libraries(squiflow_platform PRIVATE Advapi32 DbgHelp User32)
 else()
     target_sources(squiflow_platform PRIVATE crash_handler_posix.cpp single_instance_posix.cpp)
 endif()
