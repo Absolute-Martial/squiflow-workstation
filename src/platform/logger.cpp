@@ -107,7 +107,25 @@ public:
                 floor = rule.level;
             }
         }
+        if (backtrace.enabled()) {
+            // The ring exists to release records the level filter rejected.
+            // If the dispatcher threshold stayed at the filter level it would
+            // discard exactly those records on their way out, and the feature
+            // would appear to work while producing nothing.
+            floor = LogLevel::Debug;
+        }
         backend.set_level(to_backend(floor));
+    }
+
+    // The held run-up, written ahead of the failure that asked for it. Each
+    // line is marked, so nobody mistakes a released Debug record for one the
+    // current level would have written.
+    void release_backtrace() {
+        for (LogRecord& held : backtrace.take()) {
+            held.fields.push_back(LogField{"backtrace", "1"});
+            ++counters.backtrace_released;
+            write_record(held);
+        }
     }
 
     // One place where a record becomes a line, so that refusal detection and
@@ -172,6 +190,7 @@ public:
     const LogClock& clock;
     LogLevelPolicy policy;
     LogThrottle throttle;
+    LogBacktrace backtrace;
     mutable std::mutex mutex;
     LoggerCounters counters;
     std::uint64_t seen_refusals = 0;
@@ -266,6 +285,17 @@ void Logger::log(LogLevel level, std::string_view category,
 
     if (!impl_->policy.is_enabled(effective_category(category), level)) {
         ++impl_->counters.suppressed;
+        if (impl_->backtrace.enabled()) {
+            // Rejected, but not yet thrown away: if something fails shortly
+            // after this, these are the lines that will explain it.
+            LogRecord rejected;
+            rejected.level = level;
+            rejected.category.assign(category);
+            rejected.message.assign(message);
+            rejected.fields = std::move(fields);
+            rejected.timestamp_milliseconds = impl_->clock.now_milliseconds();
+            impl_->backtrace.remember(rejected);
+        }
         return;
     }
 
@@ -300,6 +330,12 @@ void Logger::log(LogLevel level, std::string_view category,
             "repeated", std::to_string(decision.suppressed_since_last)});
     }
 
+    if (impl_->backtrace.triggers_on(level)) {
+        // Ahead of the record, so the file reads in the order things happened
+        // and the failure arrives with its run-up already on the page.
+        impl_->release_backtrace();
+    }
+
     impl_->write_record(record);
 }
 
@@ -326,6 +362,17 @@ void Logger::error(std::string_view category, std::string_view message,
 void Logger::fatal(std::string_view category, std::string_view message,
                    std::vector<LogField> fields) {
     log(LogLevel::Fatal, category, message, std::move(fields));
+}
+
+void Logger::set_backtrace_policy(const LogBacktracePolicy& policy) {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    impl_->backtrace.set_policy(policy);
+    impl_->refresh_backend_floor();
+}
+
+LogBacktracePolicy Logger::backtrace_policy() const {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return impl_->backtrace.policy();
 }
 
 void Logger::set_throttle_policy(const LogThrottlePolicy& policy) {

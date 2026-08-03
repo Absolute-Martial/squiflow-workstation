@@ -31,6 +31,7 @@
 #include "platform/log_level_policy.hpp"
 #include "platform/log_record.hpp"
 #include "platform/log_sink.hpp"
+#include "platform/log_backtrace.hpp"
 #include "platform/log_throttle.hpp"
 
 namespace squiflow::platform {
@@ -49,6 +50,9 @@ struct LoggerCounters {
     std::uint64_t rate_limited = 0;
     // Lines written purely to account for records held back earlier.
     std::uint64_t repeat_summaries = 0;
+    // Records the level filter rejected that were later released
+    // because a failure asked for the run-up to it.
+    std::uint64_t backtrace_released = 0;
 };
 
 class Logger {
@@ -104,6 +108,16 @@ public:
     // No gap is ever silent: the next record written carries a `repeated`
     // field counting what it stands for, and anything still owed is reported
     // at `flush()` and at shutdown. Fatal is never held back.
+    // The deferred run-up, off by default. Records the level filter
+    // rejects are held in a small ring instead of being discarded, and
+    // released ahead of the next record at or above the trigger level.
+    //
+    // This is how a machine running at Info can still explain a failure
+    // that only the Debug lines preceding it could have explained,
+    // without paying for those lines on every ordinary day.
+    void set_backtrace_policy(const LogBacktracePolicy& policy);
+    LogBacktracePolicy backtrace_policy() const;
+
     void set_throttle_policy(const LogThrottlePolicy& policy);
     LogThrottlePolicy throttle_policy() const;
 
