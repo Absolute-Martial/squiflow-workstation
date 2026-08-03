@@ -36,6 +36,8 @@
 
 namespace squiflow::platform {
 
+class CrashBreadcrumb;
+
 // Which dispatcher was compiled in, as a plain string. Reported at startup and
 // asserted by the test programme, so an unnoticed dependency change fails the
 // gate rather than the shop counter.
@@ -134,6 +136,10 @@ public:
                std::vector<LogField> fields = {});
     void fatal(std::string_view category, std::string_view message,
                std::vector<LogField> fields = {});
+
+    // Borrowed startup resource. Passing nullptr detaches it. Records that
+    // pass the level policy are published before the sink chain is entered.
+    void set_breadcrumb(CrashBreadcrumb* breadcrumb) noexcept;
 
     void flush();
 

@@ -1,5 +1,6 @@
 #include "platform/logger.hpp"
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -9,6 +10,7 @@
 #include <spdlog/sinks/sink.h>
 #include <spdlog/version.h>
 
+#include "platform/crash_breadcrumb.hpp"
 #include "platform/log_formatter.hpp"
 
 namespace squiflow::platform {
@@ -132,6 +134,10 @@ public:
     // the flush after Error cannot drift apart between the ordinary path and
     // the summaries written on the throttle's behalf.
     void write_record(const LogRecord& record) {
+        if (CrashBreadcrumb* ring = breadcrumb.load(std::memory_order_acquire)) {
+            ring->push(record.level, effective_category(record.category),
+                       record.message, record.timestamp_milliseconds);
+        }
         try {
             // The payload is passed as an argument, never as a format string:
             // a message containing braces must not be read as formatting.
@@ -191,6 +197,7 @@ public:
     LogLevelPolicy policy;
     LogThrottle throttle;
     LogBacktrace backtrace;
+    std::atomic<CrashBreadcrumb*> breadcrumb{nullptr};
     mutable std::mutex mutex;
     LoggerCounters counters;
     std::uint64_t seen_refusals = 0;
@@ -200,6 +207,7 @@ Logger::Logger(LogSink& sink, const LogClock& clock, LogLevel minimum_level)
     : impl_(std::make_unique<Impl>(sink, clock, minimum_level)) {}
 
 Logger::~Logger() {
+    impl_->breadcrumb.store(nullptr, std::memory_order_release);
     // A gap must never outlive the run that caused it, and a destructor may
     // never throw: whatever is still owed is written here, and any failure
     // doing so is swallowed because there is nothing left to report it to.
@@ -386,6 +394,10 @@ void Logger::set_throttle_policy(const LogThrottlePolicy& policy) {
 LogThrottlePolicy Logger::throttle_policy() const {
     const std::lock_guard<std::mutex> guard(impl_->mutex);
     return impl_->throttle.policy();
+}
+
+void Logger::set_breadcrumb(CrashBreadcrumb* breadcrumb) noexcept {
+    impl_->breadcrumb.store(breadcrumb, std::memory_order_release);
 }
 
 void Logger::flush() {
