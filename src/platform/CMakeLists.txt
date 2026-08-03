@@ -15,6 +15,7 @@ add_library(squiflow_platform STATIC
     log_level_policy.cpp
     log_throttle.cpp
     log_backtrace.cpp
+    async_log_sink.cpp
     local_log_storage.cpp
     rotating_log_file.cpp
     logger.cpp)

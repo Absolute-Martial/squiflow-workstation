@@ -48,6 +48,7 @@ LOGGING_SRC := src/platform/log_record.cpp \
                src/platform/log_level_policy.cpp \
                src/platform/log_throttle.cpp \
                src/platform/log_backtrace.cpp \
+               src/platform/async_log_sink.cpp \
                src/platform/log_formatter.cpp \
                src/platform/local_log_storage.cpp \
                src/platform/rotating_log_file.cpp \
