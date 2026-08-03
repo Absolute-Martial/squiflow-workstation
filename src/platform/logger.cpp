@@ -110,10 +110,68 @@ public:
         backend.set_level(to_backend(floor));
     }
 
+    // One place where a record becomes a line, so that refusal detection and
+    // the flush after Error cannot drift apart between the ordinary path and
+    // the summaries written on the throttle's behalf.
+    void write_record(const LogRecord& record) {
+        try {
+            // The payload is passed as an argument, never as a format string:
+            // a message containing braces must not be read as formatting.
+            backend.log(to_backend(record.level), "{}",
+                        format_log_record(record));
+        } catch (...) {
+            // spdlog turns sink trouble into its error handler, but formatting
+            // and allocation can still throw, and no caller of this class is
+            // prepared for an exception.
+            ++counters.sink_failures;
+            return;
+        }
+
+        const std::uint64_t refusals = adapter->refusals();
+        if (refusals != seen_refusals) {
+            seen_refusals = refusals;
+            ++counters.sink_failures;
+        } else {
+            ++counters.emitted;
+        }
+
+        if (record.level == LogLevel::Error ||
+            record.level == LogLevel::Fatal) {
+            try {
+                backend.flush();
+            } catch (...) {
+                ++counters.sink_failures;
+            }
+        }
+    }
+
+    // A held-back record is never simply forgotten. Whatever the throttle
+    // silenced is accounted for by a line saying how many there were.
+    void report_repeats(const std::vector<RepeatSummary>& owed,
+                        std::int64_t now_milliseconds) {
+        for (const RepeatSummary& summary : owed) {
+            LogRecord record;
+            record.level = summary.level;
+            record.category = summary.category;
+            record.message = summary.message;
+            record.fields.push_back(LogField{"throttled", "summary"});
+            record.fields.push_back(
+                LogField{"repeated", std::to_string(summary.suppressed)});
+            record.timestamp_milliseconds = now_milliseconds;
+            ++counters.repeat_summaries;
+            write_record(record);
+        }
+    }
+
+    void drain_throttle(std::int64_t now_milliseconds) {
+        report_repeats(throttle.drain(), now_milliseconds);
+    }
+
     std::shared_ptr<ApplicationSink> adapter;
     spdlog::logger backend;
     const LogClock& clock;
     LogLevelPolicy policy;
+    LogThrottle throttle;
     mutable std::mutex mutex;
     LoggerCounters counters;
     std::uint64_t seen_refusals = 0;
@@ -122,7 +180,17 @@ public:
 Logger::Logger(LogSink& sink, const LogClock& clock, LogLevel minimum_level)
     : impl_(std::make_unique<Impl>(sink, clock, minimum_level)) {}
 
-Logger::~Logger() = default;
+Logger::~Logger() {
+    // A gap must never outlive the run that caused it, and a destructor may
+    // never throw: whatever is still owed is written here, and any failure
+    // doing so is swallowed because there is nothing left to report it to.
+    try {
+        const std::lock_guard<std::mutex> guard(impl_->mutex);
+        impl_->drain_throttle(impl_->clock.now_milliseconds());
+        impl_->backend.flush();
+    } catch (...) {
+    }
+}
 
 void Logger::set_minimum_level(LogLevel level) {
     const std::lock_guard<std::mutex> guard(impl_->mutex);
@@ -196,9 +264,26 @@ void Logger::log(LogLevel level, std::string_view category,
     // exists to prevent.
     const std::lock_guard<std::mutex> guard(impl_->mutex);
 
-    const spdlog::level::level_enum backend_level = to_backend(level);
     if (!impl_->policy.is_enabled(effective_category(category), level)) {
         ++impl_->counters.suppressed;
+        return;
+    }
+
+    // One reading of the clock for the whole decision, so that the record and
+    // any summary it displaces cannot disagree about when this happened.
+    const std::int64_t now = impl_->clock.now_milliseconds();
+
+    const ThrottleDecision decision = impl_->throttle.consider(
+        level, effective_category(category), message, now);
+
+    if (decision.evicted.has_value()) {
+        // Something was pushed out of the throttle's table still owing an
+        // account of itself. Settle that debt before writing anything new.
+        impl_->report_repeats({*decision.evicted}, now);
+    }
+
+    if (!decision.emit) {
+        ++impl_->counters.rate_limited;
         return;
     }
 
@@ -207,35 +292,15 @@ void Logger::log(LogLevel level, std::string_view category,
     record.category.assign(category);
     record.message.assign(message);
     record.fields = std::move(fields);
-    record.timestamp_milliseconds = impl_->clock.now_milliseconds();
+    record.timestamp_milliseconds = now;
 
-    try {
-        // The payload is passed as an argument, never as a format string: a
-        // message containing braces must not be interpreted as formatting.
-        impl_->backend.log(backend_level, "{}", format_log_record(record));
-    } catch (...) {
-        // spdlog turns sink trouble into its error handler, but formatting and
-        // allocation can still throw, and no caller of this class is prepared
-        // for an exception.
-        ++impl_->counters.sink_failures;
-        return;
+    if (decision.suppressed_since_last > 0) {
+        // This line speaks for the ones that were held back behind it.
+        record.fields.push_back(LogField{
+            "repeated", std::to_string(decision.suppressed_since_last)});
     }
 
-    const std::uint64_t refusals = impl_->adapter->refusals();
-    if (refusals != impl_->seen_refusals) {
-        impl_->seen_refusals = refusals;
-        ++impl_->counters.sink_failures;
-    } else {
-        ++impl_->counters.emitted;
-    }
-
-    if (level == LogLevel::Error || level == LogLevel::Fatal) {
-        try {
-            impl_->backend.flush();
-        } catch (...) {
-            ++impl_->counters.sink_failures;
-        }
-    }
+    impl_->write_record(record);
 }
 
 void Logger::debug(std::string_view category, std::string_view message,
@@ -263,8 +328,22 @@ void Logger::fatal(std::string_view category, std::string_view message,
     log(LogLevel::Fatal, category, message, std::move(fields));
 }
 
+void Logger::set_throttle_policy(const LogThrottlePolicy& policy) {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    // Settle what was held under the old rule before the new one applies:
+    // a debt measured under one policy must not be reported under another.
+    impl_->drain_throttle(impl_->clock.now_milliseconds());
+    impl_->throttle.set_policy(policy);
+}
+
+LogThrottlePolicy Logger::throttle_policy() const {
+    const std::lock_guard<std::mutex> guard(impl_->mutex);
+    return impl_->throttle.policy();
+}
+
 void Logger::flush() {
     const std::lock_guard<std::mutex> guard(impl_->mutex);
+    impl_->drain_throttle(impl_->clock.now_milliseconds());
     try {
         impl_->backend.flush();
     } catch (...) {

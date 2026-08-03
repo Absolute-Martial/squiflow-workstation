@@ -31,6 +31,7 @@
 #include "platform/log_level_policy.hpp"
 #include "platform/log_record.hpp"
 #include "platform/log_sink.hpp"
+#include "platform/log_throttle.hpp"
 
 namespace squiflow::platform {
 
@@ -43,6 +44,11 @@ struct LoggerCounters {
     std::uint64_t emitted = 0;
     std::uint64_t suppressed = 0;
     std::uint64_t sink_failures = 0;
+    // Records the throttle held back because the same thing was already being
+    // said. Distinct from `suppressed`, which is the level filter.
+    std::uint64_t rate_limited = 0;
+    // Lines written purely to account for records held back earlier.
+    std::uint64_t repeat_summaries = 0;
 };
 
 class Logger {
@@ -88,6 +94,18 @@ public:
     // form is the accurate one; the other asks about the default level only.
     bool is_enabled(LogLevel level) const;
     bool is_enabled(std::string_view category, LogLevel level) const;
+
+    // Rate limiting, off by default. When engaged, identical records (same
+    // level, category and message) are held back and accounted for rather
+    // than written, so that a retry loop failing thirty times a second cannot
+    // spend the log budget and push the evidence of its own cause out of the
+    // file.
+    //
+    // No gap is ever silent: the next record written carries a `repeated`
+    // field counting what it stands for, and anything still owed is reported
+    // at `flush()` and at shutdown. Fatal is never held back.
+    void set_throttle_policy(const LogThrottlePolicy& policy);
+    LogThrottlePolicy throttle_policy() const;
 
     void log(LogLevel level, std::string_view category,
              std::string_view message, std::vector<LogField> fields = {});
