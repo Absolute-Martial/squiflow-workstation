@@ -1,0 +1,5 @@
+#include "shell/completion_gate.hpp"
+#include "shell/view_model_state.hpp"
+#include "support/check.hpp"
+#include <thread>
+int main(){namespace t=squiflow::testing;using namespace squiflow::shell;t::section("completion generations");CompletionGate gate;auto first=gate.begin();t::check(gate.accepts(first),"current completion accepted");auto second=gate.begin();t::check(!gate.accepts(first)&&gate.accepts(second),"obsolete completion rejected");gate.cancel();t::check(!gate.accepts(second),"cancellation invalidates completion");t::check(gate.on_owner_thread(),"owner thread recognized");bool worker_owner=true;std::thread worker([&]{worker_owner=gate.on_owner_thread();});worker.join();t::check(!worker_owner,"worker is not GUI owner");t::section("exclusive state");ViewModelState state=LoadingState{second};t::check(state_kind(state)==ViewStateKind::Loading,"loading state selected");state=ReadyState{true,false};t::check(state_kind(state)==ViewStateKind::Ready,"ready replaces loading");state=FailedState{"load.failed"};t::check(state_kind(state)==ViewStateKind::Failed,"failure is exclusive");return t::report();}
