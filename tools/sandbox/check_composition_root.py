@@ -5,6 +5,6 @@ root=Path(__file__).resolve().parents[2];text=(root/'src/app/composition_root.cp
 includes=sorted(re.findall(r'modules/([^/]+)/module.hpp',text));calls=sorted(re.findall(r'modules::([a-z_]+)::make_module',text));errors=[]
 if includes!=dirs:errors.append(f'includes {includes} != module dirs {dirs}')
 if calls!=dirs:errors.append(f'factories {calls} != module dirs {dirs}')
-if 'r.seal();' not in text:errors.append('registry is not sealed')
+if 'r.require_complete();' not in text:errors.append('registry completeness is not enforced')
 if errors:print('\n'.join(errors),file=sys.stderr);sys.exit(1)
 print(f'composition root policy: {len(dirs)} modules passed')

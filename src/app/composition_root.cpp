@@ -14,5 +14,5 @@
 namespace squiflow::app {
 void register_all_modules(modules::Registry& r,std::function<std::int64_t()> c){
  r.add(modules::administration::make_module(c));r.add(modules::parties::make_module(c));r.add(modules::catalog::make_module(c));r.add(modules::pricing::make_module(c));r.add(modules::quotations::make_module(c));r.add(modules::orders::make_module(c));r.add(modules::jobs::make_module(c));r.add(modules::receivables::make_module(c));r.add(modules::agreements::make_module(c));r.add(modules::sourcing::make_module(c));r.add(modules::companion::make_module(c));r.add(modules::files::make_module(std::move(c)));
- r.seal();}
+ r.require_complete();}
 }
