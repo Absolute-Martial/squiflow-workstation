@@ -8,10 +8,5 @@
     "catch2",
     "libsodium",
     "gtest"
-  ],
-  "builtin-baseline": "REPLACE_WITH_PINNED_BASELINE_COMMIT",
-  "overrides": [
-    { "name": "libsodium", "version": "1.0.22" },
-    { "name": "gtest", "version": "1.17.0" }
   ]
 }

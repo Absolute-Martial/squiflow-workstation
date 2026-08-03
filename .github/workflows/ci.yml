@@ -1,0 +1,70 @@
+name: CI
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux-strict:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '4.4.2'
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - name: Validate pipeline policy
+        run: python3 tools/ci/check_pipeline.py
+      - name: Run strict source gate
+        run: make -f tools/sandbox/Makefile check
+      - name: Build pinned libsodium for CMake lane
+        run: echo "SQUIFLOW_SODIUM_ROOT=$(tools/ci/build-libsodium.sh)" >> "$GITHUB_ENV"
+      - name: Configure, build and test portable CMake lane
+        run: cmake --workflow --preset linux-check
+  windows-msvc:
+    runs-on: windows-2025
+    timeout-minutes: 90
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\.vcpkg-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '4.4.2'
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.11.1'
+          arch: win64_msvc2022_64
+          modules: 'qtshadertools qtimageformats qttools qtsvg'
+          cache: true
+      - name: Checkout pinned vcpkg
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: '2026.07.29'
+          path: .vcpkg
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: |
+          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+          New-Item -ItemType Directory -Force $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+      - name: Build and test with MSVC
+        run: cmake --workflow --preset windows-msvc-check
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msvc-test-logs
+          path: build/windows-msvc-release/Testing/Temporary/
+          if-no-files-found: ignore

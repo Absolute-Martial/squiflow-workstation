@@ -1,47 +1,209 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": { "major": 3, "minor": 26, "patch": 0 },
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 26,
+    "patch": 0
+  },
   "configurePresets": [
     {
-      "name": "base",
+      "name": "common",
       "hidden": true,
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "SQUIFLOW_BUILD_TESTS": "ON",
+        "SQUIFLOW_WARNINGS_AS_ERRORS": "ON"
       }
     },
     {
-      "name": "debug",
-      "inherits": "base",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "name": "linux-gcc-debug",
+      "displayName": "Linux GCC Debug (portable verification)",
+      "inherits": "common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SQUIFLOW_WITH_SQLITE": "OFF",
+        "SQUIFLOW_WITH_QT": "OFF",
+        "SQUIFLOW_SODIUM_ROOT": "$env{SQUIFLOW_SODIUM_ROOT}"
+      },
+      "generator": "Unix Makefiles"
     },
     {
-      "name": "release",
-      "inherits": "base",
+      "name": "linux-gcc-asan",
+      "displayName": "Linux GCC ASan/UBSan",
+      "inherits": "linux-gcc-debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "SQUIFLOW_ENABLE_SANITIZERS": "ON"
+      }
+    },
+    {
+      "name": "windows-msvc-common",
+      "hidden": true,
+      "inherits": "common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows",
+        "SQUIFLOW_WITH_SQLITE": "ON",
+        "SQUIFLOW_WITH_QT": "ON"
+      },
+      "generator": "Ninja"
+    },
+    {
+      "name": "windows-msvc-debug",
+      "displayName": "Windows MSVC Debug",
+      "inherits": "windows-msvc-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-msvc-release",
+      "displayName": "Windows MSVC RelWithDebInfo",
+      "inherits": "windows-msvc-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
       }
-    },
-    {
-      "name": "asan",
-      "inherits": "debug",
-      "cacheVariables": { "SQUIFLOW_SANITIZE": "address;undefined" }
-    },
-    {
-      "name": "headless",
-      "inherits": "debug",
-      "cacheVariables": { "SQUIFLOW_BUILD_UI": "OFF" }
     }
   ],
   "buildPresets": [
-    { "name": "debug", "configurePreset": "debug" },
-    { "name": "release", "configurePreset": "release" }
+    {
+      "name": "linux-gcc-debug",
+      "configurePreset": "linux-gcc-debug",
+      "jobs": 2
+    },
+    {
+      "name": "linux-gcc-asan",
+      "configurePreset": "linux-gcc-asan",
+      "jobs": 2
+    },
+    {
+      "name": "windows-msvc-debug",
+      "configurePreset": "windows-msvc-debug",
+      "jobs": 2
+    },
+    {
+      "name": "windows-msvc-release",
+      "configurePreset": "windows-msvc-release",
+      "jobs": 2
+    },
+    {
+      "name": "windows-msvc-package",
+      "displayName": "Stage Windows release bundle",
+      "configurePreset": "windows-msvc-release",
+      "targets": [
+        "squiflow_archive"
+      ],
+      "jobs": 2
+    }
   ],
   "testPresets": [
-    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } }
+    {
+      "name": "linux-gcc-debug",
+      "configurePreset": "linux-gcc-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "linux-gcc-asan",
+      "configurePreset": "linux-gcc-asan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "windows-msvc-debug",
+      "configurePreset": "windows-msvc-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "windows-msvc-release",
+      "configurePreset": "windows-msvc-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-check",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-gcc-debug"
+        },
+        {
+          "type": "build",
+          "name": "linux-gcc-debug"
+        },
+        {
+          "type": "test",
+          "name": "linux-gcc-debug"
+        }
+      ]
+    },
+    {
+      "name": "windows-msvc-check",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-msvc-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-msvc-release"
+        },
+        {
+          "type": "test",
+          "name": "windows-msvc-release"
+        }
+      ]
+    },
+    {
+      "name": "windows-msvc-release-bundle",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-msvc-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-msvc-release"
+        },
+        {
+          "type": "test",
+          "name": "windows-msvc-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-msvc-package"
+        }
+      ]
+    }
   ]
 }

@@ -28,6 +28,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
+include(cmake/Version.cmake)
+
 # ---------------------------------------------------------------------------
 # Options
 # ---------------------------------------------------------------------------
@@ -111,3 +113,6 @@ add_subdirectory(src)
 if(SQUIFLOW_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
+
+# Deployment and release targets are defined only after the executable exists.
+include(cmake/Packaging.cmake)
