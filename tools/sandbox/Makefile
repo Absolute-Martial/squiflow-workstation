@@ -22,7 +22,10 @@ STD ?= c++23
 BUILD ?= build/sandbox
 PYTHON ?= python3
 
-INCLUDES := -Iexternal/protocol/include -isystem external/spdlog/include -isystem external/crashcatch/include -Isrc -Itests
+SODIUM_PREFIX ?= build/vendor/libsodium
+SODIUM_LIB := $(SODIUM_PREFIX)/lib/libsodium.a
+
+INCLUDES := -Iexternal/protocol/include -isystem external/spdlog/include -isystem external/crashcatch/include -isystem $(SODIUM_PREFIX)/include -Isrc -Itests
 
 WARNINGS := -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
             -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion \
@@ -197,9 +200,17 @@ $(BUILD)/platform_single_instance_test: $(SINGLE_INSTANCE_SRC) tests/platform/si
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
-$(BUILD)/platform_secrets_test: $(SECRETS_SRC) tests/platform/secrets_test.cpp
+$(SODIUM_LIB): external/dist/libsodium-1.0.22.tar.gz
+>@rm -rf build/vendor/libsodium-src $(SODIUM_PREFIX)
+>@mkdir -p build/vendor/libsodium-src $(SODIUM_PREFIX)
+>@tar -xzf $< -C build/vendor/libsodium-src --strip-components=1
+>@cd build/vendor/libsodium-src && ./configure --disable-shared --enable-static --prefix=$(abspath $(SODIUM_PREFIX)) >/dev/null
+>@$(MAKE) -C build/vendor/libsodium-src -j2 >/dev/null
+>@$(MAKE) -C build/vendor/libsodium-src install >/dev/null
+
+$(BUILD)/platform_secrets_test: $(SECRETS_SRC) tests/platform/secrets_test.cpp $(SODIUM_LIB)
 >@mkdir -p $(BUILD)
->$(CXX) $(CXXFLAGS) $^ -o $@
+>$(CXX) $(CXXFLAGS) $(SECRETS_SRC) tests/platform/secrets_test.cpp $(SODIUM_LIB) -o $@
 
 $(BUILD)/protocol_test: $(PROTOCOL_SRC) external/protocol/tests/protocol_test.cpp
 >@mkdir -p $(BUILD)

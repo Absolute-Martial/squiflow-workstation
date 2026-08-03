@@ -27,6 +27,21 @@ add_library(squiflow_platform STATIC
 
 add_library(squiflow::platform ALIAS squiflow_platform)
 
+find_package(unofficial-sodium CONFIG QUIET)
+if(TARGET unofficial-sodium::sodium)
+    set(SQUIFLOW_SODIUM_TARGET unofficial-sodium::sodium)
+elseif(SQUIFLOW_SODIUM_ROOT)
+    add_library(squiflow_sodium STATIC IMPORTED GLOBAL)
+    set_target_properties(squiflow_sodium PROPERTIES
+        IMPORTED_LOCATION "${SQUIFLOW_SODIUM_ROOT}/lib/libsodium.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${SQUIFLOW_SODIUM_ROOT}/include")
+    set(SQUIFLOW_SODIUM_TARGET squiflow_sodium)
+else()
+    message(FATAL_ERROR
+        "libsodium 1.0.22 is required for guarded secret memory. "
+        "Install it through vcpkg or set SQUIFLOW_SODIUM_ROOT.")
+endif()
+
 target_include_directories(squiflow_platform
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
@@ -55,4 +70,5 @@ else()
 endif()
 
 target_link_libraries(squiflow_platform
-    PRIVATE squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    PRIVATE ${SQUIFLOW_SODIUM_TARGET}
+            squiflow::warnings squiflow::hardening squiflow::sanitizers)

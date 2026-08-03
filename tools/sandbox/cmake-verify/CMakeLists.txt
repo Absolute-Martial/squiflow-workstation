@@ -42,6 +42,13 @@ option(SQUIFLOW_BUILD_TESTS "Build the test targets" ON)
 
 if(SQUIFLOW_BUILD_TESTS)
     enable_testing()
+    include(FetchContent)
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(googletest
+        URL "${SQUIFLOW_ROOT}/external/dist/googletest-1.17.0.tar.gz"
+        URL_HASH SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c)
+    FetchContent_MakeAvailable(googletest)
 endif()
 
 # The test support header, as a target, so module tests can ask for
@@ -94,6 +101,13 @@ if(SQUIFLOW_BUILD_TESTS)
         PRIVATE squiflow::platform squiflow::testing
                 squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME platform.secrets COMMAND platform_secrets_test)
+
+    add_executable(platform_secrets_gtest
+        ${SQUIFLOW_ROOT}/tests/platform/secrets_gtest.cpp)
+    target_link_libraries(platform_secrets_gtest
+        PRIVATE squiflow::platform GTest::gtest_main
+                squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME platform.secrets.google_test COMMAND platform_secrets_gtest)
 
     foreach(t domain storage migration writer outbox sync)
         set(_src "${SQUIFLOW_ROOT}/tests/engine/engine_${t}_test.cpp")
