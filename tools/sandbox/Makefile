@@ -57,6 +57,9 @@ LOGGING_SRC := src/platform/log_record.cpp \
 
 CRASH_SRC := src/platform/crash_handler_posix.cpp
 
+SINGLE_INSTANCE_SRC := src/platform/single_instance_name.cpp \
+                       src/platform/single_instance_posix.cpp
+
 ENGINE_SRC := src/engine/records/identity.cpp \
               src/engine/records/quantity.cpp \
               src/engine/records/money.cpp \
@@ -183,6 +186,10 @@ $(BUILD)/platform_logging_test: $(LOGGING_SRC) tests/platform/logging_test.cpp
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(BUILD)/platform_crash_test: $(LOGGING_SRC) $(CRASH_SRC) tests/platform/crash_handler_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/platform_single_instance_test: $(SINGLE_INSTANCE_SRC) tests/platform/single_instance_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -389,7 +396,7 @@ integrity:
 >@$(PYTHON) tools/sandbox/integrity.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -414,6 +421,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== platform crash handling =='
 >./$(BUILD)/platform_crash_test
+>@echo
+>@echo '== platform single instance =='
+>./$(BUILD)/platform_single_instance_test
 >@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test
