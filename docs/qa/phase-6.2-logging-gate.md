@@ -141,3 +141,69 @@ No defect of any severity remains open.
 
 No critical or major defect. Every required gate passed. Phase 6.2 is
 approved.
+
+## 9. Sub-phase 6.2a - the capabilities Quill was wanted for
+
+Verdict: **PASS**
+Verified: 2026-08-03, GCC 11.5.0, `-std=c++23`
+
+Quill 12.1.0 was supplied and evaluated as a replacement dispatcher, and
+rejected: swapping dispatchers again would have created work rather than saved
+it, and none of what was actually wanted lives in the dispatcher. The
+capabilities were built in SquiFlow's own code instead, against spdlog.
+
+| Step | Delivered | Proven by |
+| --- | --- | --- |
+| 1 Per-category levels | `src/platform/log_level_policy.{hpp,cpp}` | Longest dotted prefix wins on a dot boundary; 32-rule ceiling; a configuration string the parser accepts round-trips |
+| 2 Repeat throttling | `src/platform/log_throttle.{hpp,cpp}` | Identity is level, category and message; first sighting always speaks; Fatal never throttled; eviction settles what it owed; a backwards clock releases |
+| 3 Deferred run-up | `src/platform/log_backtrace.{hpp,cpp}` | Ring keeps the newest on shrink; released records marked `backtrace="1"`; the dispatcher floor is forced to Debug while armed, without which released records would be discarded on the way out |
+| 4 Asynchronous delivery | `src/platform/async_log_sink.{hpp,cpp}` | Bounded queue, drop-oldest, one counted `dropped="N"` declaration per gap, order preserved, shutdown drains, `flush()` a real guarantee |
+| 5 Periodic flush | same | A quiet sink flushes unasked, then goes properly idle; zero and negatives mean off; a periodic flush never releases a waiting `flush()` |
+
+### 9.1 Defects found and fixed
+
+1. **Round-trip defect, step 1 (major).** `to_configuration()` built level names
+   from the display vocabulary, where `Warning` is `"WARN "`, while the parser
+   accepts only `warning`. The logger emitted a configuration string its own
+   parser rejected. Fixed in the code; the display and configuration
+   vocabularies are now kept deliberately separate.
+2. **Dispatcher pre-emption, steps 1 and 3 (major).** spdlog holds one
+   threshold. Without forcing the backend floor down, per-category levels and
+   released run-up records would both be discarded inside the dispatcher, and
+   the features would appear to work while producing nothing.
+3. **Dead self-cancelling code, step 3 (minor).** A duplicated counter
+   assignment was caught by reading the file before building it, and the
+   function was rewritten rather than patched.
+4. **Two mistaken expectations in the combined test (no code defect).** The
+   throttle identifies a record by level, category and message and deliberately
+   ignores fields, so two hundred invoices differing only in a number field are
+   one repeated message to it. Records held back by level count as `suppressed`
+   while records held back by the throttle count as `rate_limited`. Both
+   expectations were corrected against the observed values; no assertion was
+   loosened.
+
+### 9.2 Gate results
+
+| Gate | Result |
+| --- | --- |
+| Sandbox build, `-Werror` with the full warning set | Clean |
+| Logging programme | 1,276 checks, 0 failed |
+| Full suite | 31 programmes, 5,061 assertions, 0 failed |
+| Integrity | 293 files checked, all pass |
+| Header self-containment | 131 headers, 0 not self-contained |
+| Whitespace | `git diff --check` clean |
+
+### 9.3 Honest limits
+
+- The crash handler in 6.3 cannot safely take the asynchronous queue's mutex
+  from a signal or exception handler. Writing a crash record will need a path
+  that does not go through the queue. That design is owed by 6.3 and is not
+  claimed here.
+- Periodic flushing is proven with real short intervals and a bounded wait
+  whose releaser is the sink's own timer. It is not proven against a machine
+  under heavy load, which this environment cannot arrange honestly.
+
+### 9.4 Verdict
+
+No critical or major defect remains open. Every required gate passed.
+Sub-phase 6.2a is approved.

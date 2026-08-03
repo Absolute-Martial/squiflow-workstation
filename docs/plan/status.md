@@ -51,12 +51,13 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 5 | 5.7 Agreement quantity caps | QA approved | apply on draft; consume at issue; release at cancellation; migration 24; 31 workflow checks |
 | 5 | 5.8 Document approval/email preparation | Not started | Phase 5 is 7/8 complete |
 | 6 | 6.1 Paths - machine-wide data, per-account cache | QA approved | 129 checks, 0 failed; every directory created and proven writable; no schema change |
-| 6 | 6.2 Logging with rotation and a hard total cap | QA approved | 717 checks, 0 failed; secrets redacted; one line per record; family capped on a real disk |
+| 6 | 6.2 Logging with rotation and a hard total cap | QA approved | 1,276 checks, 0 failed; secrets redacted; one line per record; family capped on a real disk |
+| 6 | 6.2a Per-category levels, throttling, run-up ring, asynchronous delivery | QA approved | Included in the 1,276; no gap is ever silent, and the arithmetic reconciles |
 | 6 | 6.3-6.8 Crash, lock, secrets, network, services, startup | Not started | Interfaces planned, fakes required before a second caller |
 | 7-9 | UI, packaging, hardening | Not started | Nothing on disk |
 
-Totals: **285 files integrity-checked, 127 headers proven self-contained,
-4,502 assertions across 31 strict test programs, 0 failed.** The independent CMake
+Totals: **293 files integrity-checked, 131 headers proven self-contained,
+5,061 assertions across 31 strict test programs, 0 failed.** The independent CMake
 lane passes 31/31 tests and verifies the complete module graph: 12 modules,
 acyclic, core closed. The schema is at migration 25. Overall progress is
 **42/69**; Phase 5 is **8/8**; Phase 6 is **2/8**.
@@ -742,7 +743,7 @@ Generations are numbered, never dated, since a shop machine's clock moves
 backwards when it syncs. Nothing in the path throws: a refused append, a full
 volume, a file held open so it cannot be renamed, a delete that is refused and
 a size that cannot be read are each detected, counted and survived. Eight
-threads logging at once produce whole, uninterleaved lines. 717 checks, 0
+threads logging at once produce whole, uninterleaved lines. 1,276 checks, 0
 failed. The dispatcher underneath is spdlog 1.17.0, vendored and pinned, and
 it is invisible above `logger.hpp`. Formal evidence is in `docs/qa/phase-6.2-logging-gate.md`.
 

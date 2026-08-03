@@ -11,6 +11,20 @@ gate that proved it.
 
 ### Added
 
+- **Phase 6.2a - a log that never lies by omission.** Verbosity can now be
+  chosen per category, so one noisy area can be turned up without drowning
+  the file. Repeated records are held back and declared with a count rather
+  than repeated ten thousand times. The run-up to a failure is kept in a
+  small ring and released when something actually goes wrong, so the debug
+  lines that explain an error survive without paying for debug logging all
+  day. Delivery now happens on a writer thread through a bounded queue, so a
+  slow disk is never felt by whoever is waiting at the counter, and quiet
+  work is flushed without being asked. Every kind of loss is declared: held
+  back by level, held back by the throttle, dropped by a full queue, or
+  discarded by the hard budget. A combined test drives all of them at once
+  and reconciles the numbers exactly. Evidence:
+  `docs/qa/phase-6.2-logging-gate.md`,
+  `docs/adr/0007-log-delivery-is-asynchronous-and-bounded.md`.
 - **Phase 6.2 - logging.** Structured records with five levels, written one
   line at a time to a rotating file whose whole family obeys a hard total byte
   budget, so the log can never fill the disk the shop's database lives on.
