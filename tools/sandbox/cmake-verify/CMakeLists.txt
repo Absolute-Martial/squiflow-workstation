@@ -88,6 +88,13 @@ if(SQUIFLOW_BUILD_TESTS)
                 squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME platform.single_instance COMMAND platform_single_instance_test)
 
+    add_executable(platform_secrets_test
+        ${SQUIFLOW_ROOT}/tests/platform/secrets_test.cpp)
+    target_link_libraries(platform_secrets_test
+        PRIVATE squiflow::platform squiflow::testing
+                squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME platform.secrets COMMAND platform_secrets_test)
+
     foreach(t domain storage migration writer outbox sync)
         set(_src "${SQUIFLOW_ROOT}/tests/engine/engine_${t}_test.cpp")
         if(EXISTS "${_src}")

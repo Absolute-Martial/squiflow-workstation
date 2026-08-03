@@ -20,7 +20,10 @@ add_library(squiflow_platform STATIC
     rotating_log_file.cpp
     logger.cpp
     crash_breadcrumb.cpp
-    single_instance_name.cpp)
+    single_instance_name.cpp
+    secret_buffer.cpp
+    secret_identity.cpp
+    secret_envelope.cpp)
 
 add_library(squiflow::platform ALIAS squiflow_platform)
 
@@ -34,8 +37,8 @@ target_include_directories(squiflow_platform SYSTEM
             ${SQUIFLOW_ROOT}/external/crashcatch/include)
 
 if(WIN32)
-    target_sources(squiflow_platform PRIVATE crash_handler_win.cpp single_instance_win.cpp)
-    target_link_libraries(squiflow_platform PRIVATE Advapi32 DbgHelp User32)
+    target_sources(squiflow_platform PRIVATE crash_handler_win.cpp single_instance_win.cpp secrets_dpapi.cpp)
+    target_link_libraries(squiflow_platform PRIVATE Advapi32 Crypt32 DbgHelp User32)
 else()
     target_sources(squiflow_platform PRIVATE crash_handler_posix.cpp single_instance_posix.cpp)
 endif()
