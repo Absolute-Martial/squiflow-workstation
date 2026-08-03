@@ -116,6 +116,13 @@ if(SQUIFLOW_BUILD_TESTS)
                 squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME platform.network_state COMMAND platform_network_state_test)
 
+    add_executable(platform_background_services_test
+        ${SQUIFLOW_ROOT}/tests/platform/background_services_test.cpp)
+    target_link_libraries(platform_background_services_test
+        PRIVATE squiflow::platform squiflow::testing
+                squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME platform.background_services COMMAND platform_background_services_test)
+
     foreach(t domain storage migration writer outbox sync)
         set(_src "${SQUIFLOW_ROOT}/tests/engine/engine_${t}_test.cpp")
         if(EXISTS "${_src}")

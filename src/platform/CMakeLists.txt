@@ -25,7 +25,10 @@ add_library(squiflow_platform STATIC
     secret_identity.cpp
     secret_envelope.cpp
     network_state.cpp
-    network_monitor.cpp)
+    network_monitor.cpp
+    background_service.cpp
+    background_executor.cpp
+    background_supervisor.cpp)
 
 add_library(squiflow::platform ALIAS squiflow_platform)
 
