@@ -90,6 +90,26 @@ if(EXISTS "${SQUIFLOW_ROOT}/src/app/CMakeLists.txt")
     add_subdirectory(${SQUIFLOW_ROOT}/src/app app)
 endif()
 
+if(EXISTS "${SQUIFLOW_ROOT}/src/shell/CMakeLists.txt")
+    add_subdirectory(${SQUIFLOW_ROOT}/src/shell shell)
+endif()
+
+# Bridge contracts are part of the portable verification lane.
+if(SQUIFLOW_BUILD_TESTS)
+    function(squiflow_add_bridge_test target test_name source)
+        add_executable(${target} "${SQUIFLOW_ROOT}/${source}")
+        target_link_libraries(${target} PRIVATE squiflow::testing
+            squiflow::warnings squiflow::hardening squiflow::sanitizers ${ARGN})
+        add_test(NAME ${test_name} COMMAND ${target})
+    endfunction()
+    squiflow_add_bridge_test(app_contracts_test app.contracts tests/app/contracts_test.cpp squiflow::app)
+    squiflow_add_bridge_test(shell_presentation_seam_test shell.presentation_seam tests/shell/presentation_seam_test.cpp squiflow::shell)
+    squiflow_add_bridge_test(shell_surface_lifecycle_test shell.surface_lifecycle tests/shell/surface_lifecycle_test.cpp squiflow::shell)
+    squiflow_add_bridge_test(shell_screen_registry_test shell.screen_registry tests/shell/screen_registry_test.cpp squiflow::shell)
+    squiflow_add_bridge_test(shell_paged_list_cache_test shell.paged_list_cache tests/shell/paged_list_cache_test.cpp squiflow::shell)
+    squiflow_add_bridge_test(app_domain_event_bus_test app.domain_event_bus tests/app/domain_event_bus_test.cpp squiflow::app)
+endif()
+
 # The engine tests, which the real tests/CMakeLists.txt will own once it exists.
 if(SQUIFLOW_BUILD_TESTS)
     add_executable(platform_single_instance_test

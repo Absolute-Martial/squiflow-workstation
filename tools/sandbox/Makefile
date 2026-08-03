@@ -241,6 +241,26 @@ $(BUILD)/app_contracts_test: tests/app/contracts_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/shell_presentation_seam_test: src/shell/completion_gate.cpp tests/shell/presentation_seam_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_surface_lifecycle_test: src/shell/surface_lifecycle.cpp src/app/startup.cpp tests/shell/surface_lifecycle_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_screen_registry_test: src/shell/screen_registry.cpp tests/shell/screen_registry_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
+
+$(BUILD)/shell_paged_list_cache_test: src/shell/paged_list_cache.cpp tests/shell/paged_list_cache_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_domain_event_bus_test: tests/app/domain_event_bus_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/protocol_test: $(PROTOCOL_SRC) external/protocol/tests/protocol_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -451,7 +471,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_ui_resources.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -494,6 +514,21 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== application contracts =='
 >./$(BUILD)/app_contracts_test
+>@echo
+>@echo '== presentation seam =='
+>./$(BUILD)/shell_presentation_seam_test
+>@echo
+>@echo '== surface lifecycle =='
+>./$(BUILD)/shell_surface_lifecycle_test
+>@echo
+>@echo '== screen registry =='
+>./$(BUILD)/shell_screen_registry_test
+>@echo
+>@echo '== paged list cache =='
+>./$(BUILD)/shell_paged_list_cache_test
+>@echo
+>@echo '== domain event bus =='
+>./$(BUILD)/app_domain_event_bus_test
 >@echo
 >@echo '== protocol =='
 >./$(BUILD)/protocol_test
