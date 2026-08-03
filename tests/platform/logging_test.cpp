@@ -14,6 +14,7 @@
 // against a real temporary directory, because a fake that disagrees with a
 // disk proves nothing.
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
@@ -49,6 +50,8 @@ using platform::AsyncLogPolicy;
 using platform::AsyncLogSink;
 using platform::LogSink;
 using platform::kMaxAsyncQueueDepth;
+using platform::LoggerCounters;
+using platform::kMaxFlushIntervalMilliseconds;
 using platform::LogBacktrace;
 using platform::LogBacktraceCounters;
 using platform::LogBacktracePolicy;
@@ -2089,6 +2092,297 @@ void the_logger_survives_asynchronous_delivery() {
     }
 }
 
+namespace {
+
+// Waits for a condition the writer thread is expected to reach on its own,
+// giving up after a generous ceiling so a genuine failure ends the run instead
+// of hanging it. The releaser is always a real timer inside the sink, never a
+// hope that a sleep was long enough.
+template <typename Condition>
+bool eventually(Condition condition) {
+    for (int attempt = 0; attempt < 5000; ++attempt) {
+        if (condition()) {
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    return condition();
+}
+
+std::size_t count_lines_on_disk(const std::filesystem::path& root,
+                                std::string_view base) {
+    std::size_t total = 0;
+    for (int generation = 0; generation <= platform::kMaximumLogGenerations;
+         ++generation) {
+        const std::string name =
+            generation == 0
+                ? std::string(base)
+                : platform::generation_file_name(
+                      base, static_cast<std::uint8_t>(generation));
+        std::ifstream input(root / name);
+        if (!input) {
+            continue;
+        }
+        std::string line;
+        while (std::getline(input, line)) {
+            if (!line.empty()) {
+                ++total;
+            }
+        }
+    }
+    return total;
+}
+
+std::size_t count_matching_lines(const std::filesystem::path& root,
+                                 std::string_view base,
+                                 std::string_view fragment) {
+    std::size_t total = 0;
+    for (int generation = 0; generation <= platform::kMaximumLogGenerations;
+         ++generation) {
+        const std::string name =
+            generation == 0
+                ? std::string(base)
+                : platform::generation_file_name(
+                      base, static_cast<std::uint8_t>(generation));
+        std::ifstream input(root / name);
+        if (!input) {
+            continue;
+        }
+        std::string line;
+        while (std::getline(input, line)) {
+            if (line.find(fragment) != std::string::npos) {
+                ++total;
+            }
+        }
+    }
+    return total;
+}
+
+}  // namespace
+
+void quiet_lines_reach_the_disk() {
+    section("periodic flush");
+
+    // A machine that logs something and then goes quiet must not leave that
+    // line in a buffer until the next error happens to push it out.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{64, 20});
+
+        async.write_line("quiet line");
+        const bool flushed = eventually(
+            [&async] { return async.counters().periodic_flushes >= 1; });
+        check(flushed, "a quiet interval puts the line on the disk unasked");
+        check(target.flushes() >= 1, "the target really was flushed");
+        check(target.lines().size() == 1, "and the line itself arrived");
+    }
+
+    // Once everything is flushed there is nothing to flush, and the writer
+    // thread must go back to sleep rather than wake on a timer forever.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{64, 20});
+
+        async.write_line("settle down");
+        check(eventually([&async] {
+                  return async.counters().periodic_flushes >= 1;
+              }),
+              "the first quiet interval flushes");
+
+        const std::uint64_t settled = async.counters().periodic_flushes;
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        check(async.counters().periodic_flushes == settled,
+              "an idle sink then stops waking up entirely");
+    }
+
+    // Zero means off, and must not be quietly read as "use the default".
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{64, 0});
+        check(async.policy().flush_interval_milliseconds == 0,
+              "zero turns periodic flushing off");
+
+        async.write_line("nobody will flush me");
+        std::this_thread::sleep_for(std::chrono::milliseconds(120));
+        check(async.counters().periodic_flushes == 0,
+              "and nothing is flushed behind the caller's back");
+    }
+
+    // A negative interval is a configuration mistake, and an enormous one
+    // must not mean "effectively never".
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink negative(target, clock, AsyncLogPolicy{64, -5000});
+        check(negative.policy().flush_interval_milliseconds == 0,
+              "a negative interval is off, not a wait of minus five seconds");
+
+        AsyncLogSink enormous(target, clock,
+                              AsyncLogPolicy{64, 99999999999LL});
+        check(enormous.policy().flush_interval_milliseconds ==
+                  kMaxFlushIntervalMilliseconds,
+              "and an enormous one is capped");
+    }
+
+    // The dangerous case: a periodic flush must never release a caller waiting
+    // inside flush() whose own lines have not been delivered yet.
+    {
+        GatedLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{64, 10});
+
+        async.write_line("held at the door");
+        target.wait_for_arrivals(1);
+
+        std::atomic<bool> returned{false};
+        std::thread waiter([&async, &returned] {
+            async.flush();
+            returned.store(true);
+        });
+
+        // Several intervals pass with the writer stuck inside the target.
+        std::this_thread::sleep_for(std::chrono::milliseconds(120));
+        check(!returned.load(),
+              "flush keeps waiting while its line is still undelivered");
+
+        target.open();
+        waiter.join();
+        check(returned.load(), "and returns once the line really is out");
+        check(target.lines().size() == 1, "having delivered it");
+    }
+}
+
+void no_gap_is_ever_silent() {
+    section("every feature at once");
+
+    // Rotation, the hard cap, throttling, the run-up ring and asynchronous
+    // delivery all in the same stack. The claim under test is not that the log
+    // is complete, because a bounded log cannot be. It is that everything
+    // missing is declared, and the numbers reconcile exactly.
+    std::error_code error;
+    const std::filesystem::path root =
+        std::filesystem::temp_directory_path(error) /
+        ("squiflow-log-all-" +
+         std::to_string(std::chrono::steady_clock::now()
+                            .time_since_epoch()
+                            .count()));
+    check(!error, "a temporary directory is available");
+    std::filesystem::create_directories(root, error);
+    check(!error, "the test directory was created");
+
+    // Roomy enough that nothing is thrown away, so the reconciliation is exact.
+    {
+        platform::LocalLogStorage storage(root.string());
+        RotatingLogFile file(storage, small_policy(8192, 6, 262144));
+        ManualLogClock clock(1700000000000LL);
+        AsyncLogSink async(file, clock, AsyncLogPolicy{4096, 50});
+        Logger logger(async, clock, LogLevel::Info);
+        logger.set_throttle_policy(LogThrottlePolicy{60000, 0});
+        logger.set_backtrace_policy(
+            LogBacktracePolicy{true, 8, LogLevel::Error});
+
+        for (int index = 0; index < 200; ++index) {
+            clock.advance(1);
+            // Distinct messages, because the throttle identifies a record
+            // by level, category and message and deliberately ignores
+            // fields. Two hundred invoices that differ only in a number
+            // field are one repeated message as far as it is concerned.
+            logger.info("orders", "invoice " + std::to_string(index) +
+                                      " issued",
+                        {LogField{"number", std::to_string(index)}});
+        }
+        // A hundred identical warnings, which the throttle must collapse.
+        for (int index = 0; index < 100; ++index) {
+            clock.advance(1);
+            logger.warning("sync", "the shop is offline");
+        }
+        clock.advance(1);
+        logger.debug("sync", "retrying the upload");
+        clock.advance(1);
+        logger.error("sync", "the upload failed");
+        logger.flush();
+
+        const LoggerCounters counted = logger.counters();
+        const AsyncLogCounters delivered = async.counters();
+        check(delivered.submitted == counted.emitted,
+              "every record the logger emitted was handed to the queue");
+        check(delivered.dropped == 0,
+              "a queue this deep loses nothing to pressure");
+        check(delivered.written == counted.emitted,
+              "and every one of them reached the file");
+        check(counted.rate_limited == 99,
+              "ninety-nine repeated warnings were held back by the throttle");
+        check(counted.repeat_summaries == 1,
+              "and accounted for by exactly one summary");
+        check(counted.suppressed == 1,
+              "the debug line was below the level, which is a different "
+              "kind of holding back and counted separately");
+        check(counted.backtrace_released == 1,
+              "the debug line before the failure was released");
+        check(file.counters().rotations > 0,
+              "the file rotated along the way");
+        check(file.counters().discarded_files == 0,
+              "but the budget never forced anything to be thrown away");
+        check(file.counters().lines_written == counted.emitted,
+              "the file agrees with the logger, line for line");
+    }
+
+    const std::size_t on_disk = count_lines_on_disk(root, "squiflow.log");
+    check(on_disk == 204,
+          "two hundred invoices, the first warning, its repeat summary, the "
+          "released run-up and the failure: two hundred and four lines");
+    check(count_matching_lines(root, "squiflow.log", "repeated=\"99\"") == 1,
+          "the held-back repeats are declared, not silently dropped");
+    check(count_matching_lines(root, "squiflow.log", "backtrace=\"1\"") == 1,
+          "the released run-up is marked as such");
+
+    // Now the same stack with a budget too small to keep everything, and a
+    // queue too shallow to absorb the burst. Both kinds of loss must be
+    // declared: the queue in the log itself, the disk in the counters.
+    const std::filesystem::path cramped =
+        root / "cramped";
+    std::filesystem::create_directories(cramped, error);
+    check(!error, "the cramped directory was created");
+
+    {
+        platform::LocalLogStorage storage(cramped.string());
+        RotatingLogFile file(storage, small_policy(4096, 2, 8192));
+        ManualLogClock clock(1700000000000LL);
+        AsyncLogSink async(file, clock, AsyncLogPolicy{8, 0});
+        Logger logger(async, clock, LogLevel::Info);
+
+        for (int index = 0; index < 2000; ++index) {
+            clock.advance(1);
+            logger.info("orders", "invoice issued",
+                        {LogField{"number", std::to_string(index)}});
+        }
+        logger.flush();
+
+        const AsyncLogCounters delivered = async.counters();
+        check(delivered.submitted == 2000, "every record was offered");
+        check(delivered.dropped > 0,
+              "a queue of eight under two thousand lines really does lose some");
+        check(delivered.gap_reports > 0,
+              "and every gap it lost was declared in the log");
+        check(delivered.written + delivered.dropped == delivered.submitted,
+              "written plus dropped accounts for all of them, with none "
+              "unaccounted for");
+        check(delivered.peak_depth <= 8, "the queue stayed inside its bound");
+        check(file.counters().discarded_files > 0,
+              "the hard budget threw whole generations away");
+        check(file.counters().storage_failures == 0,
+              "and did so deliberately, not because writing failed");
+    }
+
+    check(count_matching_lines(cramped, "squiflow.log", "dropped=\"") >= 1,
+          "a reader of the surviving file can see that lines were lost");
+
+    std::filesystem::remove_all(root, error);
+}
+
 }  // namespace
 
 int main() {
@@ -2101,6 +2395,8 @@ int main() {
     the_logger_keeps_the_run_up();
     delivery_happens_off_the_caller_thread();
     the_logger_survives_asynchronous_delivery();
+    quiet_lines_reach_the_disk();
+    no_gap_is_ever_silent();
     levels_are_few_and_unambiguous();
     timestamps_are_exact();
     a_message_cannot_forge_a_second_entry();
