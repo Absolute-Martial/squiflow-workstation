@@ -17,6 +17,8 @@
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <condition_variable>
+#include <mutex>
 #include <optional>
 #include <fstream>
 #include <string>
@@ -27,6 +29,7 @@
 #include "platform/local_log_storage.hpp"
 #include "platform/log_formatter.hpp"
 #include "platform/log_level_policy.hpp"
+#include "platform/async_log_sink.hpp"
 #include "platform/log_backtrace.hpp"
 #include "platform/log_record.hpp"
 #include "platform/log_throttle.hpp"
@@ -41,6 +44,11 @@ namespace {
 
 namespace platform = squiflow::platform;
 using platform::CategoryLevelRule;
+using platform::AsyncLogCounters;
+using platform::AsyncLogPolicy;
+using platform::AsyncLogSink;
+using platform::LogSink;
+using platform::kMaxAsyncQueueDepth;
 using platform::LogBacktrace;
 using platform::LogBacktraceCounters;
 using platform::LogBacktracePolicy;
@@ -1731,6 +1739,356 @@ void the_logger_keeps_the_run_up() {
     }
 }
 
+namespace {
+
+// A sink that can be held shut at the door, so a test decides exactly when the
+// writer thread is allowed to make progress. Every timing question below is
+// settled by this gate rather than by sleeping and hoping, which is the
+// difference between a test that proves something and one that fails on a busy
+// machine once a fortnight.
+class GatedLogSink final : public LogSink {
+public:
+    bool write_line(std::string_view line) override {
+        std::unique_lock<std::mutex> lock(mutex_);
+        ++arrivals_;
+        arrived_.notify_all();
+        opened_.wait(lock, [this] { return open_; });
+        lines_.emplace_back(line);
+        return accepting_;
+    }
+
+    void flush() override {
+        const std::lock_guard<std::mutex> guard(mutex_);
+        ++flushes_;
+    }
+
+    // Lets the writer thread through, now and from now on.
+    void open() {
+        {
+            const std::lock_guard<std::mutex> guard(mutex_);
+            open_ = true;
+        }
+        opened_.notify_all();
+    }
+
+    // Returns once the writer thread is parked inside the target, which means
+    // the queue is empty and nothing more will drain until the gate opens.
+    void wait_for_arrivals(std::uint64_t count) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        arrived_.wait(lock, [this, count] { return arrivals_ >= count; });
+    }
+
+    std::vector<std::string> lines() const {
+        const std::lock_guard<std::mutex> guard(mutex_);
+        return lines_;
+    }
+
+    std::uint64_t flushes() const {
+        const std::lock_guard<std::mutex> guard(mutex_);
+        return flushes_;
+    }
+
+private:
+    mutable std::mutex mutex_;
+    std::condition_variable opened_;
+    std::condition_variable arrived_;
+    std::vector<std::string> lines_;
+    std::uint64_t arrivals_ = 0;
+    std::uint64_t flushes_ = 0;
+    bool open_ = false;
+    bool accepting_ = true;
+};
+
+}  // namespace
+
+void delivery_happens_off_the_caller_thread() {
+    section("asynchronous delivery");
+
+    // Everything queued arrives, in the order it was written, once flushed.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{4096});
+
+        bool queued = true;
+        for (int index = 0; index < 1000; ++index) {
+            queued = async.write_line("line " + std::to_string(index)) && queued;
+        }
+        check(queued, "every line is accepted for delivery");
+        async.flush();
+
+        check(target.lines().size() == 1000, "every line reaches the target");
+        bool ordered = target.lines().size() == 1000;
+        for (std::size_t index = 0; ordered && index < 1000; ++index) {
+            ordered = target.lines()[index] == "line " + std::to_string(index);
+        }
+        check(ordered, "and in exactly the order it was written");
+        check(async.counters().written == 1000, "the counter agrees");
+        check(async.counters().dropped == 0, "with nothing dropped");
+        check(target.flushes() >= 1, "and the target was flushed");
+    }
+
+    // Under pressure the oldest lines are dropped and the newest survive,
+    // because the newest are the ones that explain what is happening now.
+    {
+        GatedLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{4});
+
+        async.write_line("first");
+        // The writer is now parked inside the target holding "first", so the
+        // queue is empty and nothing drains until the gate opens.
+        target.wait_for_arrivals(1);
+
+        for (int index = 1; index <= 7; ++index) {
+            async.write_line("line " + std::to_string(index));
+        }
+        check(async.counters().dropped == 3,
+              "a queue of four holding seven lines drops exactly three");
+        check(async.counters().peak_depth == 4,
+              "and never grows beyond its bound");
+
+        target.open();
+        async.flush();
+
+        const std::vector<std::string> written = target.lines();
+        check(written.size() == 6,
+              "the line in flight, a declaration of the gap, and four survivors");
+        check(!written.empty() && written[0] == "first",
+              "the line already in flight is not lost");
+        check(written.size() > 1 &&
+                  written[1].find("dropped=\"3\"") != std::string::npos,
+              "the gap is declared, and says how many were lost");
+        check(written.size() > 1 && written[1].find("WARN") != std::string::npos,
+              "loudly enough to be noticed");
+        check(written.size() == 6 && written[2] == "line 4",
+              "the oldest queued lines are the ones dropped");
+        check(written.size() == 6 && written[5] == "line 7",
+              "and the newest survive");
+        check(async.counters().gap_reports == 1, "one gap was declared");
+    }
+
+    // A gap is declared once, not once per line that follows it.
+    {
+        GatedLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{2});
+
+        async.write_line("held");
+        target.wait_for_arrivals(1);
+        for (int index = 0; index < 10; ++index) {
+            async.write_line("burst " + std::to_string(index));
+        }
+        target.open();
+        async.flush();
+
+        check(async.counters().gap_reports == 1,
+              "one declaration covers the whole gap");
+        check(async.counters().dropped == 8, "which lost eight lines");
+    }
+
+    // A depth of zero is a configuration mistake, and an absurd one must not
+    // become an unbounded memory cost.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink shallow(target, clock, AsyncLogPolicy{0});
+        check(shallow.policy().queue_depth == 1, "zero is raised to one");
+
+        AsyncLogSink absurd(target, clock, AsyncLogPolicy{100000000});
+        check(absurd.policy().queue_depth == kMaxAsyncQueueDepth,
+              "and an absurd depth is clamped");
+    }
+
+    // Shutdown does not abandon what was queued. The last thing written before
+    // a machine is switched off is usually the reason it is being switched off.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        {
+            AsyncLogSink async(target, clock, AsyncLogPolicy{4096});
+            for (int index = 0; index < 200; ++index) {
+                async.write_line("parting " + std::to_string(index));
+            }
+        }
+        check(target.lines().size() == 200,
+              "everything queued is delivered as the sink shuts down");
+        check(!target.lines().empty() && target.lines().back() == "parting 199",
+              "including the very last line");
+        check(target.flushes() >= 1, "and the target is flushed on the way out");
+    }
+
+    // A target that refuses a line must not be mistaken for one that wrote it,
+    // and must not take the writer thread down.
+    {
+        RecordingLogSink target;
+        target.set_accepting(false);
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{64});
+
+        async.write_line("into the void");
+        async.flush();
+        check(async.counters().written == 0, "a refused line is not counted");
+        check(async.counters().submitted == 1, "though it was submitted");
+
+        target.set_accepting(true);
+        async.write_line("this one lands");
+        async.flush();
+        check(async.counters().written == 1, "and the sink carries on working");
+    }
+
+    // Many threads writing at once must produce every line exactly once, with
+    // no interleaving damage.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{kMaxAsyncQueueDepth});
+
+        std::vector<std::thread> writers;
+        writers.reserve(8);
+        for (int writer = 0; writer < 8; ++writer) {
+            writers.emplace_back([&async, writer] {
+                for (int index = 0; index < 500; ++index) {
+                    async.write_line("w" + std::to_string(writer) + "-" +
+                                     std::to_string(index));
+                }
+            });
+        }
+        for (std::thread& writer : writers) {
+            writer.join();
+        }
+        async.flush();
+
+        check(target.lines().size() == 4000,
+              "four thousand lines from eight threads all arrive");
+        check(async.counters().dropped == 0,
+              "a deep enough queue drops nothing");
+
+        // Every line intact, and each thread's own lines still in order.
+        std::vector<int> seen(8, 0);
+        bool intact = true;
+        for (const std::string& line : target.lines()) {
+            const std::size_t dash = line.find('-');
+            if (line.size() < 4 || line[0] != 'w' || dash == std::string::npos) {
+                intact = false;
+                break;
+            }
+            const int writer = line[1] - '0';
+            if (writer < 0 || writer > 7) {
+                intact = false;
+                break;
+            }
+            const std::size_t slot = static_cast<std::size_t>(writer);
+            if (std::stoi(line.substr(dash + 1)) != seen[slot]) {
+                intact = false;
+                break;
+            }
+            ++seen[slot];
+        }
+        check(intact, "none is torn, and each thread's lines keep their order");
+    }
+
+    // Flushing when there is nothing to do must return rather than wait for
+    // work that will never arrive.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{64});
+        async.flush();
+        async.flush();
+        check(async.counters().flushes >= 2, "an empty flush still completes");
+    }
+}
+
+void the_logger_survives_asynchronous_delivery() {
+    section("the logger and asynchronous delivery");
+
+    // The property that matters at the end of a run: a fatal record is on the
+    // disk before the call that wrote it returns, even though everything else
+    // is asynchronous.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{4096});
+        Logger logger(async, clock, LogLevel::Info);
+
+        logger.info("boot", "starting");
+        logger.info("boot", "loading");
+        logger.fatal("boot", "cannot continue");
+
+        const std::vector<std::string> written = target.lines();
+        check(written.size() == 3,
+              "the fatal record and everything before it are already written");
+        check(!written.empty() &&
+                  written.back().find("cannot continue") != std::string::npos,
+              "with the fatal record last");
+    }
+
+    // The features built earlier still behave when the road is asynchronous.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{4096});
+        Logger logger(async, clock, LogLevel::Info);
+        logger.set_throttle_policy(LogThrottlePolicy{60000, 0});
+
+        logger.warning("sync", "refused");
+        for (int index = 0; index < 100; ++index) {
+            logger.warning("sync", "refused");
+        }
+        logger.flush();
+
+        check(target.lines().size() == 2,
+              "throttling still collapses the flood before it is queued");
+        check(target.lines().size() == 2 &&
+                  target.lines()[1].find("repeated=\"100\"") != std::string::npos,
+              "and the gap is still declared honestly");
+    }
+
+    // The run-up to a failure survives the journey too, still in order.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{4096});
+        Logger logger(async, clock, LogLevel::Info);
+        logger.set_backtrace_policy(LogBacktracePolicy{true, 8, LogLevel::Error});
+
+        logger.debug("sync", "opening connection");
+        logger.error("sync", "connection refused");
+
+        const std::vector<std::string> written = target.lines();
+        check(written.size() == 2, "the run-up and the failure both arrive");
+        check(!written.empty() &&
+                  written[0].find("opening connection") != std::string::npos,
+              "with the run-up still first");
+    }
+
+    // Several threads logging through one logger into one asynchronous sink.
+    {
+        RecordingLogSink target;
+        ManualLogClock clock(1000);
+        AsyncLogSink async(target, clock, AsyncLogPolicy{kMaxAsyncQueueDepth});
+        Logger logger(async, clock, LogLevel::Info);
+
+        std::vector<std::thread> workers;
+        workers.reserve(4);
+        for (int worker = 0; worker < 4; ++worker) {
+            workers.emplace_back([&logger, worker] {
+                for (int index = 0; index < 250; ++index) {
+                    logger.info("jobs", "step " + std::to_string(worker));
+                }
+            });
+        }
+        for (std::thread& worker : workers) {
+            worker.join();
+        }
+        logger.flush();
+
+        check(target.lines().size() == 1000, "every record arrives once");
+        check(logger.counters().emitted == 1000, "and the logger agrees");
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -1741,6 +2099,8 @@ int main() {
     the_logger_holds_back_repetition();
     the_run_up_is_kept();
     the_logger_keeps_the_run_up();
+    delivery_happens_off_the_caller_thread();
+    the_logger_survives_asynchronous_delivery();
     levels_are_few_and_unambiguous();
     timestamps_are_exact();
     a_message_cannot_forge_a_second_entry();
