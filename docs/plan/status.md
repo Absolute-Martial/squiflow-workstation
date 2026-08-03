@@ -56,7 +56,8 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 6 | 6.3 Crash handling | QA approved | CrashCatch adapter, bounded breadcrumbs, 29 checks |
 | 6 | 6.4 Named single-instance ownership | QA approved | mutex/event contract; process exclusion and activation; 32 checks |
 | 6 | 6.5 DPAPI secrets | QA approved | current-user DPAPI; guarded memory; atomic rollback; 30 checks; GoogleTest |
-| 6 | 6.6-6.8 Network, services, startup | Not started | Interfaces planned, fakes required before a second caller |
+| 6 | 6.6 OS-reported network state | QA approved | QNetworkInformation adapter; conservative policy; 31 checks; no probes |
+| 6 | 6.7-6.8 Services and startup | Not started | Interfaces planned, fakes required before a second caller |
 | 7-9 | UI, packaging, hardening | Not started | Nothing on disk |
 
 Totals: **293 files integrity-checked, 131 headers proven self-contained,

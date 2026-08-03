@@ -16,3 +16,4 @@ of the past stays readable.
 | 0008 | CrashCatch and bounded crash evidence | Accepted |
 | 0009 | Named single-instance ownership | Accepted |
 | 0010 | User-bound DPAPI secrets with guarded memory | Accepted |
+| 0011 | OS-reported network state | Accepted |
