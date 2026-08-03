@@ -53,7 +53,9 @@ Exit code 0. Full output is reproduced at the bottom of this file.
 | 6 | 6.1 Paths - machine-wide data, per-account cache | QA approved | 129 checks, 0 failed; every directory created and proven writable; no schema change |
 | 6 | 6.2 Logging with rotation and a hard total cap | QA approved | 1,276 checks, 0 failed; secrets redacted; one line per record; family capped on a real disk |
 | 6 | 6.2a Per-category levels, throttling, run-up ring, asynchronous delivery | QA approved | Included in the 1,276; no gap is ever silent, and the arithmetic reconciles |
-| 6 | 6.3-6.8 Crash, lock, secrets, network, services, startup | Not started | Interfaces planned, fakes required before a second caller |
+| 6 | 6.3 Crash handling | QA approved | CrashCatch adapter, bounded breadcrumbs, 29 checks |
+| 6 | 6.4 Named single-instance ownership | QA approved | mutex/event contract; process exclusion and activation; 32 checks |
+| 6 | 6.5-6.8 Secrets, network, services, startup | Not started | Interfaces planned, fakes required before a second caller |
 | 7-9 | UI, packaging, hardening | Not started | Nothing on disk |
 
 Totals: **293 files integrity-checked, 131 headers proven self-contained,
@@ -773,3 +775,7 @@ the gate says so plainly. 129 checks, 0 failed. Formal evidence is in
 ## 6.3 crash handling
 
 Done with CrashCatch 1.5.0 behind the platform interface: lock-free bounded breadcrumbs, deterministic fake artifacts, POSIX lifecycle restoration, Windows MiniDumpWriteDump source, direct-sink crash logging, and 29 permanent checks. The full strict and independent CMake gates pass. Windows execution remains unverified in this Linux sandbox.
+
+## 6.4 named single-instance ownership
+
+A database-derived machine-wide mutex now prevents a second workstation process from reaching database open. A companion activation event asks the primary shell to raise its window; Phase 6.8 owns that UI connection. The strict lane passed 5,122 assertions across 33 programs, with 307 integrity files and 137 self-contained headers. The independent CMake build reached 100% and CTest passed 29/29. Windows execution remains unverified in this Linux sandbox.

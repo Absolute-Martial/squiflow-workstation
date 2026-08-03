@@ -111,7 +111,7 @@ than being counted here.
       failure, delivery off the caller thread and periodic flushing; every
       kind of loss declared rather than silent
 - [x] 6.3 Crash handler and minidumps *(Windows, unverifiable here)*
-- [ ] 6.4 Single-instance lock, named *(Windows, unverifiable here)*
+- [x] 6.4 Single-instance lock, named *(Windows, unverifiable here)*
 - [ ] 6.5 Secrets via DPAPI, never plaintext *(Windows, unverifiable here)*
 - [ ] 6.6 Connection state from `QNetworkInformation`, not server pings *(Qt)*
 - [ ] 6.7 Background services - one coarse timer, about five threads, no

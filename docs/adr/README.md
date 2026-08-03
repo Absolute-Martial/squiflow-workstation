@@ -13,3 +13,5 @@ of the past stays readable.
 | 0005 | A directory probe seam sits between path resolution and the disk | Accepted |
 | 0006 | spdlog is the logging dispatcher, behind the platform door | Accepted |
 | 0007 | Log delivery is asynchronous, bounded, and never silently lossy | Accepted |
+| 0008 | CrashCatch and bounded crash evidence | Accepted |
+| 0009 | Named single-instance ownership | Accepted |
