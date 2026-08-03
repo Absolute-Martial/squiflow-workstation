@@ -52,10 +52,10 @@ LOGGING_SRC := src/platform/log_record.cpp \
                src/platform/log_formatter.cpp \
                src/platform/local_log_storage.cpp \
                src/platform/rotating_log_file.cpp \
-               src/platform/logger.cpp
+               src/platform/logger.cpp \
+               src/platform/crash_breadcrumb.cpp
 
-CRASH_SRC := src/platform/crash_breadcrumb.cpp \
-             src/platform/crash_handler_posix.cpp
+CRASH_SRC := src/platform/crash_handler_posix.cpp
 
 ENGINE_SRC := src/engine/records/identity.cpp \
               src/engine/records/quantity.cpp \
