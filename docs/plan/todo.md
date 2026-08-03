@@ -10,7 +10,7 @@ including mine.
 **Legend:** `[x]` done and verified · `[~]` written but not verifiable on this
 toolchain · `[ ]` not started
 
-**Count: 41 of 69 sub-phases done.**
+**Count: 42 of 69 sub-phases done.**
 
 | Phase | Sub-phases | Done |
 |---|---|---|
@@ -19,7 +19,7 @@ toolchain · `[ ]` not started
 | 3 - The engine's storage half | 7 | 6 |
 | 4 - The twelve modules | 13 | 13 |
 | 5 - Workflows | 8 | 7 |
-| 6 - Platform and the application shell | 8 | 6 |
+| 6 - Platform and the application shell | 8 | 7 |
 | 7 - The interface | 6 | 0 |
 | 8 - The server | 8 | 0 |
 | 9 - Build, packaging and release | 6 | 0 |
@@ -114,7 +114,7 @@ than being counted here.
 - [x] 6.4 Single-instance lock, named *(Windows, unverifiable here)*
 - [x] 6.5 Secrets via current-user DPAPI with libsodium-guarded plaintext memory *(Windows runtime gate still required)*
 - [x] 6.6 Connection state from `QNetworkInformation`, not server pings *(Qt adapter written; Windows runtime gate required)*
-- [ ] 6.7 Background services - one coarse timer, about five threads, no
+- [x] 6.7 Background services - one coarse timer, two bounded worker lanes, no
       service owning a thread
 - [ ] 6.8 Startup order, fixed and tested
 

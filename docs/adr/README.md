@@ -17,3 +17,4 @@ of the past stays readable.
 | 0009 | Named single-instance ownership | Accepted |
 | 0010 | User-bound DPAPI secrets with guarded memory | Accepted |
 | 0011 | OS-reported network state | Accepted |
+| 0012 | Bounded background supervisor | Accepted |
