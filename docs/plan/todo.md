@@ -110,7 +110,7 @@ than being counted here.
 - [x] 6.2a Per-category levels, repeat throttling, a run-up ring released on
       failure, delivery off the caller thread and periodic flushing; every
       kind of loss declared rather than silent
-- [ ] 6.3 Crash handler and minidumps *(Windows, unverifiable here)*
+- [x] 6.3 Crash handler and minidumps *(Windows, unverifiable here)*
 - [ ] 6.4 Single-instance lock, named *(Windows, unverifiable here)*
 - [ ] 6.5 Secrets via DPAPI, never plaintext *(Windows, unverifiable here)*
 - [ ] 6.6 Connection state from `QNetworkInformation`, not server pings *(Qt)*

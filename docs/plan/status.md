@@ -769,3 +769,7 @@ administrative setup. Discovery of the two roots is the only Windows-specific
 part and lives in `path_environment_qt.cpp`, which this machine cannot compile;
 the gate says so plainly. 129 checks, 0 failed. Formal evidence is in
 `docs/qa/phase-6.1-paths-gate.md`.
+
+## 6.3 crash handling
+
+Done with CrashCatch 1.5.0 behind the platform interface: lock-free bounded breadcrumbs, deterministic fake artifacts, POSIX lifecycle restoration, Windows MiniDumpWriteDump source, direct-sink crash logging, and 29 permanent checks. The full strict and independent CMake gates pass. Windows execution remains unverified in this Linux sandbox.
