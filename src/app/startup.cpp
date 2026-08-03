@@ -1,0 +1,5 @@
+#include "app/startup.hpp"
+namespace squiflow::app {
+std::string_view startup_step_name(StartupStep s) noexcept {switch(s){case StartupStep::Paths:return "paths";case StartupStep::Logging:return "logging";case StartupStep::CrashHandler:return "crash-handler";case StartupStep::SingleInstance:return "single-instance";case StartupStep::DatabaseConnection:return "database-connection";case StartupStep::Migrations:return "migrations";case StartupStep::IntegrityCheck:return "integrity-check";case StartupStep::IdentitySession:return "identity-session";case StartupStep::Activation:return "activation";case StartupStep::ModuleRegistration:return "module-registration";case StartupStep::Shell:return "shell";case StartupStep::Window:return "window";}return "unknown";}
+std::string bounded_lifecycle_message(std::string_view m){return std::string(m.substr(0,kMaxLifecycleDiagnostic));}
+}
