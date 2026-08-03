@@ -245,6 +245,10 @@ $(BUILD)/shell_presentation_seam_test: src/shell/completion_gate.cpp tests/shell
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/shell_primitive_mapping_test: tests/shell/primitive_mapping_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/shell_surface_lifecycle_test: src/shell/surface_lifecycle.cpp src/app/startup.cpp tests/shell/surface_lifecycle_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -469,9 +473,10 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_qml_boundary.py
 >@$(PYTHON) tools/sandbox/test_qml_boundary.py
 >@$(PYTHON) tools/sandbox/check_ui_resources.py
+>@$(PYTHON) tools/sandbox/check_qt_bridge.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -514,6 +519,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== application contracts =='
 >./$(BUILD)/app_contracts_test
+>@echo
+>@echo '== primitive mapping =='
+>./$(BUILD)/shell_primitive_mapping_test
 >@echo
 >@echo '== presentation seam =='
 >./$(BUILD)/shell_presentation_seam_test
