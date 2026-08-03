@@ -15,3 +15,6 @@ target_link_libraries(squiflow_app
             squiflow_module_agreements squiflow_module_sourcing
             squiflow_module_companion squiflow_module_files
             squiflow::warnings squiflow::hardening squiflow::sanitizers)
+
+add_executable(squiflow_workstation main.cpp)
+target_link_libraries(squiflow_workstation PRIVATE squiflow::app)
