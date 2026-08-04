@@ -254,7 +254,7 @@ $(BUILD)/shell_surface_lifecycle_test: src/shell/surface_lifecycle.cpp src/app/s
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
-$(BUILD)/shell_screen_registry_test: src/shell/screen_registry.cpp tests/shell/screen_registry_test.cpp
+$(BUILD)/shell_screen_registry_test: $(PROTOCOL_SRC) src/shell/screen_registry.cpp tests/shell/screen_registry_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
