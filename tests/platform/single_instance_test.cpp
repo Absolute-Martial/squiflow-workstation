@@ -76,7 +76,8 @@ int main() {
         const bool primary = owner->acquire("SquiFlow.Workstation", directory).state
                              == p::InstanceState::Primary;
         const char byte = primary ? '1' : '0';
-        (void)::write(ready[1], &byte, 1);
+        const ssize_t written = ::write(ready[1], &byte, 1);
+        (void)written;
         for (;;) { ::pause(); }
     }
     ::close(ready[1]);

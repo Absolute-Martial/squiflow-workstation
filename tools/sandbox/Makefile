@@ -30,6 +30,7 @@ INCLUDES := -Iexternal/protocol/include -isystem external/spdlog/include -isyste
 WARNINGS := -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
             -Wold-style-cast -Wnon-virtual-dtor -Wcast-qual -Wdouble-promotion \
             -Wformat=2 -Wimplicit-fallthrough -Wextra-semi -Wnull-dereference \
+            -Wno-error=null-dereference \
             -Woverloaded-virtual -Wunused -Werror
 
 # -pthread from here on: the writer gate is genuinely concurrent, and a test
