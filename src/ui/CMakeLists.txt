@@ -6,7 +6,6 @@ if(SQUIFLOW_WITH_QT)
     set_target_properties(squiflow_shell PROPERTIES AUTOMOC ON)
     target_sources(squiflow_shell PRIVATE
         ../shell/paged_list_model_qt.cpp
-        ../shell/list_screen_bridge_qt.cpp
         ../shell/navigation_model_qt.cpp
         ../shell/navigation_bridge_qt.cpp
         ../shell/qml_surface_qt.cpp)
