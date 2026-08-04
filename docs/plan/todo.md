@@ -12,6 +12,10 @@ toolchain · `[ ]` not started
 
 **Count: 42 of 69 sub-phases done.**
 
+For a full map of every remaining sub-phase's implementation plan and the
+exact order to work through them, read `continuation-guide.md` in this same
+directory.
+
 | Phase | Sub-phases | Done |
 |---|---|---|
 | 1 - Setup and the protocol spine | 6 | 6 |
@@ -97,7 +101,7 @@ than being counted here.
 - [x] 5.6 Take a payment and allocate it, always by hand; tracking/receipt evidence optional; 42 checks, 0 failed
 - [x] 5.7 Apply an agreement explicitly to a draft; consume its quantity cap on invoice issue and release it on cancellation; migration 24; 31 workflow checks, 0 failed
 - [ ] 5.8 Prepare a document for approval or email; nothing sends without a
-      human pressing send
+      human pressing send — [implementation plan](phase-5.8-approval-and-send.md)
 
 ## Phase 6 - Platform and the application shell
 
@@ -116,37 +120,37 @@ than being counted here.
 - [x] 6.6 Connection state from `QNetworkInformation`, not server pings *(Qt adapter written; Windows runtime gate required)*
 - [x] 6.7 Background services - one coarse timer, two bounded worker lanes, no
       service owning a thread
-- [ ] 6.8 Startup order, fixed and tested
+- [ ] 6.8 Startup order, fixed and tested — [implementation plan](phase-6.8-startup-order.md)
 
 ## Phase 7 - The interface *(none of this compiles here)*
 
-- [ ] 7.1 Window and shell
+- [ ] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell)
 - [ ] 7.2 Navigation and module visibility from activation — [implementation plan](phase-7.2-navigation-and-activation.md)
-- [ ] 7.3 Lists
-- [ ] 7.4 Forms and validation
-- [ ] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets
-- [ ] 7.6 Images and the AVIF plugin
+- [ ] 7.3 Lists — [implementation plan](phase-7-interface-plan.md#73----lists)
+- [ ] 7.4 Forms and validation — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
+- [ ] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
+- [ ] 7.6 Images and the AVIF plugin — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
 
 ## Phase 8 - The server *(none of this compiles here)*
 
-- [ ] 8.1 Skeleton and configuration
-- [ ] 8.2 PostgreSQL and migrations
-- [ ] 8.3 Identity and tokens
-- [ ] 8.4 Sync endpoints, idempotency, sequence assignment
-- [ ] 8.5 Media, including the AVIF conversion worker
-- [ ] 8.6 The update proxy
-- [ ] 8.7 Mail - prepared by the system, sent only on confirmation
-- [ ] 8.8 Per-module endpoints
+- [ ] 8.1 Skeleton and configuration — [implementation plan](phase-8-server-plan.md#81----skeleton-and-configuration)
+- [ ] 8.2 PostgreSQL and migrations — [implementation plan](phase-8-server-plan.md#82----postgresql-and-migrations)
+- [ ] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens)
+- [ ] 8.4 Sync endpoints, idempotency, sequence assignment — [implementation plan](phase-8-server-plan.md#84----sync-endpoints-idempotency-sequence-assignment)
+- [ ] 8.5 Media, including the AVIF conversion worker — [implementation plan](phase-8-server-plan.md#85----media-including-the-avif-conversion-worker)
+- [ ] 8.6 The update proxy — [implementation plan](phase-8-server-plan.md#86----the-update-proxy)
+- [ ] 8.7 Mail - prepared by the system, sent only on confirmation — [implementation plan](phase-8-server-plan.md#87----mail-prepared-by-the-system-sent-only-on-confirmation)
+- [ ] 8.8 Per-module endpoints — [implementation plan](phase-8-server-plan.md#88----per-module-endpoints)
 
 ## Phase 9 - Build, packaging and release
 
-- [ ] 9.1 GitHub Actions across the private repositories, App installation token
-- [ ] 9.2 The ten-step Windows build
-- [ ] 9.3 Automated self-signed signing
+- [ ] 9.1 GitHub Actions across the private repositories, App installation token — [implementation plan](phase-9-packaging-plan.md#91----github-actions-across-the-private-repositories-app-installation-token)
+- [ ] 9.2 The ten-step Windows build — [implementation plan](phase-9-packaging-plan.md#92----the-ten-step-windows-build)
+- [ ] 9.3 Automated self-signed signing — [implementation plan](phase-9-packaging-plan.md#93----automated-self-signed-signing)
 - [ ] 9.4 The updater - side-by-side, directory junction, auto-revert after two
-      failed starts, blocked while the outbox is not empty
-- [ ] 9.5 Podman Quadlet units
-- [ ] 9.6 The release, size recorded by CI rather than estimated
+      failed starts, blocked while the outbox is not empty — [implementation plan](phase-9-packaging-plan.md#94----the-updater-side-by-side-directory-junction-auto-revert-outbox-blocked)
+- [ ] 9.5 Podman Quadlet units — [implementation plan](phase-9-packaging-plan.md#95----podman-quadlet-units)
+- [ ] 9.6 The release, size recorded by CI rather than estimated — [implementation plan](phase-9-packaging-plan.md#96----the-release-size-recorded-by-ci-rather-than-estimated)
 
 ---
 
