@@ -50,7 +50,14 @@ struct NavigationAccess final {
     bool allows(const ScreenContribution& screen) const noexcept;
     bool module_registered(protocol::ModuleId module) const noexcept;
 
-    friend bool operator==(const NavigationAccess&, const NavigationAccess&) = default;
+    friend bool operator==(const NavigationAccess& left,
+                           const NavigationAccess& right) noexcept {
+        return left.activation.active == right.activation.active &&
+               left.rights == right.rights &&
+               left.registered == right.registered &&
+               left.session_generation == right.session_generation &&
+               left.navigation_revision == right.navigation_revision;
+    }
 };
 
 NavigationAccess make_navigation_access(
