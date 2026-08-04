@@ -121,7 +121,7 @@ than being counted here.
 ## Phase 7 - The interface *(none of this compiles here)*
 
 - [ ] 7.1 Window and shell
-- [ ] 7.2 Navigation and module visibility from activation
+- [ ] 7.2 Navigation and module visibility from activation — [implementation plan](phase-7.2-navigation-and-activation.md)
 - [ ] 7.3 Lists
 - [ ] 7.4 Forms and validation
 - [ ] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets
