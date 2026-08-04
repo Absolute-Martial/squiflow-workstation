@@ -24,7 +24,7 @@ directory.
 | 4 - The twelve modules | 13 | 13 |
 | 5 - Workflows | 8 | 7 |
 | 6 - Platform and the application shell | 8 | 7 |
-| 7 - The interface | 6 | 0 |
+| 7 - The interface | 6 | 0 *(2 written; Qt runtime pending)* |
 | 8 - The server | 8 | 0 |
 | 9 - Build, packaging and release | 6 | 0 |
 
@@ -122,11 +122,11 @@ than being counted here.
       service owning a thread
 - [ ] 6.8 Startup order, fixed and tested — [implementation plan](phase-6.8-startup-order.md)
 
-## Phase 7 - The interface *(none of this compiles here)*
+## Phase 7 - The interface *(portable core verified; Qt runtime lane pending)*
 
 - [ ] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell)
-- [ ] 7.2 Navigation and module visibility from activation — [implementation plan](phase-7.2-navigation-and-activation.md)
-- [ ] 7.3 Lists — [implementation plan](phase-7-interface-plan.md#73----lists)
+- [~] 7.2 Navigation and module visibility from activation — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7.2-navigation-and-activation.md)
+- [~] 7.3 Lists — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7-interface-plan.md#73----lists)
 - [ ] 7.4 Forms and validation — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
 - [ ] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
 - [ ] 7.6 Images and the AVIF plugin — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)

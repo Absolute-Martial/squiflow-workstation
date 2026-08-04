@@ -1,6 +1,7 @@
 # Phase 7 -- The interface: 7.1, 7.3-7.6 implementation plan
 
-Status: planned, not started for 7.1, 7.3, 7.4, 7.5, 7.6. 7.2 has its own
+Status: 7.3 implemented with portable/static gates passing and the Qt runtime
+gate pending; 7.1 and 7.4-7.6 remain planned. 7.2 has its own
 document: `phase-7.2-navigation-and-activation.md`. Read that document
 first -- 7.3 onward depend on its typed contribution contract and
 immutable navigation snapshot, and this document does not repeat those

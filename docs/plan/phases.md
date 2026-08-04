@@ -145,10 +145,11 @@ Sub-phases 6.1-6.8 detailed when Phase 6 is reached.
 
 Theme, controls, patterns, module screens, view models.
 
-**Verification:** not verifiable in this sandbox (no Qt). Written and marked
-unverified, never counted as done.
+**Verification:** portable shell contracts compile and run in the strict lane.
+Qt adapters and QML resources are statically gated and conditionally registered,
+but remain marked unverified until a Qt-capable Linux/MSVC lane executes them.
 
-Sub-phases 7.1-7.6 detailed when Phase 7 is reached.
+Sub-phases 7.1-7.6 are detailed in the Phase 7 plan documents.
 
 ---
 

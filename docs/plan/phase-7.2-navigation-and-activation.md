@@ -2,7 +2,7 @@
 
 ## Status
 
-**Ready to implement.** This plan starts from commit `94e76dd`, after the QML presentation bridge gate. Phase 7.2 will refine the existing `ScreenRegistry` prototype into the production navigation system; it will not create a second registry.
+**Implemented; Qt runtime gate pending.** Portable contracts, manifest, reconciliation, QML resources, and static architecture gates pass. See `docs/qa/phase-7.2-navigation-and-visibility-gate.md`. A built Qt 6.11.1 SDK is still required for the registered Linux/MSVC runtime tests before this sub-phase changes from `[~]` to `[x]`.
 
 ## Goal
 

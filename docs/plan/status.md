@@ -782,3 +782,15 @@ Done with CrashCatch 1.5.0 behind the platform interface: lock-free bounded brea
 ## 6.4 named single-instance ownership
 
 A database-derived machine-wide mutex now prevents a second workstation process from reaching database open. A companion activation event asks the primary shell to raise its window; Phase 6.8 owns that UI connection. The strict lane passed 5,122 assertions across 33 programs, with 307 integrity files and 137 self-contained headers. The independent CMake build reached 100% and CTest passed 29/29. Windows execution remains unverified in this Linux sandbox.
+
+
+## Phase 7.2 and 7.3 -- navigation and reusable lists
+
+The activation-aware navigation contracts, twelve-route manifest, deterministic
+reconciliation controller, responsive QML rail/drawer, bounded PMR-backed list
+cache, list intent bridge, Qt adapters, and loading/empty/error list QML are
+implemented. The strict lane passed 5,484 assertions across 47 programs, with
+174 self-contained headers and 388 integrity files. Qt runtime execution remains
+pending because this image has no built Qt 6.11.1 SDK and no `cmake` executable.
+Formal evidence is in `docs/qa/phase-7.2-navigation-and-visibility-gate.md` and
+`docs/qa/phase-7.3-lists-gate.md`.

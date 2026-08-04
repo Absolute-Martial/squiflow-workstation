@@ -24,7 +24,7 @@ authoritative live number, not this sentence.
 | 4 The twelve modules | complete |
 | 5 Workflows | 7 of 8 -- **5.8 remains, planned below** |
 | 6 Platform and application shell | 7 of 8 -- **6.8 remains, planned below** |
-| 7 The interface | 0 of 6 -- **7.2 planned separately; 7.1, 7.3-7.6 planned below** |
+| 7 The interface | 0 of 6 fully verified -- **7.2 and 7.3 implemented, portable/static gates green, Qt runtime lane pending** |
 | 8 The server | 0 of 8 -- **all of 8.1-8.8 planned below** |
 | 9 Build, packaging, release | 0 of 6 -- **all of 9.1-9.6 planned below** |
 
@@ -56,8 +56,8 @@ that content -- it only orders the documents against each other.
 1.  5.8  Prepare a document for approval or email
 2.  6.8  Startup order, fixed and tested
 3.  7.1  Window and shell
-4.  7.2  Navigation and module visibility from activation
-5.  7.3  Lists
+4.  7.2  Navigation and module visibility from activation (implemented; run Qt gate)
+5.  7.3  Lists (implemented; run Qt gate)
 6.  7.4  Forms and validation
 7.  7.5  Documents and print (spike required first: QPdfWriter without QtWidgets)
 8.  7.6  Images and the AVIF plugin (spike required first: AVIF plugin against Qt 6.11.1)
