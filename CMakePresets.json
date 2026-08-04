@@ -105,6 +105,15 @@
         "squiflow_archive"
       ],
       "jobs": 2
+    },
+    {
+      "name": "windows-msvc-source",
+      "displayName": "Stage Windows source archive",
+      "configurePreset": "windows-msvc-release",
+      "targets": [
+        "squiflow_source_archive"
+      ],
+      "jobs": 2
     }
   ],
   "testPresets": [
@@ -202,6 +211,10 @@
         {
           "type": "build",
           "name": "windows-msvc-package"
+        },
+        {
+          "type": "build",
+          "name": "windows-msvc-source"
         }
       ]
     }
