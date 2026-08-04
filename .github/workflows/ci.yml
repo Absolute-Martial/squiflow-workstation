@@ -18,7 +18,7 @@ jobs:
       - uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: '4.4.2'
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: seanmiddleditch/gha-setup-ninja@v6
       - name: Validate pipeline policy
         run: python3 tools/ci/check_pipeline.py
       - name: Run strict source gate
@@ -41,7 +41,7 @@ jobs:
       - uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: '4.4.2'
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: seanmiddleditch/gha-setup-ninja@v6
       - uses: jurplel/install-qt-action@v4.3.1
         with:
           version: '6.11.1'
