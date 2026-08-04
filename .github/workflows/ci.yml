@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: '4.4.2'
@@ -34,7 +34,7 @@ jobs:
       VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\.vcpkg-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
@@ -50,7 +50,7 @@ jobs:
           cache: true
           aqtsource: git+https://github.com/miurahr/aqtinstall@16db45a70b5905ad596941b223469bc86a56901e
       - name: Checkout pinned vcpkg
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: microsoft/vcpkg
           ref: '2026.07.29'
