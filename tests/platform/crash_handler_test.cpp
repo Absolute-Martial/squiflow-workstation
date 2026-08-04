@@ -17,8 +17,11 @@ namespace p = squiflow::platform;
 namespace {
 std::string read(const std::string& path) {
     std::ifstream input(path, std::ios::binary);
-    return {std::istreambuf_iterator<char>(input),
-            std::istreambuf_iterator<char>()};
+    std::string content;
+    for (char ch; input.get(ch);) {
+        content.push_back(ch);
+    }
+    return content;
 }
 }
 

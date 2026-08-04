@@ -650,8 +650,10 @@ void the_real_storage_agrees_with_the_fake() {
     check(family_files <= 4, "no more than the live file and its generations");
 
     std::ifstream live((root / "squiflow.log").string());
-    std::string content((std::istreambuf_iterator<char>(live)),
-                        std::istreambuf_iterator<char>());
+    std::string content;
+    for (char ch; live.get(ch);) {
+        content.push_back(ch);
+    }
     check(!content.empty(), "the live file has content");
     check(!contains(content, "must not appear"),
           "no credential reached the disk");
