@@ -11,7 +11,8 @@ ScreenContribution primary_route(protocol::ModuleId owner, std::string id,
                                  std::string title_key, std::string icon_name,
                                  std::string group_key, std::uint16_t group_rank,
                                  std::uint16_t screen_rank,
-                                 protocol::RightId required_right) {
+                                 protocol::RightId required_right,
+                                 std::vector<ListColumn> columns) {
     const std::string route_id = id;
     return {owner,
             std::move(id),
@@ -22,7 +23,13 @@ ScreenContribution primary_route(protocol::ModuleId owner, std::string id,
             group_rank,
             screen_rank,
             required_right,
-            [route_id] { return std::make_unique<RoutePresentationBridge>(route_id); }};
+            [route_id, columns = std::move(columns)] {
+                return std::make_unique<RoutePresentationBridge>(route_id, columns);
+            }};
+}
+
+ListColumn column(std::string id, bool sortable = true, bool filterable = true) {
+    return {id, "column." + id, sortable, filterable};
 }
 
 std::size_t index_of(protocol::ModuleId module) {
@@ -34,8 +41,9 @@ std::size_t index_of(protocol::ModuleId module) {
 
 }  // namespace
 
-RoutePresentationBridge::RoutePresentationBridge(std::string route_id)
-    : route_id_(std::move(route_id)) {
+RoutePresentationBridge::RoutePresentationBridge(
+    std::string route_id, std::vector<ListColumn> columns)
+    : route_id_(std::move(route_id)), list_(std::move(columns)) {
     if (route_id_.empty()) {
         throw std::invalid_argument("route bridge requires a stable id");
     }
@@ -47,32 +55,47 @@ ScreenRegistry make_navigation_manifest() {
     using R = protocol::RightId;
     manifest.add(primary_route(M::administration, "administration.home",
                                "navigation.administration", "settings", "group.system",
-                               50, 10, R::right_person_manage));
+                               50, 10, R::right_person_manage,
+                               {column("name"), column("access")}));
     manifest.add(primary_route(M::parties, "parties.list", "navigation.parties",
-                               "people", "group.work", 10, 10, R::right_party_read));
+                               "people", "group.work", 10, 10, R::right_party_read,
+                               {column("name"), column("terms")}));
     manifest.add(primary_route(M::catalog, "catalog.list", "navigation.catalog",
-                               "box", "group.work", 10, 20, R::right_product_read));
+                               "box", "group.work", 10, 20, R::right_product_read,
+                               {column("name")}));
     manifest.add(primary_route(M::pricing, "pricing.rates", "navigation.pricing",
-                               "tag", "group.work", 10, 30, R::right_rate_read));
+                               "tag", "group.work", 10, 30, R::right_rate_read,
+                               {column("name"), column("rate")}));
     manifest.add(primary_route(M::orders, "orders.list", "navigation.orders",
-                               "cart", "group.work", 10, 40, R::right_order_read));
+                               "cart", "group.work", 10, 40, R::right_order_read,
+                               {column("number"), column("customer"), column("status"),
+                                column("total", false, false)}));
     manifest.add(primary_route(M::receivables, "receivables.invoices",
                                "navigation.receivables", "receipt", "group.finance",
-                               30, 10, R::right_invoice_read));
+                               30, 10, R::right_invoice_read,
+                               {column("number"), column("customer"), column("status"),
+                                column("total", false, false)}));
     manifest.add(primary_route(M::jobs, "jobs.list", "navigation.jobs", "briefcase",
-                               "group.work", 10, 50, R::right_job_read));
+                               "group.work", 10, 50, R::right_job_read,
+                               {column("number"), column("customer"), column("status")}));
     manifest.add(primary_route(M::quotations, "quotations.list", "navigation.quotations",
-                               "quote", "group.sales", 20, 10, R::right_quotation_read));
+                               "quote", "group.sales", 20, 10, R::right_quotation_read,
+                               {column("number"), column("customer"), column("status"),
+                                column("total", false, false)}));
     manifest.add(primary_route(M::agreements, "agreements.list", "navigation.agreements",
                                "handshake", "group.sales", 20, 20,
-                               R::right_agreement_read));
+                               R::right_agreement_read,
+                               {column("name"), column("customer"), column("status")}));
     manifest.add(primary_route(M::sourcing, "sourcing.suppliers", "navigation.sourcing",
                                "truck", "group.purchasing", 40, 10,
-                               R::right_supplier_read));
+                               R::right_supplier_read,
+                               {column("supplier"), column("status")}));
     manifest.add(primary_route(M::companion, "companion.tasks", "navigation.companion",
-                               "check", "group.work", 10, 60, R::right_task_read));
+                               "check", "group.work", 10, 60, R::right_task_read,
+                               {column("title"), column("status"), column("due")}));
     manifest.add(primary_route(M::files, "files.search", "navigation.files", "folder",
-                               "group.files", 60, 10, R::right_file_search));
+                               "group.files", 60, 10, R::right_file_search,
+                               {column("name"), column("location")}));
     return manifest;
 }
 

@@ -31,6 +31,8 @@ std::vector<protocol::ModuleId> compiled_modules() {
 QmlSurfaceQt::QmlSurfaceQt(SurfaceLifecycle::ShutdownRequest request, QObject* parent)
     : QObject(parent), lifecycle_(std::move(request)) {}
 
+QmlSurfaceQt::~QmlSurfaceQt() = default;
+
 app::StepResult QmlSurfaceQt::startShell() {
     if (engine_) {
         return {app::StepDisposition::Failed, "QML engine already exists"};

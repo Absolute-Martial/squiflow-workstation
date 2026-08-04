@@ -258,7 +258,7 @@ $(BUILD)/shell_screen_registry_test: $(PROTOCOL_SRC) src/shell/screen_registry.c
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
-$(BUILD)/shell_navigation_manifest_test: $(PROTOCOL_SRC) src/shell/screen_registry.cpp src/shell/navigation_manifest.cpp tests/shell/navigation_manifest_test.cpp
+$(BUILD)/shell_navigation_manifest_test: $(PROTOCOL_SRC) src/shell/screen_registry.cpp src/shell/paged_list_cache.cpp src/shell/list_bridge.cpp src/shell/navigation_manifest.cpp tests/shell/navigation_manifest_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
@@ -267,6 +267,10 @@ $(BUILD)/shell_navigation_controller_test: $(PROTOCOL_SRC) src/shell/screen_regi
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
 $(BUILD)/shell_paged_list_cache_test: src/shell/paged_list_cache.cpp tests/shell/paged_list_cache_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_list_bridge_test: src/shell/paged_list_cache.cpp src/shell/list_bridge.cpp tests/shell/list_bridge_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -483,9 +487,10 @@ architecture:
 >@$(PYTHON) tools/sandbox/test_qml_boundary.py
 >@$(PYTHON) tools/sandbox/check_ui_resources.py
 >@$(PYTHON) tools/sandbox/check_qt_bridge.py
+>@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -549,6 +554,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== paged list cache =='
 >./$(BUILD)/shell_paged_list_cache_test
+>@echo
+>@echo '== list bridge =='
+>./$(BUILD)/shell_list_bridge_test
 >@echo
 >@echo '== domain event bus =='
 >./$(BUILD)/app_domain_event_bus_test

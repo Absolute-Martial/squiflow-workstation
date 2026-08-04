@@ -6,11 +6,16 @@
 #include <QPointer>
 #include <QThread>
 
+#include "shell/list_screen_bridge_qt.hpp"
+#include "shell/navigation_manifest.hpp"
+
 namespace squiflow::shell {
 
 NavigationBridgeQt::NavigationBridgeQt(NavigationController& controller,
                                        NavigationModelQt& model, QObject* parent)
     : QObject(parent), controller_(controller), model_(model) {}
+
+NavigationBridgeQt::~NavigationBridgeQt() = default;
 
 QString NavigationBridgeQt::currentRoute() const {
     return QString::fromUtf8(controller_.current_route().data(),
@@ -31,6 +36,10 @@ bool NavigationBridgeQt::hasAccessibleModules() const noexcept {
     return !controller_.rows().empty();
 }
 
+QObject* NavigationBridgeQt::currentListBridge() const noexcept {
+    return current_list_bridge_.get();
+}
+
 bool NavigationBridgeQt::finish(const app::Result<void, NavigationError>& result) {
     const QString next_error = result.has_value()
         ? QString{}
@@ -47,6 +56,12 @@ bool NavigationBridgeQt::finish(const app::Result<void, NavigationError>& result
 }
 
 void NavigationBridgeQt::synchronize() {
+    current_list_bridge_.reset();
+    if (auto* route = dynamic_cast<RoutePresentationBridge*>(
+            controller_.active_bridge())) {
+        current_list_bridge_ =
+            std::make_unique<ListScreenBridgeQt>(route->list(), this);
+    }
     model_.refreshFromController();
     emit currentRouteChanged();
     emit accessibleModulesChanged();

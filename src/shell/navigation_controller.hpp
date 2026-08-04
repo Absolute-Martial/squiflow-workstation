@@ -60,6 +60,7 @@ class NavigationController final {
     const std::vector<NavigationRow>& rows() const noexcept { return rows_; }
     std::string_view current_route() const noexcept { return current_route_; }
     const PresentationBridge* active_bridge() const noexcept { return active_bridge_.get(); }
+    PresentationBridge* active_bridge() noexcept { return active_bridge_.get(); }
     std::uint64_t session_generation() const noexcept;
     std::uint64_t navigation_revision() const noexcept;
     bool has_access() const noexcept { return has_access_; }

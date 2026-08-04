@@ -53,6 +53,8 @@ int main() {
         const auto* typed = dynamic_cast<const shell::RoutePresentationBridge*>(bridge.get());
         t::check(typed != nullptr && typed->route_id() == route.id,
                  "factory creates bridge bound to exact stable route id");
+        t::check(typed != nullptr && !typed->list().columns().empty(),
+                 "each primary route owns a validated module list bridge");
     }
 
     auto incomplete = all_modules();

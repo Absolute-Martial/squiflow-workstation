@@ -9,7 +9,11 @@
 #include <QString>
 #include <QUrl>
 
+#include <memory>
+
 namespace squiflow::shell {
+
+class ListScreenBridgeQt;
 
 class NavigationBridgeQt final : public QObject {
     Q_OBJECT
@@ -17,15 +21,18 @@ class NavigationBridgeQt final : public QObject {
     Q_PROPERTY(QUrl currentComponentUrl READ currentComponentUrl NOTIFY currentRouteChanged)
     Q_PROPERTY(bool hasAccessibleModules READ hasAccessibleModules NOTIFY accessibleModulesChanged)
     Q_PROPERTY(QString lastErrorKey READ lastErrorKey NOTIFY lastErrorChanged)
+    Q_PROPERTY(QObject* currentListBridge READ currentListBridge NOTIFY currentRouteChanged)
 
   public:
     NavigationBridgeQt(NavigationController& controller, NavigationModelQt& model,
                        QObject* parent = nullptr);
+    ~NavigationBridgeQt() override;
 
     QString currentRoute() const;
     QUrl currentComponentUrl() const;
     bool hasAccessibleModules() const noexcept;
     QString lastErrorKey() const { return last_error_key_; }
+    QObject* currentListBridge() const noexcept;
 
     Q_INVOKABLE bool selectRoute(const QString& stable_id);
     Q_INVOKABLE bool goBack();
@@ -45,6 +52,7 @@ class NavigationBridgeQt final : public QObject {
 
     NavigationController& controller_;
     NavigationModelQt& model_;
+    std::unique_ptr<ListScreenBridgeQt> current_list_bridge_{};
     QString last_error_key_{};
 };
 

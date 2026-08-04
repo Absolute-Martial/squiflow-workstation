@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shell/list_bridge.hpp"
 #include "shell/screen_registry.hpp"
 
 #include <squiflow/protocol/module_id.hpp>
@@ -14,11 +15,14 @@ namespace squiflow::shell {
 // Phase 7.3 layers list behavior on top without changing route identity.
 class RoutePresentationBridge final : public PresentationBridge {
   public:
-    explicit RoutePresentationBridge(std::string route_id);
+    RoutePresentationBridge(std::string route_id, std::vector<ListColumn> columns);
     std::string_view route_id() const noexcept { return route_id_; }
+    ListBridge& list() noexcept { return list_; }
+    const ListBridge& list() const noexcept { return list_; }
 
   private:
     std::string route_id_;
+    ListBridge list_;
 };
 
 ScreenRegistry make_navigation_manifest();

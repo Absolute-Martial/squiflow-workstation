@@ -27,6 +27,7 @@ class QmlSurfaceQt final : public QObject {
   public:
     explicit QmlSurfaceQt(SurfaceLifecycle::ShutdownRequest request,
                           QObject* parent = nullptr);
+    ~QmlSurfaceQt() override;
     app::StepResult startShell();
     app::StepResult startWindow();
     Q_INVOKABLE void requestShutdown();
