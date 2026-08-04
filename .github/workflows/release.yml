@@ -14,7 +14,7 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 120
     env:
-      VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
+      SQUIFLOW_VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\.vcpkg-cache
     steps:
       - uses: actions/checkout@v7
@@ -40,21 +40,26 @@ jobs:
       - name: Bootstrap vcpkg
         shell: pwsh
         run: |
-          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
-          New-Item -ItemType Directory -Force $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          & "$env:SQUIFLOW_VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+          New-Item -ItemType Directory -Force "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
       - name: Validate tag
         shell: pwsh
         run: |
           if ('${{ github.ref_name }}' -notmatch '^v\d+\.\d+\.\d+$') { throw 'Release tag must be vMAJOR.MINOR.PATCH' }
       - name: Build, test and stage release
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
         run: cmake --workflow --preset windows-msvc-release-bundle
       - name: Write SHA-256 checksums
         shell: pwsh
         run: |
           $files = Get-ChildItem build/windows-msvc-release/artifacts/*.zip
-          if ($files.Count -ne 1) { throw 'Expected exactly one release archive' }
-          $hash = Get-FileHash -Algorithm SHA256 $files[0]
-          "$($hash.Hash.ToLower())  $($files[0].Name)" | Set-Content build/windows-msvc-release/artifacts/SHA256SUMS.txt -Encoding ascii
+          if ($files.Count -lt 1) { throw 'Expected at least one release archive' }
+          $lines = foreach ($f in $files) {
+            $hash = Get-FileHash -Algorithm SHA256 $f
+            "$($hash.Hash.ToLower())  $($f.Name)"
+          }
+          $lines | Set-Content build/windows-msvc-release/artifacts/SHA256SUMS.txt -Encoding ascii
       - name: Upload immutable workflow artifact
         uses: actions/upload-artifact@v7
         with:

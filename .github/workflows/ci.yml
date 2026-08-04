@@ -31,7 +31,7 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 90
     env:
-      VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
+      SQUIFLOW_VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\.vcpkg-cache
     steps:
       - uses: actions/checkout@v7
@@ -58,9 +58,11 @@ jobs:
       - name: Bootstrap vcpkg
         shell: pwsh
         run: |
-          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
-          New-Item -ItemType Directory -Force $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          & "$env:SQUIFLOW_VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+          New-Item -ItemType Directory -Force "$env:VCPKG_DEFAULT_BINARY_CACHE" | Out-Null
       - name: Build and test with MSVC
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
         run: cmake --workflow --preset windows-msvc-check
       - name: Upload test logs on failure
         if: failure()
