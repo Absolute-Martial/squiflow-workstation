@@ -56,7 +56,7 @@ jobs:
           $hash = Get-FileHash -Algorithm SHA256 $files[0]
           "$($hash.Hash.ToLower())  $($files[0].Name)" | Set-Content build/windows-msvc-release/artifacts/SHA256SUMS.txt -Encoding ascii
       - name: Upload immutable workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SquiFlow-${{ github.ref_name }}-windows-x64
           path: build/windows-msvc-release/artifacts/*
