@@ -127,6 +127,11 @@ than being counted here.
 
 ## Phase 7 - The interface *(portable core verified; Qt runtime lane pending)*
 
+- [~] 7.0 Fluent UI component sourcing — [plan](phase-7-fluent-ui-sourcing.md): Layer 1
+      (Qt's native `FluentWinUI3` style) applied and committed; Layer 2
+      (`zhuzichu520/FluentUI`) and Layer 3 (`Rin-UI`) planned as pinned
+      submodules, not yet vendored -- this sandbox has no network and no Qt
+      install to fetch, wire, or visually verify them
 - [~] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell),
       [gate](../qa/phase-7.1-window-shell-gate.md): geometry persistence and
       validation proven in the portable lane; the Qt-side apply/capture in
