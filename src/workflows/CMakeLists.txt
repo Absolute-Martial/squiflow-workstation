@@ -4,6 +4,7 @@ add_library(squiflow_workflows STATIC
     issue_invoice.cpp
     cancel_and_reissue.cpp
     take_payment.cpp
+    counter_sale.cpp
     apply_agreement.cpp
     record_purchase.cpp
     document_delivery.cpp)
@@ -22,6 +23,11 @@ if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/workflow_fr
     add_executable(workflow_framework_test "${SQUIFLOW_ROOT}/tests/workflows/workflow_framework_test.cpp")
     target_link_libraries(workflow_framework_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME workflows.framework COMMAND workflow_framework_test)
+endif()
+if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/counter_sale_test.cpp")
+    add_executable(counter_sale_test "${SQUIFLOW_ROOT}/tests/workflows/counter_sale_test.cpp")
+    target_link_libraries(counter_sale_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME workflows.counter_sale COMMAND counter_sale_test)
 endif()
 if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/issue_invoice_test.cpp")
     add_executable(issue_invoice_test "${SQUIFLOW_ROOT}/tests/workflows/issue_invoice_test.cpp")
