@@ -46,7 +46,7 @@ jobs:
         with:
           version: '6.11.1'
           arch: win64_msvc2022_64
-          modules: 'qtshadertools qtimageformats'
+          modules: 'qtshadertools qtimageformats qttasktree'
           cache: true
           aqtsource: git+https://github.com/miurahr/aqtinstall@16db45a70b5905ad596941b223469bc86a56901e
       - name: Checkout pinned vcpkg
