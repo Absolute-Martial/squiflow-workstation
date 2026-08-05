@@ -40,6 +40,16 @@ option(SQUIFLOW_WARNINGS_AS_ERRORS "Treat all warnings as errors" ON)
 option(SQUIFLOW_ENABLE_SANITIZERS "Build with address+undefined sanitizers" OFF)
 option(SQUIFLOW_BUILD_TESTS "Build the test suites" ON)
 
+if(SQUIFLOW_WITH_QT)
+    # Qt imported targets (Qt6::Core, Qt6::Qml, ...) are only visible in the
+    # directory that called find_package and its subdirectories. The
+    # workstation executable is created in src/app while the QML module is
+    # registered from src/ui, so the find must live here at the top so every
+    # subdirectory can reference the targets at generate time.
+    find_package(Qt6 6.11.1 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
+    qt_standard_project_setup(REQUIRES 6.11.1)
+endif()
+
 # ---------------------------------------------------------------------------
 # Shared compile options, applied via an INTERFACE target so every module
 # picks them up the same way instead of copy-pasting compiler flags.
