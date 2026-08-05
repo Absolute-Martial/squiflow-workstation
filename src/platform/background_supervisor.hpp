@@ -23,6 +23,6 @@ private:
  SubmissionResult dispatch_locked(Entry& entry,std::unique_lock<std::mutex>& lock);
  void completed(const std::string& id,BackgroundOutcome outcome,std::string error);
  void publish_locked();bool gated(const Entry& entry) const noexcept;
- mutable std::mutex mutex_;std::unordered_map<std::string,Entry> entries_;bool sealed_{false};bool stopping_{false};bool network_authorized_{false};bool idle_{false};std::optional<std::chrono::sys_days> last_calendar_day_;BackgroundExecutor executor_;std::shared_ptr<const std::vector<BackgroundServiceStatus>> snapshot_;
+ mutable std::mutex mutex_;std::unordered_map<std::string,Entry> entries_;bool sealed_{false};bool stopping_{false};bool network_authorized_{false};bool idle_{false};std::optional<std::chrono::sys_days> last_calendar_day_;BackgroundExecutor executor_;std::atomic<std::shared_ptr<const std::vector<BackgroundServiceStatus>>> snapshot_;
 };
 }
