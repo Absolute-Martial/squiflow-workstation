@@ -1,5 +1,6 @@
 squiflow_add_module(quotations
     TIER extra
+    REQUIRES catalog pricing parties
     SOURCES
         module.cpp
         domain/quotation.cpp

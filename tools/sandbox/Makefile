@@ -483,6 +483,9 @@ integrity:
 
 architecture:
 >@echo '== QML architecture boundary =='
+>@$(PYTHON) tools/sandbox/check_application_architecture.py
+>@$(PYTHON) tools/sandbox/check_composition_root.py
+>@$(PYTHON) tools/sandbox/check_module_boundaries.py
 >@$(PYTHON) tools/sandbox/check_qml_boundary.py
 >@$(PYTHON) tools/sandbox/test_qml_boundary.py
 >@$(PYTHON) tools/sandbox/check_ui_resources.py

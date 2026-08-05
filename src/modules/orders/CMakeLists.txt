@@ -1,5 +1,6 @@
 squiflow_add_module(orders
     TIER core
+    REQUIRES catalog pricing parties
     SOURCES
         module.cpp
         domain/order.cpp
@@ -18,5 +19,4 @@ if(TARGET squiflow_module_orders_test)
 endif()
 
 target_link_libraries(squiflow_module_orders
-    PUBLIC squiflow::modules::framework
-           squiflow_module_pricing)
+    PUBLIC squiflow::modules::framework)

@@ -1,5 +1,6 @@
 squiflow_add_module(receivables
     TIER core
+    REQUIRES pricing parties
     SOURCES
         module.cpp
         domain/invoice.cpp
@@ -23,6 +24,4 @@ if(TARGET squiflow_module_receivables_test)
 endif()
 
 target_link_libraries(squiflow_module_receivables
-    PUBLIC squiflow::modules::framework
-           squiflow_module_parties
-           squiflow_module_pricing)
+    PUBLIC squiflow::modules::framework)
