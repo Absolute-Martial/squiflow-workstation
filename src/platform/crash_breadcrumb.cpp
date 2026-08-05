@@ -9,6 +9,8 @@
 #include <limits>
 #ifdef _WIN32
 #include <io.h>
+#include <share.h>
+#include <sys/stat.h>
 #ifndef PATH_MAX
 #define PATH_MAX _MAX_PATH
 #endif
@@ -213,14 +215,18 @@ bool CrashBreadcrumb::dump_to_file(std::string_view path) const noexcept {
     std::array<char, PATH_MAX> terminated{};
     std::memcpy(terminated.data(), path.data(), path.size());
 #ifdef _WIN32
-    const int fd = ::_open(terminated.data(),
-                           _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY, 0600);
+    int fd = -1;
+    if (::_sopen_s(&fd, terminated.data(),
+                   _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY,
+                   _SH_DENYNO, _S_IWRITE) != 0) {
+        return false;
+    }
 #else
     const int fd = ::open(terminated.data(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
-#endif
     if (fd < 0) {
         return false;
     }
+#endif
     static_cast<void>(dump_to_fd(fd));
 #ifdef _WIN32
     const bool closed = ::_close(fd) == 0;
