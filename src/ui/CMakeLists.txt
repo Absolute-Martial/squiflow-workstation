@@ -4,6 +4,7 @@ if(SQUIFLOW_WITH_QT)
     target_compile_definitions(squiflow_workstation PRIVATE SQUIFLOW_WITH_QT=1)
     target_compile_definitions(squiflow_shell PRIVATE SQUIFLOW_WITH_QT=1)
     set_target_properties(squiflow_shell PROPERTIES AUTOMOC ON)
+    set_target_properties(squiflow_workstation PROPERTIES AUTOMOC ON)
     target_sources(squiflow_shell PRIVATE
         ../shell/paged_list_model_qt.cpp
         ../shell/list_screen_bridge_qt.cpp
