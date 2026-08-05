@@ -18,7 +18,7 @@ public:
  std::vector<BackgroundServiceStatus> statuses() const;std::optional<BackgroundServiceStatus> status(std::string_view id) const;
  ShutdownResult shutdown(BackgroundClock::duration timeout);bool sealed() const;
 private:
- struct Entry {BackgroundServiceDefinition definition;BackgroundServiceStatus status;bool rerun{false};std::uint32_t rerun_triggers{0};};
+ struct Entry {BackgroundServiceDefinition definition;BackgroundServiceStatus status;bool submission_pending{false};bool rerun{false};std::uint32_t rerun_triggers{0};};
  SubmissionResult trigger_locked(Entry& entry,BackgroundTrigger reason,std::unique_lock<std::mutex>& lock);
  SubmissionResult dispatch_locked(Entry& entry,std::unique_lock<std::mutex>& lock);
  void completed(const std::string& id,BackgroundOutcome outcome,std::string error);
