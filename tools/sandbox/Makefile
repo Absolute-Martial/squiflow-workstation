@@ -118,6 +118,12 @@ COUNTER_SALE_SRC := src/workflows/counter_sale.cpp
 APPLY_AGREEMENT_SRC := src/workflows/apply_agreement.cpp
 RECORD_PURCHASE_SRC := src/workflows/record_purchase.cpp
 DOCUMENT_DELIVERY_SRC := src/workflows/document_delivery.cpp
+WORKFLOW_REGISTRATION_SRC := src/workflows/registration.cpp
+ALL_WORKFLOWS_SRC := $(QUOTE_TO_ORDER_SRC) $(ORDER_TO_JOBS_SRC) \
+                     $(ISSUE_INVOICE_SRC) $(CANCEL_REISSUE_SRC) \
+                     $(TAKE_PAYMENT_SRC) $(COUNTER_SALE_SRC) \
+                     $(APPLY_AGREEMENT_SRC) $(RECORD_PURCHASE_SRC) \
+                     $(DOCUMENT_DELIVERY_SRC) $(WORKFLOW_REGISTRATION_SRC)
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
@@ -237,6 +243,15 @@ $(BUILD)/platform_background_services_test: $(BACKGROUND_SERVICES_SRC) tests/pla
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(BUILD)/app_startup_test: $(APP_STARTUP_SRC) tests/app/startup_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
+
+$(BUILD)/app_composition_root_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                    $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) $(PARTIES_SRC) \
+                                    $(CATALOG_SRC) $(PRICING_SRC) $(ORDERS_SRC) $(RECEIVABLES_SRC) \
+                                    $(JOBS_SRC) $(QUOTATIONS_SRC) $(AGREEMENTS_SRC) $(SOURCING_SRC) \
+                                    $(COMPANION_SRC) $(FILES_SRC) $(ALL_WORKFLOWS_SRC) \
+                                    src/app/composition_root.cpp tests/app/composition_root_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
@@ -508,7 +523,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -550,6 +565,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== application startup =='
 >./$(BUILD)/app_startup_test
+>@echo
+>@echo '== application composition root =='
+>./$(BUILD)/app_composition_root_test
 >@echo
 >@echo '== application contracts =='
 >./$(BUILD)/app_contracts_test

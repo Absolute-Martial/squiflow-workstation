@@ -1,4 +1,5 @@
 add_library(squiflow_workflows STATIC
+    registration.cpp
     quote_to_order.cpp
     order_to_jobs.cpp
     issue_invoice.cpp
@@ -18,6 +19,7 @@ target_link_libraries(squiflow_workflows
            squiflow_module_pricing
            squiflow_module_receivables
            squiflow_module_agreements
+           squiflow_module_sourcing
     PRIVATE squiflow::warnings squiflow::hardening squiflow::sanitizers)
 if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/workflow_framework_test.cpp")
     add_executable(workflow_framework_test "${SQUIFLOW_ROOT}/tests/workflows/workflow_framework_test.cpp")
