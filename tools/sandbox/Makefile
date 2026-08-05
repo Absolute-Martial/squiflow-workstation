@@ -306,6 +306,14 @@ $(BUILD)/shell_window_state_test: src/shell/window_state.cpp tests/shell/window_
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+SERVER_IDENTITY_SRC := server/src/identity/token_store.cpp \
+                       server/src/identity/token_issuer.cpp \
+                       src/engine/records/identity.cpp
+
+$(BUILD)/server_identity_token_issuer_test: $(SERVER_IDENTITY_SRC) server/tests/identity/token_issuer_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iserver/src $(SERVER_IDENTITY_SRC) server/tests/identity/token_issuer_test.cpp $(SODIUM_LIB) -o $@
+
 $(BUILD)/app_domain_event_bus_test: tests/app/domain_event_bus_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -538,7 +546,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_window_state_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_window_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -616,6 +624,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== window state =='
 >./$(BUILD)/shell_window_state_test
+>@echo
+>@echo '== server identity: token issuer =='
+>./$(BUILD)/server_identity_token_issuer_test
 >@echo
 >@echo '== domain event bus =='
 >./$(BUILD)/app_domain_event_bus_test

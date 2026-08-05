@@ -9,6 +9,7 @@
 
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QScreen>
 #include <QWindow>
 
 #include <utility>
@@ -28,8 +29,11 @@ std::vector<protocol::ModuleId> compiled_modules() {
 
 }  // namespace
 
-QmlSurfaceQt::QmlSurfaceQt(SurfaceLifecycle::ShutdownRequest request, QObject* parent)
-    : QObject(parent), lifecycle_(std::move(request)) {}
+QmlSurfaceQt::QmlSurfaceQt(SurfaceLifecycle::ShutdownRequest request,
+                          WindowStateStore* window_state_store,
+                          QObject* parent)
+    : QObject(parent), lifecycle_(std::move(request)),
+      window_state_store_(window_state_store) {}
 
 QmlSurfaceQt::~QmlSurfaceQt() = default;
 
@@ -85,6 +89,24 @@ app::StepResult QmlSurfaceQt::startWindow() {
     if (!root_) {
         return lifecycle_.start_window(false, "QML root is not a window");
     }
+    if (window_state_store_) {
+        int screen_width = 0;
+        int screen_height = 0;
+        if (const auto* screen = root_->screen()) {
+            const auto available = screen->availableGeometry();
+            screen_width = available.width();
+            screen_height = available.height();
+        }
+        const auto geometry = resolve_window_geometry(*window_state_store_,
+                                                       screen_width,
+                                                       screen_height);
+        if (geometry.maximized) {
+            root_->showMaximized();
+        } else {
+            root_->setGeometry(geometry.x, geometry.y, geometry.width,
+                               geometry.height);
+        }
+    }
     root_->show();
     return lifecycle_.start_window(true);
 }
@@ -103,6 +125,18 @@ void QmlSurfaceQt::publishNavigationAccess(NavigationAccess access) {
 
 void QmlSurfaceQt::stopWindow() noexcept {
     if (root_) {
+        if (window_state_store_) {
+            WindowGeometry geometry;
+            geometry.maximized = root_->windowState() & Qt::WindowMaximized;
+            if (!geometry.maximized) {
+                const auto bounds = root_->geometry();
+                geometry.x = bounds.x();
+                geometry.y = bounds.y();
+                geometry.width = bounds.width();
+                geometry.height = bounds.height();
+            }
+            window_state_store_->save(geometry);
+        }
         root_->hide();
         delete root_.data();
         root_ = nullptr;
