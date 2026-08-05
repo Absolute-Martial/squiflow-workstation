@@ -127,7 +127,10 @@ than being counted here.
 
 ## Phase 7 - The interface *(portable core verified; Qt runtime lane pending)*
 
-- [ ] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell)
+- [~] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell),
+      [gate](../qa/phase-7.1-window-shell-gate.md): geometry persistence and
+      validation proven in the portable lane; the Qt-side apply/capture in
+      `QmlSurfaceQt` is written but unverified until the Qt runtime lane runs it
 - [~] 7.2 Navigation and module visibility from activation — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7.2-navigation-and-activation.md)
 - [~] 7.3 Lists — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7-interface-plan.md#73----lists)
 - [ ] 7.4 Forms and validation — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
@@ -138,7 +141,10 @@ than being counted here.
 
 - [ ] 8.1 Skeleton and configuration — [implementation plan](phase-8-server-plan.md#81----skeleton-and-configuration)
 - [ ] 8.2 PostgreSQL and migrations — [implementation plan](phase-8-server-plan.md#82----postgresql-and-migrations)
-- [ ] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens)
+- [~] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens),
+      [gate](../qa/phase-8.3-identity-token-core.md): portable bearer-token
+      issuance, hashing, and constant-time validation proven; the storage
+      backend and HTTP-layer wiring remain, now unblocked by D1's resolution
 - [ ] 8.4 Sync endpoints, idempotency, sequence assignment — [implementation plan](phase-8-server-plan.md#84----sync-endpoints-idempotency-sequence-assignment)
 - [ ] 8.5 Media, including the AVIF conversion worker — [implementation plan](phase-8-server-plan.md#85----media-including-the-avif-conversion-worker)
 - [ ] 8.6 The update proxy — [implementation plan](phase-8-server-plan.md#86----the-update-proxy)
@@ -164,7 +170,7 @@ and each one blocks something.
 
 | # | Question | Blocks |
 |---|---|---|
-| D1 | **Oat++ has no current release.** 1.3.0 is the last one; 1.4.0 has been in development for years. Recommendation: pin a specific 1.4.0 commit through a vcpkg overlay port, never a branch | Phase 8 |
+| D1 | **Decided: Hical**, not Oat++, is the Phase 8 HTTP framework. Bound to the sync transport adapter only; it must not leak into domain, workflows, protocol, or the PostgreSQL schema design | Done — unblocks 8.1 |
 | D2 | The storage seam is a **typed record store**, not prepare-bind-step SQL. A SQL-shaped seam cannot be faked, and nothing above it would be testable here | already built; reversible only now |
 | D3 | Is `jobs` really an Extra module? It currently requires nothing, which is unusual for something this central | 4.8 |
 | D4 | **Decided:** consume an agreement quantity cap when the invoice is issued and release it when that invoice is cancelled; jobs do not consume caps | Done in 5.7 |

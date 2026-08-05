@@ -7,17 +7,15 @@ be compiled and gated on a machine that has those, and honestly marked
 
 ## Decisions this phase is built on
 
-- **D1, recommendation standing, not yet confirmed by the shopkeeper:** pin
-  a specific Oat++ 1.4.0-branch commit through a vcpkg overlay port, never
-  a floating branch. This blocks 8.1 (the server cannot be scaffolded
-  without picking the framework version it links against). Do not start
-  8.1 until D1 is confirmed.
-- **Hical stays a Phase 8 adapter candidate, not a decided replacement.**
-  If Hical is chosen over (or alongside) Oat++, it is bound to the sync
-  transport adapter only; it must never leak into domain, workflows,
-  protocol, or the PostgreSQL schema design, and its Boost.MySQL
-  middleware is not used for the PostgreSQL design regardless of which
-  HTTP framework wins.
+- **D1, decided by the shopkeeper: Hical, not Oat++.** Oat++ is dropped as
+  the Phase 8 HTTP framework; Hical is the confirmed choice, which unblocks
+  8.1 (the server can now be scaffolded against a picked framework). Hical
+  is bound to the sync transport adapter only; it must never leak into
+  domain, workflows, protocol, or the PostgreSQL schema design, and its
+  Boost.MySQL middleware is not used for the PostgreSQL design -- that
+  design stays PostgreSQL regardless of the HTTP framework. Pin an exact
+  Hical version/commit through a vcpkg overlay port, never a floating
+  branch, matching the same pinning discipline D1 always required.
 - **D5, decided (from 5.8):** approval is by hand. 8.7 (mail) therefore
   sends only what a human already approved and explicitly requested to
   send -- it never infers approval from a reply.
