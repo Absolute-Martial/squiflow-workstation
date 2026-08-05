@@ -120,7 +120,10 @@ than being counted here.
 - [x] 6.6 Connection state from `QNetworkInformation`, not server pings *(Qt adapter written; Windows runtime gate required)*
 - [x] 6.7 Background services - one coarse timer, two bounded worker lanes, no
       service owning a thread
-- [ ] 6.8 Startup order, fixed and tested — [implementation plan](phase-6.8-startup-order.md)
+- [~] 6.8 Startup order, fixed and tested — [implementation plan](phase-6.8-startup-order.md),
+      [gate](../qa/phase-6.8-startup-order-gate.md): ordering/rollback proven
+      against a real registry via `RealStartupRuntime`; `main.cpp` wiring
+      blocked on the not-yet-built sign-in feature (`IdentitySession`)
 
 ## Phase 7 - The interface *(portable core verified; Qt runtime lane pending)*
 
