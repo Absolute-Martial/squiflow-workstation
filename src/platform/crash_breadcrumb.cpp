@@ -7,7 +7,14 @@
 #include <cstring>
 #include <fcntl.h>
 #include <limits>
+#ifdef _WIN32
+#include <io.h>
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
+#else
 #include <unistd.h>
+#endif
 
 namespace squiflow::platform {
 namespace {
@@ -98,7 +105,11 @@ FixedLine format_entry(const BreadcrumbEntry& entry) noexcept {
 bool write_all(int fd, const char* data, std::size_t size,
                std::size_t& total) noexcept {
     while (size != 0U) {
+#ifdef _WIN32
+        const int written = ::_write(fd, data, static_cast<unsigned>(size));
+#else
         const ssize_t written = ::write(fd, data, size);
+#endif
         if (written < 0) {
             if (errno == EINTR) {
                 continue;
@@ -201,12 +212,21 @@ bool CrashBreadcrumb::dump_to_file(std::string_view path) const noexcept {
     }
     std::array<char, PATH_MAX> terminated{};
     std::memcpy(terminated.data(), path.data(), path.size());
+#ifdef _WIN32
+    const int fd = ::_open(terminated.data(),
+                           _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY, 0600);
+#else
     const int fd = ::open(terminated.data(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
+#endif
     if (fd < 0) {
         return false;
     }
     static_cast<void>(dump_to_fd(fd));
+#ifdef _WIN32
+    const bool closed = ::_close(fd) == 0;
+#else
     const bool closed = ::close(fd) == 0;
+#endif
     return closed;
 }
 
