@@ -1,8 +1,8 @@
 #include "platform/single_instance.hpp"
 #include "platform/single_instance_name.hpp"
 
-#include <sddl.h>
 #include <windows.h>
+#include <sddl.h>
 
 #include <string>
 
