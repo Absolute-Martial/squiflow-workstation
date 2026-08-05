@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import sys
-root=Path(__file__).resolve().parents[2];ui=root/'src/ui';cmake=(ui/'CMakeLists.txt').read_text();errors=[]
+root=Path(__file__).resolve().parents[2];ui=root/'src/ui'
+cmake=(ui/'CMakeLists.txt').read_text()+(root/'src/app'/'CMakeLists.txt').read_text()
+errors=[]
 for p in ui.rglob('*.qml'):
  rel=p.relative_to(ui).as_posix();text=p.read_text()
  if rel not in cmake:errors.append(f'{rel}: not embedded')

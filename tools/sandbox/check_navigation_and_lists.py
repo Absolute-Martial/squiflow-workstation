@@ -37,7 +37,7 @@ require("src/shell/qml_surface_qt.cpp", [
     'setContextProperty("navigationBridge"',
     "make_navigation_manifest", "require_navigation_complete"])
 
-ui_cmake = read("src/ui/CMakeLists.txt")
+ui_cmake = read("src/ui/CMakeLists.txt") + read("src/app/CMakeLists.txt")
 for path in (
     "navigation/NavigationRail.qml", "navigation/NavigationDrawer.qml",
     "navigation/NavigationHost.qml", "navigation/NoAccessibleModules.qml",
