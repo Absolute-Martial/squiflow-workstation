@@ -115,6 +115,7 @@ ISSUE_INVOICE_SRC := src/workflows/issue_invoice.cpp
 CANCEL_REISSUE_SRC := src/workflows/cancel_and_reissue.cpp
 TAKE_PAYMENT_SRC := src/workflows/take_payment.cpp
 APPLY_AGREEMENT_SRC := src/workflows/apply_agreement.cpp
+RECORD_PURCHASE_SRC := src/workflows/record_purchase.cpp
 DOCUMENT_DELIVERY_SRC := src/workflows/document_delivery.cpp
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
@@ -371,6 +372,12 @@ $(BUILD)/document_delivery_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/record_purchase_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                $(PAYLOAD_SRC) $(MODULES_SRC) $(SOURCING_SRC) \
+                                $(RECORD_PURCHASE_SRC) tests/workflows/record_purchase_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/administration_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                               $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
                               src/modules/administration/tests/administration_test.cpp
@@ -502,6 +509,7 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
        $(BUILD)/cancel_and_reissue_test \
        $(BUILD)/take_payment_test \
        $(BUILD)/apply_agreement_test \
+       $(BUILD)/record_purchase_test \
        $(BUILD)/document_delivery_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
@@ -614,6 +622,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== document delivery workflow =='
 >./$(BUILD)/document_delivery_test
+>@echo
+>@echo '== record purchase workflow =='
+>./$(BUILD)/record_purchase_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test
