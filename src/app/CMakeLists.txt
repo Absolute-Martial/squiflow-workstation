@@ -1,6 +1,7 @@
 add_library(squiflow_app STATIC
     startup.cpp
     startup_sequence.cpp
+    real_startup_runtime.cpp
     activation_controller.cpp
     qt_message_mapping.cpp
     composition_root.cpp)

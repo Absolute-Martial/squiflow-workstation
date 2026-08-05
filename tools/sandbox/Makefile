@@ -255,6 +255,17 @@ $(BUILD)/app_composition_root_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC)
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
+$(BUILD)/app_real_startup_runtime_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                       $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) $(PARTIES_SRC) \
+                                       $(CATALOG_SRC) $(PRICING_SRC) $(ORDERS_SRC) $(RECEIVABLES_SRC) \
+                                       $(JOBS_SRC) $(QUOTATIONS_SRC) $(AGREEMENTS_SRC) $(SOURCING_SRC) \
+                                       $(COMPANION_SRC) $(FILES_SRC) $(ALL_WORKFLOWS_SRC) \
+                                       src/app/startup.cpp src/app/startup_sequence.cpp \
+                                       src/app/composition_root.cpp src/app/real_startup_runtime.cpp \
+                                       tests/app/real_startup_runtime_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
+
 $(BUILD)/app_contracts_test: tests/app/contracts_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -523,7 +534,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -568,6 +579,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== application composition root =='
 >./$(BUILD)/app_composition_root_test
+>@echo
+>@echo '== real startup runtime =='
+>./$(BUILD)/app_real_startup_runtime_test
 >@echo
 >@echo '== application contracts =='
 >./$(BUILD)/app_contracts_test
