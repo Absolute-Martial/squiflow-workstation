@@ -53,6 +53,15 @@ app::StepResult QmlSurfaceQt::startShell() {
             *navigation_controller_, *navigation_model_, this);
 
         engine_ = std::make_unique<QQmlApplicationEngine>();
+#if defined(SQUIFLOW_WITH_UI_FLUENT)
+        // Layer 2/3 of the hybrid Fluent UI sourcing strategy (see
+        // docs/plan/phase-7-fluent-ui-sourcing.md): pure-QML component
+        // modules vendored under external/ui-fluent/. Layer 1 (Qt's native
+        // FluentWinUI3 style) needs no import path; it is picked up from
+        // src/ui/qtquickcontrols2.conf automatically.
+        engine_->addImportPath(QStringLiteral(SQUIFLOW_UI_FLUENTCONTROLS_IMPORT_PATH));
+        engine_->addImportPath(QStringLiteral(SQUIFLOW_UI_RINUI_IMPORT_PATH));
+#endif
         engine_->rootContext()->setContextProperty("applicationSurface", this);
         engine_->rootContext()->setContextProperty("navigationModel",
                                                    navigation_model_.get());
