@@ -6,6 +6,10 @@
 #include <filesystem>
 #include <fstream>
 #include <vector>
+#include <memory>
+#include <span>
+#include <cstddef>
+#include <string_view>
 namespace squiflow::platform { namespace {
 std::wstring wide(const std::string& s){return {s.begin(),s.end()};}
 class DpapiStore final:public SecretStore{public:explicit DpapiStore(std::string root):root_(std::move(root)){}
