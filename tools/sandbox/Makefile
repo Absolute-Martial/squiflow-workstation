@@ -302,6 +302,10 @@ $(BUILD)/shell_list_bridge_test: src/shell/paged_list_cache.cpp src/shell/list_b
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/shell_form_bridge_test: src/shell/form_bridge.cpp tests/shell/form_bridge_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/shell_window_state_test: src/shell/window_state.cpp tests/shell/window_state_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -546,7 +550,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_window_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_window_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -621,6 +625,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== list bridge =='
 >./$(BUILD)/shell_list_bridge_test
+>@echo
+>@echo '== forms =='
+>./$(BUILD)/shell_form_bridge_test
 >@echo
 >@echo '== window state =='
 >./$(BUILD)/shell_window_state_test
