@@ -18,3 +18,4 @@ of the past stays readable.
 | 0010 | User-bound DPAPI secrets with guarded memory | Accepted |
 | 0011 | OS-reported network state | Accepted |
 | 0012 | Bounded background supervisor | Accepted |
+| 0013 | Server frameworks and providers are adapters | Accepted |

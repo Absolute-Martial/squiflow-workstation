@@ -1,12 +1,10 @@
 #pragma once
 
-// Portable half of Phase 8.3 (Identity and tokens). This header has no Oat++
-// and no PostgreSQL dependency on purpose: 8.1's HTTP skeleton is blocked on
-// decision D1 (docs/plan/phase-8-server-plan.md), which is not yet confirmed,
-// but the token issuance/validation *rules* do not need an HTTP framework or
-// a database driver to be designed, implemented, and tested. The PostgreSQL-
-// backed TokenStore is deferred to when 8.2's schema work starts; only the
-// storage side effect is missing here, not the policy.
+// Portable half of Phase 8.3 (Identity and tokens). This header has no Hical
+// and no PostgreSQL dependency on purpose. Hical is now selected as the inbound
+// HTTP adapter, but token issuance/validation rules do not belong to an HTTP
+// framework or database driver. The PostgreSQL-backed TokenStore is deferred
+// to 8.2/8.3; only the durable storage adapter is missing here, not the policy.
 
 #include "engine/records/identity.hpp"
 
