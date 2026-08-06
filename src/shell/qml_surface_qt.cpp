@@ -53,6 +53,9 @@ app::StepResult QmlSurfaceQt::startShell() {
             *navigation_controller_, *navigation_model_, this);
 
         engine_ = std::make_unique<QQmlApplicationEngine>();
+        if (pending_image_provider_) {
+            engine_->addImageProvider(QStringLiteral("squiflow-files"), pending_image_provider_.release());
+        }
 #if defined(SQUIFLOW_WITH_UI_FLUENT)
         // Layer 2/3 of the hybrid Fluent UI sourcing strategy (see
         // docs/plan/phase-7-fluent-ui-sourcing.md): pure-QML component
@@ -124,6 +127,12 @@ void QmlSurfaceQt::requestShutdown() {
     lifecycle_.request_shutdown();
 }
 
+bool QmlSurfaceQt::installImageProvider(std::unique_ptr<QQuickImageProvider> provider) {
+    if (engine_ || !provider) return false;
+    pending_image_provider_ = std::move(provider);
+    return true;
+}
+
 void QmlSurfaceQt::publishNavigationAccess(NavigationAccess access) {
     if (navigation_bridge_) {
         navigation_bridge_->publishAccess(std::move(access));
@@ -155,6 +164,7 @@ void QmlSurfaceQt::stopWindow() noexcept {
 
 void QmlSurfaceQt::stopShell() noexcept {
     engine_.reset();
+    pending_image_provider_.reset();
     if (navigation_bridge_) {
         navigation_bridge_->shutdown();
     }

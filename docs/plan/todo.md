@@ -140,9 +140,9 @@ than being counted here.
       `QmlSurfaceQt` is written but unverified until the Qt runtime lane runs it
 - [~] 7.2 Navigation and module visibility from activation — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7.2-navigation-and-activation.md)
 - [~] 7.3 Lists — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7-interface-plan.md#73----lists)
-- [ ] 7.4 Forms and validation — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
-- [ ] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
-- [ ] 7.6 Images and the AVIF plugin — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
+- [~] 7.4 Forms and validation — portable bridge and shared QML form implemented; Qt runtime pending — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
+- [~] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — immutable snapshots, templates, atomic Qt Core/Gui PDF renderer implemented; Qt visual spike pending — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
+- [~] 7.6 Images and the AVIF plugin — bounded hash cache, stable-id provider, placeholder and AVIF capability gate implemented; Qt plugin runtime pending — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
 
 ## Phase 8 - The server *(none of this compiles here)*
 
