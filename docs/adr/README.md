@@ -20,3 +20,4 @@ of the past stays readable.
 | 0012 | Bounded background supervisor | Accepted |
 | 0013 | Server frameworks and providers are adapters | Accepted |
 | 0014 | Adopt capabilities, not product frameworks | Accepted |
+| 0015 | External extensions never share the core process | Accepted |

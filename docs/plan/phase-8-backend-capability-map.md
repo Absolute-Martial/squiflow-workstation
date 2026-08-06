@@ -104,13 +104,30 @@ A capability may be **owned**, **adopt**, **spike**, **defer**, or **reject**:
 
 ### Product extensibility without a dynamic-platform trap
 
-- Typed built-in modules stay compiled and governed by the protocol manifest.
+- Typed built-in modules are trusted reviewed source, stay statically composed,
+  and are governed by the protocol manifest and source boundary tests.
+- Remote applications are the preferred third-party path: separate identity,
+  tenant-scoped operation grants, signed/replayable webhooks, revocation and no
+  direct database/internal C++ access; Phases 8.9 and 8.11.
+- An extension manifest is declarative and only requests rights/capabilities.
+  Installation stores a separate administrator-approved grant; effective access
+  is the intersection of request, grant, tenant, actor, entitlement and policy.
+- Commercial entitlement documents are signed and verified by core-owned code
+  at activation and authoritative command dispatch. Extensions never receive
+  issuer private keys, verifier replacement hooks, or entitlement-write APIs.
+- Package identity, complete file inventory, artifact hashes, compatibility,
+  signature, key revocation and anti-rollback are separate from permissions.
+  Valid signing proves provenance/integrity, not safety or authorization.
 - Safe custom fields may be added through validated metadata and typed value
   kinds after the Phase 8.9 schema spike; they never override money, rights,
-  state-machine or audit fields.
-- Custom objects, arbitrary server code, unsigned native plugins, and dynamic
-  SQL are deferred. A future extension package must be signed, versioned,
-  permission-declared, resource-bounded, uninstallable, and tenant-scoped.
+  identity, state-machine, entitlement, audit or system fields.
+- Runtime native libraries, embedded Python/Lua/JavaScript, direct SQL and
+  same-process external hooks are rejected. A local extension, if ever needed,
+  must use a restricted subprocess or qualified Wasm host with deny-by-default
+  host functions and CPU/memory/time/output/concurrency limits.
+- Extism versus direct Wasmtime is a future measured spike only after a concrete
+  local-computation use case. Sigstore/cosign and TUF are public repository
+  spikes, not initial-shop services.
 - REST/operation APIs remain canonical. GraphQL is rejected until a real client
   demonstrates that it offsets the second authorization/versioning surface.
 

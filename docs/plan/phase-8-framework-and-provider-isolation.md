@@ -16,6 +16,17 @@ It complements `phase-8-server-plan.md`; it does not add another server phase.
 The broader capability register and open-source shortlist are in
 `phase-8-backend-capability-map.md`.
 
+## Extension trust boundary
+
+Provider replacement and product extensibility are different seams. Built-in
+modules are reviewed SquiFlow source; external applications communicate through
+neutral operation/webhook contracts and never import provider or core APIs.
+`docs/adr/0015-external-extensions-never-share-core-process.md` rejects runtime
+native loading and embedded server scripting. A future local subprocess/Wasm
+host requires its own qualification and does not weaken any provider boundary.
+`tools/sandbox/check_extension_boundaries.py` enforces the current no-in-process-
+extension decision.
+
 ## Evidence from the supplied source
 
 The uploaded `CMakeLists.txt` identifies Hical 2.6.7. The archive is pinned in
