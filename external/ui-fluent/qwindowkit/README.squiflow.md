@@ -12,15 +12,9 @@
 - `src/widgets` (QWidgets module, not used by this Qt Quick shell)
 - `examples/`, `docs/`, `share/` (not needed to build the library)
 
-## Known gap -- build is not yet wired
-- QWindowKit's `CMakeLists.txt` requires a companion CMake helper library,
-  `qmsetup` (https://github.com/stdware/qmsetup), normally pulled in as a git
-  submodule. The uploaded zip snapshot did not include that submodule's
-  content, and this sandbox has no network access to fetch it. The
-  `qmsetup/` directory here is an empty placeholder.
-- Until `qmsetup` is vendored (or `find_package(qmsetup)` is satisfied some
-  other way on the build machine), this library will not configure. This is
-  called out explicitly in `docs/plan/phase-7-fluent-ui-sourcing.md`.
+## Build integration status
+- `qmsetup` is now vendored from the user-provided snapshot.
+- That snapshot itself has an empty `src/syscmdline` git submodule. `qmsetup` builds its host utility against `syscmdline`, so QWindowKit still cannot configure honestly until that final nested dependency is supplied or installed.
 - No CMake target in this repository references this directory yet; it is
   vendored source only, gated to be wired once `qmsetup` is available and a
   Qt 6.8+ toolchain can actually build/verify it.
