@@ -114,8 +114,16 @@ ORDER_TO_JOBS_SRC := src/workflows/order_to_jobs.cpp
 ISSUE_INVOICE_SRC := src/workflows/issue_invoice.cpp
 CANCEL_REISSUE_SRC := src/workflows/cancel_and_reissue.cpp
 TAKE_PAYMENT_SRC := src/workflows/take_payment.cpp
+COUNTER_SALE_SRC := src/workflows/counter_sale.cpp
 APPLY_AGREEMENT_SRC := src/workflows/apply_agreement.cpp
+RECORD_PURCHASE_SRC := src/workflows/record_purchase.cpp
 DOCUMENT_DELIVERY_SRC := src/workflows/document_delivery.cpp
+WORKFLOW_REGISTRATION_SRC := src/workflows/registration.cpp
+ALL_WORKFLOWS_SRC := $(QUOTE_TO_ORDER_SRC) $(ORDER_TO_JOBS_SRC) \
+                     $(ISSUE_INVOICE_SRC) $(CANCEL_REISSUE_SRC) \
+                     $(TAKE_PAYMENT_SRC) $(COUNTER_SALE_SRC) \
+                     $(APPLY_AGREEMENT_SRC) $(RECORD_PURCHASE_SRC) \
+                     $(DOCUMENT_DELIVERY_SRC) $(WORKFLOW_REGISTRATION_SRC)
 
 CATALOG_SRC := src/modules/catalog/module.cpp \
                src/modules/catalog/domain/product.cpp \
@@ -238,6 +246,26 @@ $(BUILD)/app_startup_test: $(APP_STARTUP_SRC) tests/app/startup_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
+$(BUILD)/app_composition_root_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                    $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) $(PARTIES_SRC) \
+                                    $(CATALOG_SRC) $(PRICING_SRC) $(ORDERS_SRC) $(RECEIVABLES_SRC) \
+                                    $(JOBS_SRC) $(QUOTATIONS_SRC) $(AGREEMENTS_SRC) $(SOURCING_SRC) \
+                                    $(COMPANION_SRC) $(FILES_SRC) $(ALL_WORKFLOWS_SRC) \
+                                    src/app/composition_root.cpp tests/app/composition_root_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
+
+$(BUILD)/app_real_startup_runtime_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                       $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) $(PARTIES_SRC) \
+                                       $(CATALOG_SRC) $(PRICING_SRC) $(ORDERS_SRC) $(RECEIVABLES_SRC) \
+                                       $(JOBS_SRC) $(QUOTATIONS_SRC) $(AGREEMENTS_SRC) $(SOURCING_SRC) \
+                                       $(COMPANION_SRC) $(FILES_SRC) $(ALL_WORKFLOWS_SRC) \
+                                       src/app/startup.cpp src/app/startup_sequence.cpp \
+                                       src/app/composition_root.cpp src/app/real_startup_runtime.cpp \
+                                       tests/app/real_startup_runtime_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
+
 $(BUILD)/app_contracts_test: tests/app/contracts_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -273,6 +301,30 @@ $(BUILD)/shell_paged_list_cache_test: src/shell/paged_list_cache.cpp tests/shell
 $(BUILD)/shell_list_bridge_test: src/shell/paged_list_cache.cpp src/shell/list_bridge.cpp tests/shell/list_bridge_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_form_bridge_test: src/shell/form_bridge.cpp tests/shell/form_bridge_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_document_snapshot_test: src/shell/document_snapshot.cpp tests/shell/document_snapshot_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_thumbnail_cache_test: src/shell/thumbnail_cache.cpp tests/shell/thumbnail_cache_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_window_state_test: src/shell/window_state.cpp tests/shell/window_state_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+SERVER_IDENTITY_SRC := server/src/identity/token_store.cpp \
+                       server/src/identity/token_issuer.cpp \
+                       src/engine/records/identity.cpp
+
+$(BUILD)/server_identity_token_issuer_test: $(SERVER_IDENTITY_SRC) server/tests/identity/token_issuer_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iserver/src $(SERVER_IDENTITY_SRC) server/tests/identity/token_issuer_test.cpp $(SODIUM_LIB) -o $@
 
 $(BUILD)/app_domain_event_bus_test: tests/app/domain_event_bus_test.cpp
 >@mkdir -p $(BUILD)
@@ -356,6 +408,13 @@ $(BUILD)/take_payment_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/counter_sale_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                            $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) \
+                            $(ORDERS_SRC) $(RECEIVABLES_SRC) $(COUNTER_SALE_SRC) \
+                            tests/workflows/counter_sale_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/apply_agreement_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                               $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) $(ORDERS_SRC) \
                               $(RECEIVABLES_SRC) $(AGREEMENTS_SRC) $(ISSUE_INVOICE_SRC) \
@@ -368,6 +427,12 @@ $(BUILD)/document_delivery_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(
                                  $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) $(PRICING_SRC) \
                                  $(RECEIVABLES_SRC) $(QUOTATIONS_SRC) $(AGREEMENTS_SRC) \
                                  $(DOCUMENT_DELIVERY_SRC) tests/workflows/document_delivery_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/record_purchase_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                $(PAYLOAD_SRC) $(MODULES_SRC) $(SOURCING_SRC) \
+                                $(RECORD_PURCHASE_SRC) tests/workflows/record_purchase_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -483,6 +548,9 @@ integrity:
 
 architecture:
 >@echo '== QML architecture boundary =='
+>@$(PYTHON) tools/sandbox/check_application_architecture.py
+>@$(PYTHON) tools/sandbox/check_composition_root.py
+>@$(PYTHON) tools/sandbox/check_module_boundaries.py
 >@$(PYTHON) tools/sandbox/check_qml_boundary.py
 >@$(PYTHON) tools/sandbox/test_qml_boundary.py
 >@$(PYTHON) tools/sandbox/check_ui_resources.py
@@ -490,7 +558,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -498,7 +566,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
        $(BUILD)/issue_invoice_test \
        $(BUILD)/cancel_and_reissue_test \
        $(BUILD)/take_payment_test \
+       $(BUILD)/counter_sale_test \
        $(BUILD)/apply_agreement_test \
+       $(BUILD)/record_purchase_test \
        $(BUILD)/document_delivery_test \
        $(BUILD)/catalog_test $(BUILD)/pricing_test $(BUILD)/orders_test \
        $(BUILD)/receivables_test $(BUILD)/jobs_test \
@@ -531,6 +601,12 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo '== application startup =='
 >./$(BUILD)/app_startup_test
 >@echo
+>@echo '== application composition root =='
+>./$(BUILD)/app_composition_root_test
+>@echo
+>@echo '== real startup runtime =='
+>./$(BUILD)/app_real_startup_runtime_test
+>@echo
 >@echo '== application contracts =='
 >./$(BUILD)/app_contracts_test
 >@echo
@@ -557,6 +633,21 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== list bridge =='
 >./$(BUILD)/shell_list_bridge_test
+>@echo
+>@echo '== forms =='
+>./$(BUILD)/shell_form_bridge_test
+>@echo
+>@echo '== document snapshots =='
+>./$(BUILD)/shell_document_snapshot_test
+>@echo
+>@echo '== thumbnails =='
+>./$(BUILD)/shell_thumbnail_cache_test
+>@echo
+>@echo '== window state =='
+>./$(BUILD)/shell_window_state_test
+>@echo
+>@echo '== server identity: token issuer =='
+>./$(BUILD)/server_identity_token_issuer_test
 >@echo
 >@echo '== domain event bus =='
 >./$(BUILD)/app_domain_event_bus_test
@@ -606,11 +697,17 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo '== take payment workflow =='
 >./$(BUILD)/take_payment_test
 >@echo
+>@echo '== counter sale workflow =='
+>./$(BUILD)/counter_sale_test
+>@echo
 >@echo '== apply agreement workflow =='
 >./$(BUILD)/apply_agreement_test
 >@echo
 >@echo '== document delivery workflow =='
 >./$(BUILD)/document_delivery_test
+>@echo
+>@echo '== record purchase workflow =='
+>./$(BUILD)/record_purchase_test
 >@echo
 >@echo '== administration =='
 >./$(BUILD)/administration_test

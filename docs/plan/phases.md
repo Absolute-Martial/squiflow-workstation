@@ -36,7 +36,7 @@ deactivation closure behaves.
 
 | # | Sub-phase | Files | Done when |
 | --- | --- | --- | --- |
-| 1.1 | Repository skeleton and build logic | `CMakeLists.txt` (root), `cmake/modules.cmake` (module declaration helper + graph checks), `tools/sandbox/Makefile`, `docs/plan/*` | Release, debug, sanitizer, and headless CMake configurations exist and are internally consistent; the sandbox Makefile builds and runs a trivial smoke test. CMake itself is unproven here -- none installed. |
+| 1.1 | Repository skeleton and build logic | `CMakeLists.txt` (root), `cmake/SquiflowModule.cmake` and `cmake/ModuleGraph.cmake` (module declaration helper + graph checks), `tools/sandbox/Makefile`, `docs/plan/*` | Release, debug, sanitizer, and headless CMake configurations exist and are internally consistent; the sandbox Makefile builds and runs a trivial smoke test. CMake itself is unproven here -- none installed. |
 | 1.2 | The module graph | `src/protocol/module_id.hpp`, `src/protocol/module_id.def`, `src/protocol/module_graph.hpp/.cpp`, `tests/protocol/module_graph_test.cpp` | Twelve modules declared with tiers; cycle detection named; core proven closed under dependency; activation closure computed and tested. |
 | 1.3 | Rights | `src/protocol/right.hpp`, `src/protocol/right.def`, `tests/protocol/right_test.cpp` | 43 rights declared, each owned by exactly one module; a test enforces uniqueness of ownership. |
 | 1.4 | The operation table | `src/protocol/operation_id.hpp`, `src/protocol/operation.hpp/.cpp`, `src/protocol/operation.def`, `tests/protocol/operation_test.cpp` | 67 operations declared, each carrying its owning right, sync class, and offline rule; lookup by name rejects unknown operations rather than guessing. |
@@ -149,7 +149,10 @@ Theme, controls, patterns, module screens, view models.
 Qt adapters and QML resources are statically gated and conditionally registered,
 but remain marked unverified until a Qt-capable Linux/MSVC lane executes them.
 
-Sub-phases 7.1-7.6 are detailed in the Phase 7 plan documents.
+Sub-phases 7.1-7.6 build the interface foundations. Sub-phases 7.7-7.10
+build the real dashboard, all module pages and interactions, and the final Qt
+runtime/accessibility/performance gate. They are detailed in the Phase 7 plan
+documents.
 
 ---
 

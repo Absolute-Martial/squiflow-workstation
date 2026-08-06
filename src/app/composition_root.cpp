@@ -11,8 +11,10 @@
 #include "modules/quotations/module.hpp"
 #include "modules/receivables/module.hpp"
 #include "modules/sourcing/module.hpp"
+#include "workflows/registration.hpp"
 namespace squiflow::app {
 void register_all_modules(modules::Registry& r,std::function<std::int64_t()> c){
- r.add(modules::administration::make_module(c));r.add(modules::parties::make_module(c));r.add(modules::catalog::make_module(c));r.add(modules::pricing::make_module(c));r.add(modules::quotations::make_module(c));r.add(modules::orders::make_module(c));r.add(modules::jobs::make_module(c));r.add(modules::receivables::make_module(c));r.add(modules::agreements::make_module(c));r.add(modules::sourcing::make_module(c));r.add(modules::companion::make_module(c));r.add(modules::files::make_module(std::move(c)));
+ r.add(modules::administration::make_module(c));r.add(modules::parties::make_module(c));r.add(modules::catalog::make_module(c));r.add(modules::pricing::make_module(c));r.add(modules::quotations::make_module(c));r.add(modules::orders::make_module(c));r.add(modules::jobs::make_module(c));r.add(modules::receivables::make_module(c));r.add(modules::agreements::make_module(c));r.add(modules::sourcing::make_module(c));r.add(modules::companion::make_module(c));r.add(modules::files::make_module(c));
+ workflows::register_all_workflows(r,std::move(c));
  r.require_complete();}
 }

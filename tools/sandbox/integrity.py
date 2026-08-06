@@ -107,6 +107,10 @@ CXX23_NOT_VERIFIABLE = [
     (re.compile(r"#include\s*<generator>"), "<generator>"),
 ]
 
+TRUNCATION_MARKERS = [
+    (re.compile(r"\[\.\.\.\]"), "a '[...]' truncation marker"),
+]
+
 
 def check_header(rel: str, text: str, is_test: bool = False) -> None:
     if text.count("#pragma once") == 0:
@@ -153,6 +157,10 @@ def check_language_policy(rel: str, text: str) -> None:
         if pattern.search(text):
             fail(rel, f"includes {name}: a C++23 library header this toolchain "
                       f"cannot compile, so it would break the verification lane")
+    for pattern, description in TRUNCATION_MARKERS:
+        if pattern.search(text):
+            fail(rel, f"contains {description}; source must never contain "
+                      "transcript or archive elision placeholders")
 
 
 # ---------------------------------------------------------------- def checks

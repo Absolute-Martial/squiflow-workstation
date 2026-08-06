@@ -120,22 +120,42 @@ than being counted here.
 - [x] 6.6 Connection state from `QNetworkInformation`, not server pings *(Qt adapter written; Windows runtime gate required)*
 - [x] 6.7 Background services - one coarse timer, two bounded worker lanes, no
       service owning a thread
-- [ ] 6.8 Startup order, fixed and tested — [implementation plan](phase-6.8-startup-order.md)
+- [~] 6.8 Startup order, fixed and tested — [implementation plan](phase-6.8-startup-order.md),
+      [gate](../qa/phase-6.8-startup-order-gate.md): ordering/rollback proven
+      against a real registry via `RealStartupRuntime`; `main.cpp` wiring
+      blocked on the not-yet-built sign-in feature (`IdentitySession`)
 
 ## Phase 7 - The interface *(portable core verified; Qt runtime lane pending)*
 
-- [ ] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell)
+- [~] 7.0 Fluent UI component sourcing — [plan](phase-7-fluent-ui-sourcing.md): Layer 0
+      (`qwindowkit`), Layer 1 (Qt native `FluentWinUI3` style, applied),
+      Layer 2 (`FluentUI` + FluentPySide's `FluentControls`), and Layer 3
+      (`Rin-UI`) are vendored under `external/ui-fluent/` and import paths
+      are wired behind `SQUIFLOW_WITH_UI_FLUENT` (default OFF) -- nothing
+      compiled or visually verified yet (no Qt install in this sandbox);
+      `qmsetup` is now vendored; `qwindowkit` still needs qmsetup's missing nested `syscmdline` submodule
+- [~] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell),
+      [gate](../qa/phase-7.1-window-shell-gate.md): geometry persistence and
+      validation proven in the portable lane; the Qt-side apply/capture in
+      `QmlSurfaceQt` is written but unverified until the Qt runtime lane runs it
 - [~] 7.2 Navigation and module visibility from activation — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7.2-navigation-and-activation.md)
 - [~] 7.3 Lists — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7-interface-plan.md#73----lists)
-- [ ] 7.4 Forms and validation — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
-- [ ] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
-- [ ] 7.6 Images and the AVIF plugin — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
+- [~] 7.4 Forms and validation — portable bridge and shared QML form implemented; Qt runtime pending — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
+- [~] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — immutable snapshots, templates, atomic Qt Core/Gui PDF renderer implemented; Qt visual spike pending — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
+- [~] 7.6 Images and the AVIF plugin — bounded hash cache, stable-id provider, placeholder and AVIF capability gate implemented; Qt plugin runtime pending — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
+- [ ] 7.7 Design system, application shell, and real dashboard — [implementation plan](phase-7.7-7.10-application-ui-plan.md#77----design-system-application-shell-and-dashboard)
+- [ ] 7.8 Master-data and primary commercial pages — parties, catalog, pricing, orders/counter sales, receivables — [implementation plan](phase-7.7-7.10-application-ui-plan.md#78----master-data-and-primary-commercial-pages)
+- [ ] 7.9 Remaining operational and supporting pages — quotations, agreements, jobs, sourcing, companion, files, administration/settings — [implementation plan](phase-7.7-7.10-application-ui-plan.md#79----remaining-operational-and-supporting-module-pages)
+- [ ] 7.10 UI integration, accessibility, performance, and Qt runtime closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#710----integration-accessibility-performance-and-qt-runtime-closure)
 
 ## Phase 8 - The server *(none of this compiles here)*
 
 - [ ] 8.1 Skeleton and configuration — [implementation plan](phase-8-server-plan.md#81----skeleton-and-configuration)
 - [ ] 8.2 PostgreSQL and migrations — [implementation plan](phase-8-server-plan.md#82----postgresql-and-migrations)
-- [ ] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens)
+- [~] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens),
+      [gate](../qa/phase-8.3-identity-token-core.md): portable bearer-token
+      issuance, hashing, and constant-time validation proven; the storage
+      backend and HTTP-layer wiring remain, now unblocked by D1's resolution
 - [ ] 8.4 Sync endpoints, idempotency, sequence assignment — [implementation plan](phase-8-server-plan.md#84----sync-endpoints-idempotency-sequence-assignment)
 - [ ] 8.5 Media, including the AVIF conversion worker — [implementation plan](phase-8-server-plan.md#85----media-including-the-avif-conversion-worker)
 - [ ] 8.6 The update proxy — [implementation plan](phase-8-server-plan.md#86----the-update-proxy)
@@ -161,7 +181,7 @@ and each one blocks something.
 
 | # | Question | Blocks |
 |---|---|---|
-| D1 | **Oat++ has no current release.** 1.3.0 is the last one; 1.4.0 has been in development for years. Recommendation: pin a specific 1.4.0 commit through a vcpkg overlay port, never a branch | Phase 8 |
+| D1 | **Decided: Hical**, not Oat++, is the Phase 8 HTTP framework. Bound to the sync transport adapter only; it must not leak into domain, workflows, protocol, or the PostgreSQL schema design | Done — unblocks 8.1 |
 | D2 | The storage seam is a **typed record store**, not prepare-bind-step SQL. A SQL-shaped seam cannot be faked, and nothing above it would be testable here | already built; reversible only now |
 | D3 | Is `jobs` really an Extra module? It currently requires nothing, which is unusual for something this central | 4.8 |
 | D4 | **Decided:** consume an agreement quantity cap when the invoice is issued and release it when that invoice is cancelled; jobs do not consume caps | Done in 5.7 |

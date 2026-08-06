@@ -36,6 +36,11 @@ include(cmake/Version.cmake)
 
 option(SQUIFLOW_WITH_SQLITE "Build the SQLite-backed storage implementation" ON)
 option(SQUIFLOW_WITH_QT "Build the Qt/QML interface layer" ON)
+# Vendored extras layered on top of Qt's native FluentWinUI3 style: see
+# docs/plan/phase-7-fluent-ui-sourcing.md. Defaults OFF because none of it
+# has been built or visually verified yet (this needs a real Qt 6 machine);
+# turning it on is opt-in and never affects the default build.
+option(SQUIFLOW_WITH_UI_FLUENT "Vendor extra Fluent Design QML/C++ component libraries (FluentUI, FluentControls, Rin-UI)" OFF)
 option(SQUIFLOW_WARNINGS_AS_ERRORS "Treat all warnings as errors" ON)
 option(SQUIFLOW_ENABLE_SANITIZERS "Build with address+undefined sanitizers" OFF)
 option(SQUIFLOW_BUILD_TESTS "Build the test suites" ON)
@@ -90,8 +95,6 @@ endif()
 # ---------------------------------------------------------------------------
 # Module declaration helper and dependency-graph checks.
 # ---------------------------------------------------------------------------
-
-include(cmake/modules.cmake)
 
 # ---------------------------------------------------------------------------
 # Testing

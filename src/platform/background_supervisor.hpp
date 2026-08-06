@@ -18,11 +18,11 @@ public:
  std::vector<BackgroundServiceStatus> statuses() const;std::optional<BackgroundServiceStatus> status(std::string_view id) const;
  ShutdownResult shutdown(BackgroundClock::duration timeout);bool sealed() const;
 private:
- struct Entry {BackgroundServiceDefinition definition;BackgroundServiceStatus status;bool rerun{false};std::uint32_t rerun_triggers{0};};
+ struct Entry {BackgroundServiceDefinition definition;BackgroundServiceStatus status;bool submission_pending{false};bool rerun{false};std::uint32_t rerun_triggers{0};};
  SubmissionResult trigger_locked(Entry& entry,BackgroundTrigger reason,std::unique_lock<std::mutex>& lock);
  SubmissionResult dispatch_locked(Entry& entry,std::unique_lock<std::mutex>& lock);
  void completed(const std::string& id,BackgroundOutcome outcome,std::string error);
  void publish_locked();bool gated(const Entry& entry) const noexcept;
- mutable std::mutex mutex_;std::unordered_map<std::string,Entry> entries_;bool sealed_{false};bool stopping_{false};bool network_authorized_{false};bool idle_{false};std::optional<std::chrono::sys_days> last_calendar_day_;BackgroundExecutor executor_;std::atomic<std::shared_ptr<const std::vector<BackgroundServiceStatus>>> snapshot_;
+ mutable std::mutex mutex_;std::unordered_map<std::string,Entry> entries_;bool sealed_{false};bool stopping_{false};bool network_authorized_{false};bool idle_{false};std::optional<std::chrono::sys_days> last_calendar_day_;BackgroundExecutor executor_;std::shared_ptr<const std::vector<BackgroundServiceStatus>> snapshot_;
 };
 }

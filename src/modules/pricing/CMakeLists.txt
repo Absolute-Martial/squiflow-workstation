@@ -1,5 +1,6 @@
 squiflow_add_module(pricing
     TIER core
+    REQUIRES catalog parties
     SOURCES
         module.cpp
         domain/rate.cpp

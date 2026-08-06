@@ -1,10 +1,13 @@
 add_library(squiflow_workflows STATIC
+    registration.cpp
     quote_to_order.cpp
     order_to_jobs.cpp
     issue_invoice.cpp
     cancel_and_reissue.cpp
     take_payment.cpp
+    counter_sale.cpp
     apply_agreement.cpp
+    record_purchase.cpp
     document_delivery.cpp)
 add_library(squiflow::workflows ALIAS squiflow_workflows)
 target_include_directories(squiflow_workflows PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
@@ -16,11 +19,17 @@ target_link_libraries(squiflow_workflows
            squiflow_module_pricing
            squiflow_module_receivables
            squiflow_module_agreements
+           squiflow_module_sourcing
     PRIVATE squiflow::warnings squiflow::hardening squiflow::sanitizers)
 if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/workflow_framework_test.cpp")
     add_executable(workflow_framework_test "${SQUIFLOW_ROOT}/tests/workflows/workflow_framework_test.cpp")
     target_link_libraries(workflow_framework_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME workflows.framework COMMAND workflow_framework_test)
+endif()
+if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/counter_sale_test.cpp")
+    add_executable(counter_sale_test "${SQUIFLOW_ROOT}/tests/workflows/counter_sale_test.cpp")
+    target_link_libraries(counter_sale_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME workflows.counter_sale COMMAND counter_sale_test)
 endif()
 if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/issue_invoice_test.cpp")
     add_executable(issue_invoice_test "${SQUIFLOW_ROOT}/tests/workflows/issue_invoice_test.cpp")
@@ -46,6 +55,11 @@ if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/document_de
     add_executable(document_delivery_test "${SQUIFLOW_ROOT}/tests/workflows/document_delivery_test.cpp")
     target_link_libraries(document_delivery_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
     add_test(NAME workflows.document_delivery COMMAND document_delivery_test)
+endif()
+if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/record_purchase_test.cpp")
+    add_executable(record_purchase_test "${SQUIFLOW_ROOT}/tests/workflows/record_purchase_test.cpp")
+    target_link_libraries(record_purchase_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
+    add_test(NAME workflows.record_purchase COMMAND record_purchase_test)
 endif()
 if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/quote_to_order_test.cpp")
     add_executable(quote_to_order_test "${SQUIFLOW_ROOT}/tests/workflows/quote_to_order_test.cpp")

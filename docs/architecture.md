@@ -14,8 +14,10 @@ Dependencies point downward. Never upward, never sideways.
 
 ## Three rules that must never bend
 
-1. **A module never includes another module's header.** Crossing modules is what
-   `src/workflows/` is for. Enforced by a test that reads the source tree.
+1. **A module includes only its declared dependencies.** Read-only domain
+   collaboration may follow an edge declared in the protocol graph; a mutation
+   spanning modules belongs in `src/workflows/`. The source and CMake graphs are
+   checked against the protocol declarations by the strict gate.
 2. **Core is closed under dependency.** A core module may never require an extra,
    because switching that extra off would break something unswitchable. Enforced
    at configure time and again by the protocol test.

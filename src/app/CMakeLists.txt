@@ -1,6 +1,7 @@
 add_library(squiflow_app STATIC
     startup.cpp
     startup_sequence.cpp
+    real_startup_runtime.cpp
     activation_controller.cpp
     qt_message_mapping.cpp
     composition_root.cpp)
@@ -8,6 +9,7 @@ add_library(squiflow::app ALIAS squiflow_app)
 target_include_directories(squiflow_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(squiflow_app
     PUBLIC squiflow::platform squiflow::modules::framework
+    PRIVATE squiflow::workflows
     PRIVATE squiflow_module_administration squiflow_module_parties
             squiflow_module_catalog squiflow_module_pricing
             squiflow_module_quotations squiflow_module_orders
@@ -34,11 +36,17 @@ if(SQUIFLOW_WITH_QT)
             ../ui/Main.qml
             ../ui/Theme.qml
             ../ui/common/DataList.qml
+            ../ui/common/Form.qml
+            ../ui/common/FilePreview.qml
             ../ui/navigation/NavigationRail.qml
             ../ui/navigation/NavigationDrawer.qml
             ../ui/navigation/NavigationHost.qml
             ../ui/navigation/NoAccessibleModules.qml
             ../ui/screens/ModuleListScreen.qml
+        RESOURCES
+            ../ui/documents/quotation.html
+            ../ui/documents/invoice.html
+            ../ui/documents/statement.html
         RESOURCE_PREFIX /qt/qml)
     qt_add_resources(squiflow_workstation squiflow_ui_config
         PREFIX "/" FILES ../ui/qtquickcontrols2.conf)
