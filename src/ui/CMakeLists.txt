@@ -29,7 +29,8 @@ if(SQUIFLOW_WITH_QT)
         ../shell/list_screen_bridge_qt.cpp
         ../shell/navigation_model_qt.cpp
         ../shell/navigation_bridge_qt.cpp
-        ../shell/qml_surface_qt.cpp)
+        ../shell/qml_surface_qt.cpp
+        ../shell/document_render_qt.cpp)
     target_link_libraries(squiflow_shell PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
     target_link_libraries(squiflow_workstation PRIVATE squiflow::shell)
 

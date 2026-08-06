@@ -42,6 +42,10 @@ if(SQUIFLOW_WITH_QT)
             ../ui/navigation/NavigationHost.qml
             ../ui/navigation/NoAccessibleModules.qml
             ../ui/screens/ModuleListScreen.qml
+        RESOURCES
+            ../ui/documents/quotation.html
+            ../ui/documents/invoice.html
+            ../ui/documents/statement.html
         RESOURCE_PREFIX /qt/qml)
     qt_add_resources(squiflow_workstation squiflow_ui_config
         PREFIX "/" FILES ../ui/qtquickcontrols2.conf)
