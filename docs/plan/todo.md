@@ -161,7 +161,7 @@ than being counted here.
 - [ ] 8.6 The update proxy — [implementation plan](phase-8-server-plan.md#86----the-update-proxy)
 - [ ] 8.7 Mail - prepared by the system, sent only on confirmation — [implementation plan](phase-8-server-plan.md#87----mail-prepared-by-the-system-sent-only-on-confirmation)
 - [ ] 8.8 Per-module endpoints — [implementation plan](phase-8-server-plan.md#88----per-module-endpoints)
-- [ ] 8.9 Tenant lifecycle, RLS, module manifests, and safe extension seams — [implementation plan](phase-8-server-plan.md#89----tenant-lifecycle-module-manifests-and-extension-seams)
+- [ ] 8.9 Tenant lifecycle, RLS, built-in module manifests, external-app grants, core-owned entitlements, and safe extension seams — [implementation plan](phase-8-server-plan.md#89----tenant-lifecycle-module-manifests-and-extension-seams)
 - [ ] 8.10 Durable jobs, scheduler, and worker process — [implementation plan](phase-8-server-plan.md#810----durable-jobs-scheduler-and-worker-process)
 - [ ] 8.11 Webhooks, realtime notifications, and connector registry — [implementation plan](phase-8-server-plan.md#811----webhooks-realtime-notifications-and-connector-registry)
 - [ ] 8.12 Blob lifecycle, quarantine, scanning, and bulk import/export — [implementation plan](phase-8-server-plan.md#812----blob-lifecycle-quarantine-scanning-and-bulk-importexport)

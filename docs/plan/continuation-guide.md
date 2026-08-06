@@ -99,6 +99,10 @@ although 9.1 may be pulled forward solely to add CI coverage for UI work.
   their real Qt 6.11.1 runtime and visual gates remain prerequisites for 7.10.
 - Decision D1 is resolved in favor of Hical. Remaining decisions and their
   owners are recorded in `todo.md`; none blocks starting 7.7.
+- External extensions never load into a core process. Built-in modules are
+  rebuild-only; third-party integrations use the 8.11 API/webhook boundary.
+  Package signatures, permission grants, and commercial entitlements remain
+  three separate checks as required by ADR 0015.
 
 ## How to resume in one sentence
 

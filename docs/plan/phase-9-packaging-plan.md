@@ -103,6 +103,13 @@ if signing fails, rather than shipping an unsigned build with a warning.
 deliberately broken/expired test certificate causes the job to fail
 visibly rather than produce a falsely-"signed" artifact.
 
+If external extension packages are ever enabled, this sub-phase also signs a
+complete package-file/hash manifest bound to publisher id, package id, version,
+API compatibility and revocation metadata. Installation verifies it before any
+activation. This is separate from extension permission grants and tenant
+commercial entitlements. Sigstore/cosign and TUF remain spikes for a future
+public repository; neither is required for the initial shop release.
+
 ## 9.4 -- The updater: side-by-side, directory junction, auto-revert, outbox-blocked
 
 **Goal:** an updater that stages a new version alongside the running one,

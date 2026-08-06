@@ -11,6 +11,11 @@ This is architecture research, not evidence that any candidate is already
 approved. Every adopted project still needs an exact version/commit, license and
 security review, native build proof, failure tests, and a SquiFlow adapter.
 
+The focused extension, plugin, package-signing, and entitlement threat model is
+in `open-source-extension-security-review.md`. It follows Odoo/Frappe with
+Saleor, Grafana, HashiCorp, VS Code, Nextcloud, Kubernetes, Wasmtime/Extism,
+Sigstore, and TUF patterns.
+
 ## Reference systems reviewed
 
 ### Twenty CRM
