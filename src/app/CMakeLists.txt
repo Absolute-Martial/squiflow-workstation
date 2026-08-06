@@ -37,6 +37,7 @@ if(SQUIFLOW_WITH_QT)
             ../ui/Theme.qml
             ../ui/common/DataList.qml
             ../ui/common/Form.qml
+            ../ui/common/FilePreview.qml
             ../ui/navigation/NavigationRail.qml
             ../ui/navigation/NavigationDrawer.qml
             ../ui/navigation/NavigationHost.qml
