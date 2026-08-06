@@ -1,8 +1,7 @@
-# Phase 7 -- The interface: 7.1, 7.3-7.6 implementation plan
+# Phase 7 -- interface foundations: 7.1, 7.3-7.6 implementation plan
 
-Status: 7.3 implemented with portable/static gates passing and the Qt runtime
-gate pending; 7.1 and 7.4-7.6 remain planned. 7.2 has its own
-document: `phase-7.2-navigation-and-activation.md`. Read that document
+Status: 7.1 and 7.3-7.6 are implemented in the portable/static lane;
+the Qt runtime gates remain pending. 7.2 has its own document: `phase-7.2-navigation-and-activation.md`. Read that document
 first -- 7.3 onward depend on its typed contribution contract and
 immutable navigation snapshot, and this document does not repeat those
 definitions.
@@ -288,10 +287,11 @@ here), a gate document under `docs/qa/`, and its own commit before the
 next sub-phase starts -- following the same discipline as every prior
 phase.
 
-## Acceptance criteria for closing Phase 7
+## Acceptance criteria for closing the 7.1-7.6 foundation
 
-Phase 7 is complete only when every one of 7.1-7.6 (including the
-already-planned 7.2) has its own gate document, and `docs/plan/todo.md`'s
-Phase 7 row moves from `0` to `6` of `6` sub-phases done -- with the two
-required spikes (7.5 print, 7.6 AVIF) resolved on the real machine, not
-assumed.
+The Phase 7 foundation is complete only when every one of 7.1-7.6
+(including 7.2) has its own gate document and the two required spikes (7.5
+print and 7.6 AVIF) are resolved on the real machine, not assumed. The
+product-facing dashboard, real module pages, interactions, and final release
+gate are owned by 7.7-7.10 in `phase-7.7-7.10-application-ui-plan.md`; full
+Phase 7 cannot close before those phases close.

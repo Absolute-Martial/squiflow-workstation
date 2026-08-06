@@ -133,7 +133,7 @@ than being counted here.
       (`Rin-UI`) are vendored under `external/ui-fluent/` and import paths
       are wired behind `SQUIFLOW_WITH_UI_FLUENT` (default OFF) -- nothing
       compiled or visually verified yet (no Qt install in this sandbox);
-      `qwindowkit` additionally needs its missing `qmsetup` dependency
+      `qmsetup` is now vendored; `qwindowkit` still needs qmsetup's missing nested `syscmdline` submodule
 - [~] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell),
       [gate](../qa/phase-7.1-window-shell-gate.md): geometry persistence and
       validation proven in the portable lane; the Qt-side apply/capture in
@@ -143,6 +143,10 @@ than being counted here.
 - [~] 7.4 Forms and validation — portable bridge and shared QML form implemented; Qt runtime pending — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
 - [~] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — immutable snapshots, templates, atomic Qt Core/Gui PDF renderer implemented; Qt visual spike pending — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
 - [~] 7.6 Images and the AVIF plugin — bounded hash cache, stable-id provider, placeholder and AVIF capability gate implemented; Qt plugin runtime pending — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
+- [ ] 7.7 Design system, application shell, and real dashboard — [implementation plan](phase-7.7-7.10-application-ui-plan.md#77----design-system-application-shell-and-dashboard)
+- [ ] 7.8 Master-data and primary commercial pages — parties, catalog, pricing, orders/counter sales, receivables — [implementation plan](phase-7.7-7.10-application-ui-plan.md#78----master-data-and-primary-commercial-pages)
+- [ ] 7.9 Remaining operational and supporting pages — quotations, agreements, jobs, sourcing, companion, files, administration/settings — [implementation plan](phase-7.7-7.10-application-ui-plan.md#79----remaining-operational-and-supporting-module-pages)
+- [ ] 7.10 UI integration, accessibility, performance, and Qt runtime closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#710----integration-accessibility-performance-and-qt-runtime-closure)
 
 ## Phase 8 - The server *(none of this compiles here)*
 

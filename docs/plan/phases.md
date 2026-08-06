@@ -149,7 +149,10 @@ Theme, controls, patterns, module screens, view models.
 Qt adapters and QML resources are statically gated and conditionally registered,
 but remain marked unverified until a Qt-capable Linux/MSVC lane executes them.
 
-Sub-phases 7.1-7.6 are detailed in the Phase 7 plan documents.
+Sub-phases 7.1-7.6 build the interface foundations. Sub-phases 7.7-7.10
+build the real dashboard, all module pages and interactions, and the final Qt
+runtime/accessibility/performance gate. They are detailed in the Phase 7 plan
+documents.
 
 ---
 
