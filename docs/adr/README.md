@@ -19,3 +19,4 @@ of the past stays readable.
 | 0011 | OS-reported network state | Accepted |
 | 0012 | Bounded background supervisor | Accepted |
 | 0013 | Server frameworks and providers are adapters | Accepted |
+| 0014 | Adopt capabilities, not product frameworks | Accepted |
