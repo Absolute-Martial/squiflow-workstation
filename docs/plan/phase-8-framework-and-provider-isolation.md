@@ -13,6 +13,8 @@ This plan answers two separate questions:
    rewrite.
 
 It complements `phase-8-server-plan.md`; it does not add another server phase.
+The broader capability register and open-source shortlist are in
+`phase-8-backend-capability-map.md`.
 
 ## Evidence from the supplied source
 
@@ -190,9 +192,10 @@ Hical logging must not become a second independent retention/rotation policy.
 Do not replace opaque tokens with Hical JWT simply because JWT middleware is
 available.
 
-Add OpenTelemetry C++ or prometheus-cpp only after concrete metrics/export
-requirements exist. First define a minimal `MetricsSink` used by server core;
-a no-op and deterministic recorder are sufficient for implementation tests.
+Define a minimal `MetricsSink` in 8.13 with no-op and deterministic recorders.
+Spike OpenTelemetry C++ against prometheus-cpp only when the deployment has a
+collector/export requirement; adopt one telemetry stack, not two competing
+ownership paths.
 
 ## The large-upload gap
 

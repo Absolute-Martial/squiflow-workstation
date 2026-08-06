@@ -158,12 +158,18 @@ documents.
 
 ## Phase 8 -- Server
 
-Sync endpoints, identity, PostgreSQL schema, media worker, update proxy,
-container files.
+HTTP/sync, identity, PostgreSQL, tenancy, durable workers, integrations,
+media/blob lifecycle, module endpoints, observability, recovery and operator
+controls.
 
-**Verification:** Hical 2.6.7 source is vendored and its boundary is planned, but the runtime lane is not verifiable here -- no qualified Hical dependency graph or PostgreSQL.
+**Verification:** Hical 2.6.7 source is vendored and its boundary is planned,
+but the runtime lane is not verifiable here -- no qualified Hical dependency
+graph or PostgreSQL.
 
-Sub-phases 8.1-8.8 are detailed in `phase-8-server-plan.md`; provider isolation is detailed in `phase-8-framework-and-provider-isolation.md`.
+Sub-phases 8.1-8.13 are detailed in `phase-8-server-plan.md`; provider isolation
+is detailed in `phase-8-framework-and-provider-isolation.md`, and the
+Twenty/Odoo/Frappe completeness review is enforced by
+`phase-8-backend-capability-map.md`.
 
 ---
 

@@ -25,7 +25,7 @@ a duplicated count becomes stale.
 | 5 Workflows | 7 of 8 -- **5.8 remains, planned below** |
 | 6 Platform and application shell | 7 of 8 -- **6.8 remains, planned below** |
 | 7 The interface | 0 of 10 fully verified -- **7.1-7.6 implemented in portable/static lanes; 7.7-7.10 product UI planned; Qt runtime lane pending** |
-| 8 The server | 0 of 8 -- **all of 8.1-8.8 planned below** |
+| 8 The server | 0 of 13 fully verified -- **8.3 portable token core implemented; 8.1-8.13 planned, runtime lane pending** |
 | 9 Build, packaging, release | 0 of 6 -- **all of 9.1-9.6 planned below** |
 
 The QML presentation-bridge architecture (the seam between Qt/QML and the
@@ -43,7 +43,7 @@ file -- it explains the seam every Phase 7 sub-phase below builds on.
 | 7.1, 7.3, 7.4, 7.5, 7.6 | `phase-7-interface-plan.md` | 7.2 (`phase-7.2-navigation-and-activation.md`), 6.8, the QML bridge (done) |
 | 7.2 | `phase-7.2-navigation-and-activation.md` | 6.8, the QML bridge (done) |
 | 7.7-7.10 | `phase-7.7-7.10-application-ui-plan.md` | 7.1-7.6 foundations and existing module operations |
-| 8.1-8.8 | `phase-8-server-plan.md` | Hical decision recorded; Phase 2-5 engine libraries done |
+| 8.1-8.13 | `phase-8-server-plan.md`, `phase-8-backend-capability-map.md` | Hical decision recorded; Phase 2-5 engine libraries done |
 | 9.1-9.6 | `phase-9-packaging-plan.md` | Phase 7 (something to build), Phase 8 (something to deploy), 3.5 outbox (done) |
 
 Every one of those documents already contains, for its sub-phases: goal,
@@ -66,12 +66,17 @@ that content -- it only orders the documents against each other.
 10. 8.6  The update proxy
 11. 8.7  Mail -- prepared by the system, sent only on confirmation
 12. 8.8  Per-module endpoints
-13. 9.1  GitHub Actions across the private repositories
-14. 9.2  The ten-step Windows build
-15. 9.3  Automated self-signed signing
-16. 9.4  The updater
-17. 9.5  Podman Quadlet units
-18. 9.6  The release
+13. 8.9  Tenant lifecycle, RLS, module manifests, extension seams
+14. 8.10 Durable jobs, scheduler, and worker process
+15. 8.11 Webhooks, realtime notifications, and connector registry
+16. 8.12 Blob lifecycle, quarantine, scanning, and import/export
+17. 8.13 Observability, backup/restore, and operator control plane
+18. 9.1  GitHub Actions across the private repositories
+19. 9.2  The ten-step Windows build
+20. 9.3  Automated self-signed signing
+21. 9.4  The updater
+22. 9.5  Podman Quadlet units
+23. 9.6  The release
 ```
 
 **Why this order:** 7.7-7.10 come next because the 7.1-7.6 UI
