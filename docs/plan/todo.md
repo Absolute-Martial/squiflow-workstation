@@ -148,9 +148,9 @@ than being counted here.
 - [ ] 7.9 Remaining operational and supporting pages — quotations, agreements, jobs, sourcing, companion, files, administration/settings — [implementation plan](phase-7.7-7.10-application-ui-plan.md#79----remaining-operational-and-supporting-module-pages)
 - [ ] 7.10 UI integration, accessibility, performance, and Qt runtime closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#710----integration-accessibility-performance-and-qt-runtime-closure)
 
-## Phase 8 - The server *(none of this compiles here)*
+## Phase 8 - The server *(portable token core compiles; provider runtime does not)*
 
-- [ ] 8.1 Skeleton and configuration — [implementation plan](phase-8-server-plan.md#81----skeleton-and-configuration)
+- [ ] 8.1 Skeleton, configuration, and replaceable Hical adapter — [server plan](phase-8-server-plan.md#81----skeleton-and-configuration), [provider isolation plan](phase-8-framework-and-provider-isolation.md)
 - [ ] 8.2 PostgreSQL and migrations — [implementation plan](phase-8-server-plan.md#82----postgresql-and-migrations)
 - [~] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens),
       [gate](../qa/phase-8.3-identity-token-core.md): portable bearer-token
@@ -181,7 +181,7 @@ and each one blocks something.
 
 | # | Question | Blocks |
 |---|---|---|
-| D1 | **Decided: Hical**, not Oat++, is the Phase 8 HTTP framework. Bound to the sync transport adapter only; it must not leak into domain, workflows, protocol, or the PostgreSQL schema design | Done — unblocks 8.1 |
+| D1 | **Decided: Hical**, not Oat++, is the Phase 8 inbound HTTP adapter. The supplied 2.6.7 snapshot is vendored and all missing capabilities stay behind provider ports | Done — unblocks 8.1 |
 | D2 | The storage seam is a **typed record store**, not prepare-bind-step SQL. A SQL-shaped seam cannot be faked, and nothing above it would be testable here | already built; reversible only now |
 | D3 | Is `jobs` really an Extra module? It currently requires nothing, which is unusual for something this central | 4.8 |
 | D4 | **Decided:** consume an agreement quantity cap when the invoice is issued and release it when that invoice is cancelled; jobs do not consume caps | Done in 5.7 |
@@ -192,6 +192,8 @@ and each one blocks something.
 - [ ] Spike: printing through `QPdfWriter` without dragging in QtWidgets — before 7.5
 - [ ] Spike: an AVIF image plugin verified against the pinned Qt — before 7.6
 - [ ] Confirm `cmake --preset` configures at all — nothing in `cmake/` has ever run
+- [ ] Qualify vendored Hical 2.6.7 with pinned Boost/OpenSSL/zlib and its upstream tests on the Phase 8 compiler matrix
+- [ ] Run the Phase 8.5 bounded streaming-upload spike; Hical multipart is currently full-buffered
 
 ## Standing rules that are easy to forget
 

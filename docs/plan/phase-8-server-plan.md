@@ -1,21 +1,20 @@
 # Phase 8 -- The server: 8.1-8.8 implementation plan
 
-Status: planned, not started. None of this compiles in the current sandbox
-(no Oat++, no PostgreSQL, no network). Every sub-phase below is written to
-be compiled and gated on a machine that has those, and honestly marked
-`[~]` here until it does.
+Status: planned, with the portable 8.3 token core already implemented. Hical
+2.6.7 source is vendored but not linked. The current sandbox has no qualified
+Boost/OpenSSL/zlib/Hical runtime lane, PostgreSQL, or real network gate. The
+adapter and missing-provider boundaries are defined in
+`phase-8-framework-and-provider-isolation.md`.
 
 ## Decisions this phase is built on
 
-- **D1, decided by the shopkeeper: Hical, not Oat++.** Oat++ is dropped as
-  the Phase 8 HTTP framework; Hical is the confirmed choice, which unblocks
-  8.1 (the server can now be scaffolded against a picked framework). Hical
-  is bound to the sync transport adapter only; it must never leak into
-  domain, workflows, protocol, or the PostgreSQL schema design, and its
-  Boost.MySQL middleware is not used for the PostgreSQL design -- that
-  design stays PostgreSQL regardless of the HTTP framework. Pin an exact
-  Hical version/commit through a vcpkg overlay port, never a floating
-  branch, matching the same pinning discipline D1 always required.
+- **D1, decided by the shopkeeper: Hical, not Oat++.** Hical is the inbound
+  HTTP adapter, not the server architecture. Only
+  `server/src/adapters/http/hical/` may include Hical/Boost transport types.
+  Its MySQL middleware, JWT ownership, configuration ownership, and logging
+  ownership are disabled or adapted rather than adopted. The supplied 2.6.7
+  archive is pinned by SHA-256; release requires an exact reproducible upstream
+  commit/artifact. See ADR 0013 and the provider-isolation plan.
 - **D5, decided (from 5.8):** approval is by hand. 8.7 (mail) therefore
   sends only what a human already approved and explicitly requested to
   send -- it never infers approval from a reply.
@@ -37,31 +36,35 @@ be compiled and gated on a machine that has those, and honestly marked
 - All money, quantity, and identity types are the same Phase 2 types used
   workstation-side; the wire format is a serialization of those types, not
   a parallel type.
+- Missing capabilities are independent adapters: libpqxx for PostgreSQL,
+  libcurl for outbound HTTP/SMTP, libavif for conversion, and a replaceable
+  blob store. Third-party types and error enums never cross those boundaries.
+- A future Hical implementation of any missing capability must satisfy the
+  existing SquiFlow port/conformance tests; callers and protocol payloads do
+  not change.
 
 ## 8.1 -- Skeleton and configuration
 
-**Goal:** a running Oat++ (or chosen framework) HTTP server process with
-health check, structured startup, and typed configuration -- no business
+**Goal:** a running Hical HTTP adapter over a framework-neutral endpoint core,
+with health check, structured startup, and typed configuration -- no business
 endpoints yet.
 
-**Scope:** `server/CMakeLists.txt`, `server/src/main.cpp`,
-`server/src/config.hpp/.cpp` (typed config: bind address, port, database
-connection string, log level, secrets source -- loaded from environment
-variables and/or a config file, never hardcoded), `server/src/health_
-endpoint.hpp/.cpp` (`GET /health` returning process status, build version,
-and database reachability), reuse of the Phase 6.2 logging library
-compiled for a server (non-Windows) target.
+**Scope:** `server/CMakeLists.txt`, `server/src/main.cpp`, typed configuration,
+framework-neutral `ApiRequest`/`ApiResponse`/`Problem`/`RouteSpec`, health and
+readiness endpoints, plus `server/src/adapters/http/hical/` request/response
+mappers, route registration, lifecycle, and error boundary. Reuse Phase 6.2
+logging through an adapter. Hical headers are forbidden everywhere else.
 
 **Invariants:** the server refuses to start with an incomplete or
 malformed configuration, naming exactly which setting is missing/invalid --
 no partial-startup "try it and see" behavior. Secrets never appear in
 startup logs.
 
-**Tests:** normal startup, missing required config key, malformed port/
-address, database unreachable at startup (health check reports it, server
-still starts so an operator can see the health endpoint), health check
-under load (concurrent requests), graceful shutdown on `SIGTERM` closes
-the DB pool cleanly.
+**Tests:** direct endpoint tests without Hical, Hical loopback conformance,
+request-lifetime copying, normal startup, malformed/missing configuration,
+database-unreachable readiness, concurrent health checks, provider include
+boundary, and graceful `SIGTERM` shutdown. The same endpoint response must be
+identical through direct and Hical paths.
 
 ## 8.2 -- PostgreSQL and migrations
 
@@ -69,7 +72,8 @@ the DB pool cleanly.
 ordering discipline already proven in the workstation's Phase 3.3 runner,
 adapted to PostgreSQL rather than SQLite.
 
-**Scope:** `server/src/storage/postgres_store.hpp/.cpp`,
+**Scope:** a pinned libpqxx adapter under `server/src/adapters/postgres/`,
+`server/src/storage/postgres_store.hpp/.cpp`,
 `server/src/storage/migration_runner_pg.hpp/.cpp` (reuse the Phase 3.3
 migration *ordering and versioning rules*; do not invent a second
 migration numbering scheme -- server migrations get their own numbered
@@ -155,7 +159,10 @@ uploaded originals to AVIF previews, mirroring the workstation's Phase 6.7
 "bounded worker lanes, no service owning a thread" discipline server-side),
 content-hash verification on upload matching the 4.13 identity rule
 (device, volume, file id, content hash) so a re-upload of unchanged
-content is detected and skipped.
+content is detected and skipped. Hical's supplied multipart path buffers
+complete bodies/parts, so it is capped to a measured small-body limit. Large-file
+support requires the separate `UploadReceiver` spike/adapter described in the
+provider-isolation plan.
 
 **Invariants:** the worker pool has a hard concurrency and queue-depth
 cap; an oversized or corrupt upload is rejected before conversion is
@@ -178,8 +185,9 @@ server-side).
 **Scope:** `server/src/update/manifest_endpoint.hpp/.cpp` (serves the
 current release manifest: version, download URL, SHA-256, mandatory/
 optional flag), `server/src/update/proxy_cache.hpp/.cpp` (caches the
-actual release artifact so the update host is not hit once per
-workstation).
+actual release artifact so the update host is not hit once per workstation),
+and a libcurl-backed `ArtifactFetcher` adapter. Hical owns inbound delivery
+only.
 
 **Invariants:** the manifest served is always the one this server
 administrator has explicitly published, never automatically the newest
@@ -199,10 +207,10 @@ version is honored immediately.
 transmit an email, and only for a `SendIntent` (from 5.8) that already
 carries an explicit human confirmation.
 
-**Scope:** `server/src/mail/send_worker.hpp/.cpp` (consumes `SendIntent`
-records synced up from the workstation via 8.4, sends via a configured
-SMTP/mail-API provider, records delivery status back), `server/src/mail/
-template_render.hpp/.cpp` (renders the 5.8 `PreparedDocument` content to
+**Scope:** `server/src/mail/send_worker.hpp/.cpp`, a libcurl-backed
+`MailTransport` adapter for SMTP or an HTTP provider, and application code that
+consumes `SendIntent` records synced from the workstation via 8.4 and records
+delivery status back; `server/src/mail/template_render.hpp/.cpp` (renders the 5.8 `PreparedDocument` content to
 an email body/attachment -- reusing the same document content the 7.5
 renderer will eventually turn into a PDF, never a third independent
 rendering of the same fields).
@@ -270,8 +278,9 @@ since that is what a server actually is.
 
 ## Acceptance criteria for closing Phase 8
 
-Phase 8 is complete only when all eight sub-phases have gate documents
-produced on a machine with PostgreSQL and the chosen HTTP framework
-available, D1 (or its Hical alternative) is a confirmed, recorded decision
-rather than a standing recommendation, and Phase 9's CI (9.1) can actually
-build and run the server's own test suite, not just the workstation's.
+Phase 8 is complete only when all eight sub-phases have gate documents from a
+machine with PostgreSQL and the pinned Hical dependency graph, provider include
+boundaries and conformance suites pass, Hical upstream tests pass in the
+qualification lane, and Phase 9 CI builds/runs the server suite. Replacing Hical
+or a missing-capability provider must require only an adapter/composition-root
+change, never domain, protocol, workflow, endpoint, or migration changes.

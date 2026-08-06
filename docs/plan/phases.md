@@ -161,9 +161,9 @@ documents.
 Sync endpoints, identity, PostgreSQL schema, media worker, update proxy,
 container files.
 
-**Verification:** not verifiable here -- no Oat++, no PostgreSQL.
+**Verification:** Hical 2.6.7 source is vendored and its boundary is planned, but the runtime lane is not verifiable here -- no qualified Hical dependency graph or PostgreSQL.
 
-Sub-phases 8.1-8.8 detailed when Phase 8 is reached.
+Sub-phases 8.1-8.8 are detailed in `phase-8-server-plan.md`; provider isolation is detailed in `phase-8-framework-and-provider-isolation.md`.
 
 ---
 
