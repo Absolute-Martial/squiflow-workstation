@@ -12,12 +12,27 @@
 namespace squiflow::app::primary {
 
 enum class PageKind : std::uint8_t {
+    Administration,
     Parties,
     Catalog,
     Pricing,
     Orders,
     Receivables,
+    Jobs,
+    Quotations,
+    Agreements,
+    Sourcing,
+    Companion,
+    Files,
+    Count,
 };
+
+inline constexpr std::size_t kPageKindCount =
+    static_cast<std::size_t>(PageKind::Count);
+
+constexpr bool is_valid(PageKind kind) noexcept {
+    return static_cast<std::size_t>(kind) < kPageKindCount;
+}
 
 struct ListRequest final {
     std::size_t offset{0};

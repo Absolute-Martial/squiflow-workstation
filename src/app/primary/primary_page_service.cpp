@@ -40,11 +40,19 @@ bool valid_row(const ListRow& row) noexcept {
 protocol::ModuleId PrimaryPageService::owner(PageKind kind) noexcept {
     using M = protocol::ModuleId;
     switch (kind) {
+        case PageKind::Administration: return M::administration;
         case PageKind::Parties: return M::parties;
         case PageKind::Catalog: return M::catalog;
         case PageKind::Pricing: return M::pricing;
         case PageKind::Orders: return M::orders;
         case PageKind::Receivables: return M::receivables;
+        case PageKind::Jobs: return M::jobs;
+        case PageKind::Quotations: return M::quotations;
+        case PageKind::Agreements: return M::agreements;
+        case PageKind::Sourcing: return M::sourcing;
+        case PageKind::Companion: return M::companion;
+        case PageKind::Files: return M::files;
+        case PageKind::Count: break;
     }
     return M::administration;
 }
@@ -52,13 +60,21 @@ protocol::ModuleId PrimaryPageService::owner(PageKind kind) noexcept {
 protocol::RightId PrimaryPageService::read_right(PageKind kind) noexcept {
     using R = protocol::RightId;
     switch (kind) {
+        case PageKind::Administration: return R::right_person_manage;
         case PageKind::Parties: return R::right_party_read;
         case PageKind::Catalog: return R::right_product_read;
         case PageKind::Pricing: return R::right_rate_read;
         case PageKind::Orders: return R::right_order_read;
         case PageKind::Receivables: return R::right_invoice_read;
+        case PageKind::Jobs: return R::right_job_read;
+        case PageKind::Quotations: return R::right_quotation_read;
+        case PageKind::Agreements: return R::right_agreement_read;
+        case PageKind::Sourcing: return R::right_supplier_read;
+        case PageKind::Companion: return R::right_task_read;
+        case PageKind::Files: return R::right_file_search;
+        case PageKind::Count: break;
     }
-    return R::right_audit_read;
+    return R::right_person_manage;
 }
 
 bool PrimaryPageService::valid_field(PageKind kind, std::string_view field,
@@ -67,6 +83,8 @@ bool PrimaryPageService::valid_field(PageKind kind, std::string_view field,
         return true;
     }
     switch (kind) {
+        case PageKind::Administration:
+            return field == "name" || field == "access";
         case PageKind::Parties:
             return field == "name" || field == "terms";
         case PageKind::Catalog:
@@ -76,6 +94,20 @@ bool PrimaryPageService::valid_field(PageKind kind, std::string_view field,
         case PageKind::Orders:
         case PageKind::Receivables:
             return field == "number" || field == "customer" || field == "status";
+        case PageKind::Jobs:
+            return field == "number" || field == "customer" || field == "status";
+        case PageKind::Quotations:
+            return field == "number" || field == "customer" || field == "status";
+        case PageKind::Agreements:
+            return field == "name" || field == "customer" || field == "status";
+        case PageKind::Sourcing:
+            return field == "supplier" || field == "status";
+        case PageKind::Companion:
+            return field == "title" || field == "status" || field == "due";
+        case PageKind::Files:
+            return field == "name" || field == "location";
+        case PageKind::Count:
+            return false;
     }
     return false;
 }
@@ -83,6 +115,11 @@ bool PrimaryPageService::valid_field(PageKind kind, std::string_view field,
 Result<ListPage, DomainError> PrimaryPageService::list(
     const RequestContext& context, const protocol::Activation& activation,
     PageKind kind, const ListRequest& request) const {
+    if (!is_valid(kind)) {
+        return Result<ListPage, DomainError>::failure(
+            error(DomainErrorCode::ValidationFailed,
+                  "primary.error.invalid_page_kind", "kind"));
+    }
     const auto module = owner(kind);
     const auto right = read_right(kind);
     if (!activation.is_active(module)) {
