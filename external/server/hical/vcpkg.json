@@ -1,0 +1,27 @@
+{
+    "name": "hical",
+    "version": "2.6.7",
+    "dependencies": [
+        "boost-asio",
+        "boost-system",
+        "boost-json",
+        "openssl",
+        "zlib",
+        "gtest"
+    ],
+    "features": {
+        "database": {
+            "description": "Database middleware with MySQL support (requires Boost.MySQL)",
+            "dependencies": [
+                "boost-mysql",
+                "boost-charconv"
+            ]
+        },
+        "mimalloc": {
+            "description": "Use mimalloc as PMR upstream allocator",
+            "dependencies": [
+                "mimalloc"
+            ]
+        }
+    }
+}

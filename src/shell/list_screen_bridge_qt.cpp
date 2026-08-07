@@ -54,6 +54,11 @@ bool ListScreenBridgeQt::emit_request(
     }
     request_error_key_.clear();
     const ListRequest& request = result.value();
+    if (receivers(SIGNAL(pageRequested(qulonglong,qulonglong,qulonglong,QString,bool,QString,QString))) == 0) {
+        (void)bridge_.fail(request.generation, "list.error.provider_unavailable");
+        synchronize();
+        return false;
+    }
     emit pageRequested(
         static_cast<qulonglong>(request.generation),
         static_cast<qulonglong>(request.offset),

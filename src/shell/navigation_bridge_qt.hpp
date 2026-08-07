@@ -13,6 +13,7 @@
 
 namespace squiflow::shell {
 
+class DashboardBridgeQt;
 class ListScreenBridgeQt;
 
 class NavigationBridgeQt final : public QObject {
@@ -22,6 +23,7 @@ class NavigationBridgeQt final : public QObject {
     Q_PROPERTY(bool hasAccessibleModules READ hasAccessibleModules NOTIFY accessibleModulesChanged)
     Q_PROPERTY(QString lastErrorKey READ lastErrorKey NOTIFY lastErrorChanged)
     Q_PROPERTY(QObject* currentListBridge READ currentListBridge NOTIFY currentRouteChanged)
+    Q_PROPERTY(QObject* currentDashboardBridge READ currentDashboardBridge NOTIFY currentRouteChanged)
 
   public:
     NavigationBridgeQt(NavigationController& controller, NavigationModelQt& model,
@@ -33,6 +35,7 @@ class NavigationBridgeQt final : public QObject {
     bool hasAccessibleModules() const noexcept;
     QString lastErrorKey() const { return last_error_key_; }
     QObject* currentListBridge() const noexcept;
+    QObject* currentDashboardBridge() const noexcept;
 
     Q_INVOKABLE bool selectRoute(const QString& stable_id);
     Q_INVOKABLE bool goBack();
@@ -53,6 +56,7 @@ class NavigationBridgeQt final : public QObject {
     NavigationController& controller_;
     NavigationModelQt& model_;
     std::unique_ptr<ListScreenBridgeQt> current_list_bridge_{};
+    std::unique_ptr<DashboardBridgeQt> current_dashboard_bridge_{};
     QString last_error_key_{};
 };
 

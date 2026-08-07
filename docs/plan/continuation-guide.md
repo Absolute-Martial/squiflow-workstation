@@ -12,9 +12,9 @@ and the dependency order across all of them.
 
 ## Current state, as of this document's commit
 
-**42 of 69 sub-phases done and verified**, per `todo.md`'s count at the
-time of writing -- re-check that file's own count line, since it is the
-authoritative live number, not this sentence.
+The authoritative completion ledger is `todo.md`. This guide deliberately does
+not copy its numeric total because adding 7.7-7.10 changes the denominator and
+a duplicated count becomes stale.
 
 | Phase | State |
 | --- | --- |
@@ -24,8 +24,8 @@ authoritative live number, not this sentence.
 | 4 The twelve modules | complete |
 | 5 Workflows | 7 of 8 -- **5.8 remains, planned below** |
 | 6 Platform and application shell | 7 of 8 -- **6.8 remains, planned below** |
-| 7 The interface | 0 of 6 fully verified -- **7.2 and 7.3 implemented, portable/static gates green, Qt runtime lane pending** |
-| 8 The server | 0 of 8 -- **all of 8.1-8.8 planned below** |
+| 7 The interface | 0 of 10 fully verified -- **7.1-7.6 implemented in portable/static lanes; 7.7-7.10 product UI planned; Qt runtime lane pending** |
+| 8 The server | 0 of 13 fully verified -- **8.3 portable token core implemented; 8.1-8.13 planned, runtime lane pending** |
 | 9 Build, packaging, release | 0 of 6 -- **all of 9.1-9.6 planned below** |
 
 The QML presentation-bridge architecture (the seam between Qt/QML and the
@@ -42,7 +42,8 @@ file -- it explains the seam every Phase 7 sub-phase below builds on.
 | 6.8 | `phase-6.8-startup-order.md` | 6.1-6.7 (all done), extends existing `src/app/startup*.hpp/.cpp` |
 | 7.1, 7.3, 7.4, 7.5, 7.6 | `phase-7-interface-plan.md` | 7.2 (`phase-7.2-navigation-and-activation.md`), 6.8, the QML bridge (done) |
 | 7.2 | `phase-7.2-navigation-and-activation.md` | 6.8, the QML bridge (done) |
-| 8.1-8.8 | `phase-8-server-plan.md` | Decision D1 (Oat++/Hical pin), Phase 2-5 engine libraries (done) |
+| 7.7-7.10 | `phase-7.7-7.10-application-ui-plan.md` | 7.1-7.6 foundations and existing module operations |
+| 8.1-8.13 | `phase-8-server-plan.md`, `phase-8-backend-capability-map.md` | Hical decision recorded; Phase 2-5 engine libraries done |
 | 9.1-9.6 | `phase-9-packaging-plan.md` | Phase 7 (something to build), Phase 8 (something to deploy), 3.5 outbox (done) |
 
 Every one of those documents already contains, for its sub-phases: goal,
@@ -53,23 +54,23 @@ that content -- it only orders the documents against each other.
 ## The exact order to work in from here
 
 ```text
-1.  5.8  Prepare a document for approval or email
-2.  6.8  Startup order, fixed and tested
-3.  7.1  Window and shell
-4.  7.2  Navigation and module visibility from activation (implemented; run Qt gate)
-5.  7.3  Lists (implemented; run Qt gate)
-6.  7.4  Forms and validation
-7.  7.5  Documents and print (spike required first: QPdfWriter without QtWidgets)
-8.  7.6  Images and the AVIF plugin (spike required first: AVIF plugin against Qt 6.11.1)
-9.  D1   Confirm the Oat++ pin (or the Hical alternative) -- a decision, not code
-10. 8.1  Server skeleton and configuration
-11. 8.2  PostgreSQL and migrations
-12. 8.3  Identity and tokens
-13. 8.4  Sync endpoints, idempotency, sequence assignment
-14. 8.5  Media, including the AVIF conversion worker
-15. 8.6  The update proxy
-16. 8.7  Mail -- prepared by the system, sent only on confirmation
-17. 8.8  Per-module endpoints
+1.  7.7  Design system, application shell, and real dashboard
+2.  7.8  Master-data and primary commercial pages
+3.  7.9  Remaining operational and supporting module pages
+4.  7.10 UI integration, accessibility, performance, and Qt runtime closure
+5.  8.1  Server skeleton and configuration
+6.  8.2  PostgreSQL and migrations
+7.  8.3  Complete identity-token storage and HTTP wiring
+8.  8.4  Sync endpoints, idempotency, sequence assignment
+9.  8.5  Media, including the AVIF conversion worker
+10. 8.6  The update proxy
+11. 8.7  Mail -- prepared by the system, sent only on confirmation
+12. 8.8  Per-module endpoints
+13. 8.9  Tenant lifecycle, RLS, module manifests, extension seams
+14. 8.10 Durable jobs, scheduler, and worker process
+15. 8.11 Webhooks, realtime notifications, and connector registry
+16. 8.12 Blob lifecycle, quarantine, scanning, and import/export
+17. 8.13 Observability, backup/restore, and operator control plane
 18. 9.1  GitHub Actions across the private repositories
 19. 9.2  The ten-step Windows build
 20. 9.3  Automated self-signed signing
@@ -78,19 +79,13 @@ that content -- it only orders the documents against each other.
 23. 9.6  The release
 ```
 
-**Why this order and not phase-number order:** 5.8 and 6.8 are cheap to
-close now -- both only extend code that already exists (the workflow
-framework and the startup-sequence scaffolding respectively) and neither
-is blocked by anything. Closing them first means Phase 5 and Phase 6 both
-reach 100% before any Phase 7 work starts, which keeps the `todo.md`
-ledger from ever showing a phase stuck at "nearly done" indefinitely.
-7.1-7.6 come next because the QML bridge they depend on is already built.
-Phase 8 waits for D1 because starting a server against an undecided HTTP
-framework pin means redoing the skeleton later. Phase 9 comes last because
-it packages and ships what 7 and 8 produce -- there is nothing to build a
-release pipeline around before then, though 9.1 (bare CI) can technically
-start earlier if a maintainer wants build/test coverage on Phase 7 work as
-it lands.
+**Why this order:** 7.7-7.10 come next because the 7.1-7.6 UI
+foundations and all twelve module operations they depend on are implemented
+in the portable/static lanes. This produces the real native workstation before
+more server scope is added. The Hical server decision is already recorded, so
+Phase 8 can follow without another framework-selection pause. Phase 9 comes
+last because it packages and ships the completed workstation and server,
+although 9.1 may be pulled forward solely to add CI coverage for UI work.
 
 ## Standing rules that apply to every one of the above (restated from `README.md`/`todo.md`)
 
@@ -100,13 +95,10 @@ it lands.
   never quietly counted as done.
 - No invented numbers -- sizes, counts, and test results always come from
   an actual run.
-- Two spikes are on the machine-only list in `todo.md` and are
-  prerequisites for 7.5 and 7.6 specifically, not general project risks:
-  `QPdfWriter` printing without QtWidgets, and the AVIF plugin against the
-  pinned Qt 6.11.1 build.
-- Decision D1 (Oat++ pin vs. a specific Hical-based alternative) is the
-  only remaining open decision blocking a phase (Phase 8). D2-D5 are
-  already resolved and recorded in `todo.md`.
+- The 7.5 PDF and 7.6 AVIF implementations exist in the portable/static lane;
+  their real Qt 6.11.1 runtime and visual gates remain prerequisites for 7.10.
+- Decision D1 is resolved in favor of Hical. Remaining decisions and their
+  owners are recorded in `todo.md`; none blocks starting 7.7.
 
 ## How to resume in one sentence
 

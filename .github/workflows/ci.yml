@@ -27,6 +27,39 @@ jobs:
         run: echo "SQUIFLOW_SODIUM_ROOT=$(tools/ci/build-libsodium.sh)" >> "$GITHUB_ENV"
       - name: Configure, build and test portable CMake lane
         run: cmake --workflow --preset linux-check
+  linux-qt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '4.4.2'
+      - uses: seanmiddleditch/gha-setup-ninja@v6
+      - uses: jurplel/install-qt-action@v4.3.1
+        with:
+          version: '6.11.1'
+          arch: linux_gcc_64
+          modules: 'qtshadertools qtimageformats qttasktree'
+          cache: true
+          aqtsource: git+https://github.com/miurahr/aqtinstall@16db45a70b5905ad596941b223469bc86a56901e
+      - name: Build pinned libsodium for CMake lane
+        run: echo "SQUIFLOW_SODIUM_ROOT=$(tools/ci/build-libsodium.sh)" >> "$GITHUB_ENV"
+      - name: Configure, build and test Qt/QWindowKit
+        run: cmake --workflow --preset linux-qt-check
+      - name: Launch offscreen dashboard smoke test
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QSG_RHI_BACKEND: software
+        run: ./build/linux-qt-release/src/app/squiflow_workstation --smoke-test
+      - name: Upload Qt test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-qt-test-logs
+          path: build/linux-qt-release/Testing/Temporary/
+          if-no-files-found: ignore
+
   windows-msvc:
     runs-on: windows-2025
     timeout-minutes: 90
@@ -64,6 +97,12 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
         run: cmake --workflow --preset windows-msvc-check
+      - name: Launch offscreen dashboard smoke test
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QSG_RHI_BACKEND: software
+        run: "& .\\build\\windows-msvc-release\\src\\app\\squiflow_workstation.exe --smoke-test"
       - name: Upload test logs on failure
         if: failure()
         uses: actions/upload-artifact@v7

@@ -12,13 +12,15 @@ ScreenContribution primary_route(protocol::ModuleId owner, std::string id,
                                  std::string group_key, std::uint16_t group_rank,
                                  std::uint16_t screen_rank,
                                  protocol::RightId required_right,
-                                 std::vector<ListColumn> columns) {
+                                 std::vector<ListColumn> columns,
+                                 std::string component_url =
+                                     "qrc:/qt/qml/SquiFlow/screens/ModuleListScreen.qml") {
     const std::string route_id = id;
     return {owner,
             std::move(id),
             std::move(title_key),
             std::move(icon_name),
-            "qrc:/qt/qml/SquiFlow/screens/ModuleListScreen.qml",
+            std::move(component_url),
             std::move(group_key),
             group_rank,
             screen_rank,
@@ -53,28 +55,41 @@ ScreenRegistry make_navigation_manifest() {
     ScreenRegistry manifest;
     using M = protocol::ModuleId;
     using R = protocol::RightId;
+    manifest.add({M::administration, "dashboard.home", "navigation.dashboard",
+                  "home", "qrc:/qt/qml/SquiFlow/dashboard/DashboardPage.qml",
+                  "group.home", 0, 0, std::nullopt,
+                  [] { return std::make_unique<DashboardPresentationBridge>(); }});
     manifest.add(primary_route(M::administration, "administration.home",
                                "navigation.administration", "settings", "group.system",
                                50, 10, R::right_person_manage,
                                {column("name"), column("access")}));
     manifest.add(primary_route(M::parties, "parties.list", "navigation.parties",
                                "people", "group.work", 10, 10, R::right_party_read,
-                               {column("name"), column("terms")}));
+                               {column("name"), column("terms")},
+                               "qrc:/qt/qml/SquiFlow/parties/PartiesPage.qml"));
     manifest.add(primary_route(M::catalog, "catalog.list", "navigation.catalog",
                                "box", "group.work", 10, 20, R::right_product_read,
-                               {column("name")}));
+                               {column("name")},
+                               "qrc:/qt/qml/SquiFlow/catalog/CatalogPage.qml"));
     manifest.add(primary_route(M::pricing, "pricing.rates", "navigation.pricing",
                                "tag", "group.work", 10, 30, R::right_rate_read,
-                               {column("name"), column("rate")}));
+                               {column("name"), column("rate", true, false)},
+                               "qrc:/qt/qml/SquiFlow/pricing/PricingPage.qml"));
     manifest.add(primary_route(M::orders, "orders.list", "navigation.orders",
                                "cart", "group.work", 10, 40, R::right_order_read,
                                {column("number"), column("customer"), column("status"),
-                                column("total", false, false)}));
+                                column("total", false, false)},
+                               "qrc:/qt/qml/SquiFlow/orders/OrdersPage.qml"));
+    manifest.add({M::orders, "orders.counter_sale", "navigation.counter_sale",
+                  "calculator", "qrc:/qt/qml/SquiFlow/counter/CounterSalePage.qml",
+                  "group.work", 10, 41, R::right_order_write,
+                  [] { return std::make_unique<PresentationBridge>(); }});
     manifest.add(primary_route(M::receivables, "receivables.invoices",
                                "navigation.receivables", "receipt", "group.finance",
                                30, 10, R::right_invoice_read,
                                {column("number"), column("customer"), column("status"),
-                                column("total", false, false)}));
+                                column("total", false, false)},
+                               "qrc:/qt/qml/SquiFlow/receivables/ReceivablesPage.qml"));
     manifest.add(primary_route(M::jobs, "jobs.list", "navigation.jobs", "briefcase",
                                "group.work", 10, 50, R::right_job_read,
                                {column("number"), column("customer"), column("status")}));

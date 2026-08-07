@@ -1,0 +1,3 @@
+#include "shell/document_snapshot.hpp"
+#include "support/check.hpp"
+int main(){namespace t=squiflow::testing;using namespace squiflow::shell;for(auto k:{DocumentKind::Quotation,DocumentKind::Invoice,DocumentKind::Statement}){PreparedDocumentSnapshot s{k,"id","42","Title","Party","2026-08-06","",{{"Work","2.00","$1.2345","$2.4690"}},"$2.4690","$0","$2.4690",""};t::check(validate_document_snapshot(s)&&!document_template_name(k).empty(),"kind has valid immutable snapshot and template");t::check(s.total=="$2.4690","formatted money remains opaque");s.lines.clear();t::check(!validate_document_snapshot(s),"zero-line document refused");}return t::report();}

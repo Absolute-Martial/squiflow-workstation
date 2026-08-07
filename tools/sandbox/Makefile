@@ -270,6 +270,22 @@ $(BUILD)/app_contracts_test: tests/app/contracts_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/app_dashboard_service_test: $(PROTOCOL_SRC) src/engine/identity/rights_set.cpp src/app/dashboard/dashboard_service.cpp tests/app/dashboard_service_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_primary_page_service_test: $(PROTOCOL_SRC) src/engine/identity/rights_set.cpp \
+                                        src/app/primary/primary_page_service.cpp \
+                                        tests/app/primary_page_service_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_local_primary_query_test: $(STORAGE_SRC) src/engine/records/lifecycle.cpp \
+                                       src/app/primary/local_primary_query.cpp \
+                                       tests/app/local_primary_query_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/shell_presentation_seam_test: src/shell/completion_gate.cpp tests/shell/presentation_seam_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -301,6 +317,38 @@ $(BUILD)/shell_paged_list_cache_test: src/shell/paged_list_cache.cpp tests/shell
 $(BUILD)/shell_list_bridge_test: src/shell/paged_list_cache.cpp src/shell/list_bridge.cpp tests/shell/list_bridge_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_form_bridge_test: src/shell/form_bridge.cpp tests/shell/form_bridge_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_document_snapshot_test: src/shell/document_snapshot.cpp tests/shell/document_snapshot_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_thumbnail_cache_test: src/shell/thumbnail_cache.cpp tests/shell/thumbnail_cache_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_window_state_test: src/shell/window_state.cpp tests/shell/window_state_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_dashboard_bridge_test: src/shell/dashboard_bridge.cpp tests/shell/dashboard_bridge_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_state_test: src/shell/notification_queue.cpp src/shell/shell_state.cpp tests/shell/shell_state_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+SERVER_IDENTITY_SRC := server/src/identity/token_store.cpp \
+                       server/src/identity/token_issuer.cpp \
+                       src/engine/records/identity.cpp
+
+$(BUILD)/server_identity_token_issuer_test: $(SERVER_IDENTITY_SRC) server/tests/identity/token_issuer_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) -Iserver/src $(SERVER_IDENTITY_SRC) server/tests/identity/token_issuer_test.cpp $(SODIUM_LIB) -o $@
 
 $(BUILD)/app_domain_event_bus_test: tests/app/domain_event_bus_test.cpp
 >@mkdir -p $(BUILD)
@@ -527,14 +575,18 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_application_architecture.py
 >@$(PYTHON) tools/sandbox/check_composition_root.py
 >@$(PYTHON) tools/sandbox/check_module_boundaries.py
+>@$(PYTHON) tools/sandbox/check_server_provider_boundaries.py
+>@$(PYTHON) tools/sandbox/check_extension_boundaries.py
 >@$(PYTHON) tools/sandbox/check_qml_boundary.py
 >@$(PYTHON) tools/sandbox/test_qml_boundary.py
 >@$(PYTHON) tools/sandbox/check_ui_resources.py
 >@$(PYTHON) tools/sandbox/check_qt_bridge.py
 >@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
+>@$(PYTHON) tools/sandbox/check_dashboard_and_shell.py
+>@$(PYTHON) tools/sandbox/check_phase78_design_policy.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/app_dashboard_service_test $(BUILD)/app_primary_page_service_test $(BUILD)/app_local_primary_query_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/shell_dashboard_bridge_test $(BUILD)/shell_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -586,6 +638,15 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo '== application contracts =='
 >./$(BUILD)/app_contracts_test
 >@echo
+>@echo '== application dashboard service =='
+>./$(BUILD)/app_dashboard_service_test
+>@echo
+>@echo '== application primary page service =='
+>./$(BUILD)/app_primary_page_service_test
+>@echo
+>@echo '== application local primary query =='
+>./$(BUILD)/app_local_primary_query_test
+>@echo
 >@echo '== primitive mapping =='
 >./$(BUILD)/shell_primitive_mapping_test
 >@echo
@@ -609,6 +670,27 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== list bridge =='
 >./$(BUILD)/shell_list_bridge_test
+>@echo
+>@echo '== forms =='
+>./$(BUILD)/shell_form_bridge_test
+>@echo
+>@echo '== document snapshots =='
+>./$(BUILD)/shell_document_snapshot_test
+>@echo
+>@echo '== thumbnails =='
+>./$(BUILD)/shell_thumbnail_cache_test
+>@echo
+>@echo '== window state =='
+>./$(BUILD)/shell_window_state_test
+>@echo
+>@echo '== dashboard bridge =='
+>./$(BUILD)/shell_dashboard_bridge_test
+>@echo
+>@echo '== shell state and notifications =='
+>./$(BUILD)/shell_state_test
+>@echo
+>@echo '== server identity: token issuer =='
+>./$(BUILD)/server_identity_token_issuer_test
 >@echo
 >@echo '== domain event bus =='
 >./$(BUILD)/app_domain_event_bus_test

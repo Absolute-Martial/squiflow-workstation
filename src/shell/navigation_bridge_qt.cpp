@@ -6,6 +6,7 @@
 #include <QPointer>
 #include <QThread>
 
+#include "shell/dashboard_bridge_qt.hpp"
 #include "shell/list_screen_bridge_qt.hpp"
 #include "shell/navigation_manifest.hpp"
 
@@ -40,6 +41,10 @@ QObject* NavigationBridgeQt::currentListBridge() const noexcept {
     return current_list_bridge_.get();
 }
 
+QObject* NavigationBridgeQt::currentDashboardBridge() const noexcept {
+    return current_dashboard_bridge_.get();
+}
+
 bool NavigationBridgeQt::finish(const app::Result<void, NavigationError>& result) {
     const QString next_error = result.has_value()
         ? QString{}
@@ -57,8 +62,13 @@ bool NavigationBridgeQt::finish(const app::Result<void, NavigationError>& result
 
 void NavigationBridgeQt::synchronize() {
     current_list_bridge_.reset();
-    if (auto* route = dynamic_cast<RoutePresentationBridge*>(
+    current_dashboard_bridge_.reset();
+    if (auto* dashboard = dynamic_cast<DashboardPresentationBridge*>(
             controller_.active_bridge())) {
+        current_dashboard_bridge_ =
+            std::make_unique<DashboardBridgeQt>(dashboard->dashboard(), this);
+    } else if (auto* route = dynamic_cast<RoutePresentationBridge*>(
+                   controller_.active_bridge())) {
         current_list_bridge_ =
             std::make_unique<ListScreenBridgeQt>(route->list(), this);
     }

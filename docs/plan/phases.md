@@ -149,18 +149,27 @@ Theme, controls, patterns, module screens, view models.
 Qt adapters and QML resources are statically gated and conditionally registered,
 but remain marked unverified until a Qt-capable Linux/MSVC lane executes them.
 
-Sub-phases 7.1-7.6 are detailed in the Phase 7 plan documents.
+Sub-phases 7.1-7.6 build the interface foundations. Sub-phases 7.7-7.10
+build the real dashboard, all module pages and interactions, and the final Qt
+runtime/accessibility/performance gate. They are detailed in the Phase 7 plan
+documents.
 
 ---
 
 ## Phase 8 -- Server
 
-Sync endpoints, identity, PostgreSQL schema, media worker, update proxy,
-container files.
+HTTP/sync, identity, PostgreSQL, tenancy, durable workers, integrations,
+media/blob lifecycle, module endpoints, observability, recovery and operator
+controls.
 
-**Verification:** not verifiable here -- no Oat++, no PostgreSQL.
+**Verification:** Hical 2.6.7 source is vendored and its boundary is planned,
+but the runtime lane is not verifiable here -- no qualified Hical dependency
+graph or PostgreSQL.
 
-Sub-phases 8.1-8.8 detailed when Phase 8 is reached.
+Sub-phases 8.1-8.13 are detailed in `phase-8-server-plan.md`; provider isolation
+is detailed in `phase-8-framework-and-provider-isolation.md`, and the
+Twenty/Odoo/Frappe completeness review is enforced by
+`phase-8-backend-capability-map.md`.
 
 ---
 

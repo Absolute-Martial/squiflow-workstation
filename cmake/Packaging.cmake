@@ -44,6 +44,7 @@ add_custom_target(squiflow_stage
         -DSTAGE_DIR=${SQUIFLOW_STAGE_DIR}
         -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
         -DWITH_QT=${SQUIFLOW_WITH_QT}
+        -DWITH_UI_FLUENT=${SQUIFLOW_WITH_UI_FLUENT}
         -DWINDEPLOYQT=${SQUIFLOW_WINDEPLOYQT}
         -P "${CMAKE_SOURCE_DIR}/packaging/stage_windows.cmake"
     DEPENDS squiflow_workstation

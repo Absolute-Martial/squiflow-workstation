@@ -1,28 +1,27 @@
-# Phase 8 -- The server: 8.1-8.8 implementation plan
+# Phase 8 -- The server: 8.1-8.13 implementation plan
 
-Status: planned, not started. None of this compiles in the current sandbox
-(no Oat++, no PostgreSQL, no network). Every sub-phase below is written to
-be compiled and gated on a machine that has those, and honestly marked
-`[~]` here until it does.
+Status: planned, with the portable 8.3 token core already implemented. Hical
+2.6.7 source is vendored but not linked. The current sandbox has no qualified
+Boost/OpenSSL/zlib/Hical runtime lane, PostgreSQL, or real network gate. The
+adapter and missing-provider boundaries are defined in
+`phase-8-framework-and-provider-isolation.md`. The complete capability register,
+including lessons from Twenty, Odoo, and Frappe/ERPNext, is
+`phase-8-backend-capability-map.md`.
 
 ## Decisions this phase is built on
 
-- **D1, recommendation standing, not yet confirmed by the shopkeeper:** pin
-  a specific Oat++ 1.4.0-branch commit through a vcpkg overlay port, never
-  a floating branch. This blocks 8.1 (the server cannot be scaffolded
-  without picking the framework version it links against). Do not start
-  8.1 until D1 is confirmed.
-- **Hical stays a Phase 8 adapter candidate, not a decided replacement.**
-  If Hical is chosen over (or alongside) Oat++, it is bound to the sync
-  transport adapter only; it must never leak into domain, workflows,
-  protocol, or the PostgreSQL schema design, and its Boost.MySQL
-  middleware is not used for the PostgreSQL design regardless of which
-  HTTP framework wins.
+- **D1, decided by the shopkeeper: Hical, not Oat++.** Hical is the inbound
+  HTTP adapter, not the server architecture. Only
+  `server/src/adapters/http/hical/` may include Hical/Boost transport types.
+  Its MySQL middleware, JWT ownership, configuration ownership, and logging
+  ownership are disabled or adapted rather than adopted. The supplied 2.6.7
+  archive is pinned by SHA-256; release requires an exact reproducible upstream
+  commit/artifact. See ADR 0013 and the provider-isolation plan.
 - **D5, decided (from 5.8):** approval is by hand. 8.7 (mail) therefore
   sends only what a human already approved and explicitly requested to
   send -- it never infers approval from a reply.
 
-## Shared ground rules for all of 8.1-8.8
+## Shared ground rules for all of 8.1-8.13
 
 - The server is a separate deployable from the workstation; it shares the
   protocol spine (module ids, rights, operation table) by depending on the
@@ -39,31 +38,35 @@ be compiled and gated on a machine that has those, and honestly marked
 - All money, quantity, and identity types are the same Phase 2 types used
   workstation-side; the wire format is a serialization of those types, not
   a parallel type.
+- Missing capabilities are independent adapters: libpqxx for PostgreSQL,
+  libcurl for outbound HTTP/SMTP, libavif for conversion, and a replaceable
+  blob store. Third-party types and error enums never cross those boundaries.
+- A future Hical implementation of any missing capability must satisfy the
+  existing SquiFlow port/conformance tests; callers and protocol payloads do
+  not change.
 
 ## 8.1 -- Skeleton and configuration
 
-**Goal:** a running Oat++ (or chosen framework) HTTP server process with
-health check, structured startup, and typed configuration -- no business
+**Goal:** a running Hical HTTP adapter over a framework-neutral endpoint core,
+with health check, structured startup, and typed configuration -- no business
 endpoints yet.
 
-**Scope:** `server/CMakeLists.txt`, `server/src/main.cpp`,
-`server/src/config.hpp/.cpp` (typed config: bind address, port, database
-connection string, log level, secrets source -- loaded from environment
-variables and/or a config file, never hardcoded), `server/src/health_
-endpoint.hpp/.cpp` (`GET /health` returning process status, build version,
-and database reachability), reuse of the Phase 6.2 logging library
-compiled for a server (non-Windows) target.
+**Scope:** `server/CMakeLists.txt`, `server/src/main.cpp`, typed configuration,
+framework-neutral `ApiRequest`/`ApiResponse`/`Problem`/`RouteSpec`, health and
+readiness endpoints, plus `server/src/adapters/http/hical/` request/response
+mappers, route registration, lifecycle, and error boundary. Reuse Phase 6.2
+logging through an adapter. Hical headers are forbidden everywhere else.
 
 **Invariants:** the server refuses to start with an incomplete or
 malformed configuration, naming exactly which setting is missing/invalid --
 no partial-startup "try it and see" behavior. Secrets never appear in
 startup logs.
 
-**Tests:** normal startup, missing required config key, malformed port/
-address, database unreachable at startup (health check reports it, server
-still starts so an operator can see the health endpoint), health check
-under load (concurrent requests), graceful shutdown on `SIGTERM` closes
-the DB pool cleanly.
+**Tests:** direct endpoint tests without Hical, Hical loopback conformance,
+request-lifetime copying, normal startup, malformed/missing configuration,
+database-unreachable readiness, concurrent health checks, provider include
+boundary, and graceful `SIGTERM` shutdown. The same endpoint response must be
+identical through direct and Hical paths.
 
 ## 8.2 -- PostgreSQL and migrations
 
@@ -71,7 +74,8 @@ the DB pool cleanly.
 ordering discipline already proven in the workstation's Phase 3.3 runner,
 adapted to PostgreSQL rather than SQLite.
 
-**Scope:** `server/src/storage/postgres_store.hpp/.cpp`,
+**Scope:** a pinned libpqxx adapter under `server/src/adapters/postgres/`,
+`server/src/storage/postgres_store.hpp/.cpp`,
 `server/src/storage/migration_runner_pg.hpp/.cpp` (reuse the Phase 3.3
 migration *ordering and versioning rules*; do not invent a second
 migration numbering scheme -- server migrations get their own numbered
@@ -157,7 +161,10 @@ uploaded originals to AVIF previews, mirroring the workstation's Phase 6.7
 "bounded worker lanes, no service owning a thread" discipline server-side),
 content-hash verification on upload matching the 4.13 identity rule
 (device, volume, file id, content hash) so a re-upload of unchanged
-content is detected and skipped.
+content is detected and skipped. Hical's supplied multipart path buffers
+complete bodies/parts, so it is capped to a measured small-body limit. Large-file
+support requires the separate `UploadReceiver` spike/adapter described in the
+provider-isolation plan.
 
 **Invariants:** the worker pool has a hard concurrency and queue-depth
 cap; an oversized or corrupt upload is rejected before conversion is
@@ -180,8 +187,9 @@ server-side).
 **Scope:** `server/src/update/manifest_endpoint.hpp/.cpp` (serves the
 current release manifest: version, download URL, SHA-256, mandatory/
 optional flag), `server/src/update/proxy_cache.hpp/.cpp` (caches the
-actual release artifact so the update host is not hit once per
-workstation).
+actual release artifact so the update host is not hit once per workstation),
+and a libcurl-backed `ArtifactFetcher` adapter. Hical owns inbound delivery
+only.
 
 **Invariants:** the manifest served is always the one this server
 administrator has explicitly published, never automatically the newest
@@ -201,10 +209,10 @@ version is honored immediately.
 transmit an email, and only for a `SendIntent` (from 5.8) that already
 carries an explicit human confirmation.
 
-**Scope:** `server/src/mail/send_worker.hpp/.cpp` (consumes `SendIntent`
-records synced up from the workstation via 8.4, sends via a configured
-SMTP/mail-API provider, records delivery status back), `server/src/mail/
-template_render.hpp/.cpp` (renders the 5.8 `PreparedDocument` content to
+**Scope:** `server/src/mail/send_worker.hpp/.cpp`, a libcurl-backed
+`MailTransport` adapter for SMTP or an HTTP provider, and application code that
+consumes `SendIntent` records synced from the workstation via 8.4 and records
+delivery status back; `server/src/mail/template_render.hpp/.cpp` (renders the 5.8 `PreparedDocument` content to
 an email body/attachment -- reusing the same document content the 7.5
 renderer will eventually turn into a PDF, never a third independent
 rendering of the same fields).
@@ -250,7 +258,147 @@ marks online-only, concurrent requests for the same numbered resource
 (e.g. two devices racing for the same invoice number block) never produce
 a duplicate number.
 
-## Cross-cutting sequence for 8.1-8.8
+## 8.9 -- Tenant lifecycle, module manifests, and extension seams
+
+**Goal:** make tenant isolation and module lifecycle authoritative server
+capabilities rather than relying on every query and deployment operator to
+remember them.
+
+**Scope:** `server/src/tenancy/tenant_service.hpp/.cpp`,
+`tenant_store.hpp/.cpp`, `tenant_context.hpp/.cpp`, PostgreSQL row-level
+security policies and tenant-scoped sequences; `server/src/modules/module_
+manifest.hpp/.cpp` and `tenant_module_state.hpp/.cpp` for module identity,
+version, dependencies, migrations, rights, routes, activation and compatibility;
+tenant provision, suspend, export and delete commands. Safe custom-field
+metadata may be spiked for non-authoritative descriptive fields only.
+
+**Invariants:** tenant identity comes from the validated token/session and is
+never accepted from a request body; every tenant table and object/blob/job key
+is tenant scoped; PostgreSQL transactions set and verify tenant context before
+access; cross-tenant reads/writes fail closed even with guessed ids; disabling a
+module preserves its data and rights state; custom metadata cannot replace or
+weaken money, identity, permission, workflow, audit or system fields. No
+unsigned native plugin is loaded into the server process.
+
+**Tests:** provision/suspend/reactivate/export/delete lifecycle, invalid module
+dependency graph, incompatible module version, RLS negative matrix across every
+store, pooled-connection tenant-context reset, guessed-id access, tenant-scoped
+sequence collision, module activation rollback, complete export and verified
+deletion without cross-tenant effects.
+
+## 8.10 -- Durable jobs, scheduler, and worker process
+
+**Goal:** keep slow/retryable work out of HTTP handlers while giving every job a
+durable state, bounded execution lane, lease, retry policy, progress and
+operator-visible failure.
+
+**Scope:** `server/src/jobs/job.hpp`, `job_store.hpp/.cpp`,
+`job_dispatcher.hpp/.cpp`, `job_lease.hpp/.cpp`, `scheduler.hpp/.cpp`,
+`worker_health.hpp/.cpp`, and `server/src/worker_main.cpp`. Spike PGMQ extension
+and SQL-only modes against a narrow SquiFlow-owned PostgreSQL job table using
+`FOR UPDATE SKIP LOCKED`; select one behind `JobStore` without exposing its API.
+Provide short/default/long or equivalent resource lanes, dead-letter records,
+cancellation, progress and schedule definitions.
+
+**Invariants:** enqueue may commit atomically with the business outbox; delivery
+is at least once and handlers are idempotent; a crashed worker's lease expires
+and another worker may claim the job; no lease permits two active owners;
+queues, concurrency, attempts, payloads and retention are hard bounded; retries
+use capped backoff with jitter and permanent faults never spin; scheduler
+singleton/tenant leases handle missed runs explicitly and use UTC instants plus
+separate local-calendar policy.
+
+**Tests:** atomic enqueue/rollback, claim/renew/complete, crash and lease expiry,
+concurrent claim race, duplicate idempotency key, cancellation at each state,
+retry/dead-letter transition, queue/worker saturation, schedule catch-up,
+clock jump, tenant fairness, graceful drain and restart with no lost job.
+
+## 8.11 -- Webhooks, realtime notifications, and connector registry
+
+**Goal:** provide one durable, secure integration-delivery path for external
+systems and one resumable realtime path for clients, instead of adding custom
+network code to modules.
+
+**Scope:** `server/src/integrations/connector_registry.hpp/.cpp`,
+`webhook_subscription.hpp/.cpp`, `webhook_delivery.hpp/.cpp`,
+`delivery_worker.hpp/.cpp`, credential references, libcurl adapter usage;
+`server/src/realtime/notification_log.hpp/.cpp`, `realtime_session.hpp/.cpp`
+and Hical SSE/WebSocket mapping. The operation/outbox catalog produces events;
+modules never call network providers directly.
+
+**Invariants:** webhook destinations pass HTTPS/host/IP and redirect validation
+to prevent SSRF; payloads are versioned and signed with rotatable tenant
+secrets; delivery ids are stable across retries; HTTP requests are acknowledged
+only after accepted work is durable; subscription filters cannot broaden the
+caller's tenant/rights; realtime messages carry monotonic resume cursors and
+are discardable projections of durable state; slow clients have bounded buffers
+and are disconnected rather than exhausting memory; secrets and payload
+contents are redacted from logs.
+
+**Tests:** signature verification/rotation, duplicate delivery, timeout/retry,
+permanent failure and replay, DNS/redirect SSRF cases, destination response-size
+limit, subscription tenant/rights matrix, connector disable/revoke, realtime
+resume after disconnect, slow-consumer eviction, fan-out bounds and server
+restart from durable cursor.
+
+## 8.12 -- Blob lifecycle, quarantine, scanning, and bulk import/export
+
+**Goal:** own the full lifecycle of untrusted files and long-running data
+movement, not only upload and AVIF conversion.
+
+**Scope:** `server/src/blob/blob_store.hpp`, `blob_record.hpp`,
+`filesystem_blob_store.hpp/.cpp`, optional Garage/S3 adapter spike,
+`server/src/media/upload_receiver.hpp/.cpp`, `quarantine_service.hpp/.cpp`,
+`clamav_adapter.hpp/.cpp`, retention/orphan reconciliation, and
+`server/src/transfer/import_job.hpp/.cpp` plus `export_job.hpp/.cpp`. Uploads
+stream to staging with incremental hash and quota checks; database publication
+occurs only after validation/scanning.
+
+**Invariants:** domain records contain stable blob ids and hashes, never provider
+paths/bucket URLs; incomplete or failed uploads leave no published object;
+untrusted files remain quarantined until policy and malware scan pass;
+scanner unavailable is a named fail-closed/deferred state, never "clean";
+tenant quota and global concurrency are enforced while streaming; blob deletion
+uses tombstones/retention and reconciles references; import is previewable,
+resumable, tenant-scoped and atomic per documented batch; export is complete,
+versioned and independently verifiable.
+
+**Tests:** streaming size/hash limit, disconnect cleanup, duplicate hash,
+malware and malformed-file quarantine, scanner timeout/unavailable, publish
+transaction failure, orphan/reference reconciliation, retention race,
+filesystem provider conformance, optional S3-compatible conformance, import
+preview/error report/resume, export round trip and cross-tenant denial.
+
+## 8.13 -- Observability, backup/restore, and operator control plane
+
+**Goal:** make the server diagnosable and recoverable by a small shop without
+turning arbitrary shell access into the management API.
+
+**Scope:** `server/src/observability/metrics_sink.hpp`, deterministic/no-op
+implementations and an OpenTelemetry C++ versus prometheus-cpp spike;
+`server/src/operations/system_health.hpp/.cpp`, `control_command.hpp/.cpp` and
+an allowlisted audited command runner; pgBackRest configuration for PostgreSQL
+backup/WAL/PITR; blob/config/secret inventory, consistency markers, backup age,
+restore rehearsal and support diagnostics. Deployment wiring remains in Phase
+9, while correctness and command contracts close here.
+
+**Invariants:** metric names/labels are bounded and never include tenant ids,
+record ids or secrets as unbounded labels; trace/log correlation follows one id
+through HTTP, job, database and outbound delivery; health distinguishes live,
+ready and degraded; control commands require explicit administrative rights,
+confirmation for destructive work and append-only audit; no endpoint executes
+free-form shell text; a backup is not counted successful until all required
+stores are present, checksummed and restorable; restore rehearsals run in an
+isolated destination and never overwrite production by default.
+
+**Tests:** metric-cardinality budget, redaction and correlation, dependency and
+worker degradation, command authorization/allowlist/idempotency, concurrent
+backup exclusion, pgBackRest failure/retention/PITR in the machine lane,
+missing-blob/config detection, clean-host restore rehearsal, post-restore schema
+and tenant isolation checks, and an operator report showing migration, queue,
+backup and restore status without secrets.
+
+## Cross-cutting sequence for 8.1-8.13
 
 | Order | Sub-phase | Depends on |
 | --- | --- | --- |
@@ -262,6 +410,11 @@ a duplicate number.
 | 6 | 8.6 Update proxy | 8.1 only; can run in parallel with 8.4/8.5 |
 | 7 | 8.7 Mail | 8.4 (SendIntent sync), 5.8 |
 | 8 | 8.8 Per-module endpoints | 8.3, 8.4, and the specific module each endpoint belongs to |
+| 9 | 8.9 Tenancy/module lifecycle | 8.2, 8.3, protocol module graph |
+| 10 | 8.10 Jobs/scheduler/worker | 8.2, 8.4; needed by 8.5-8.7 and 8.11-8.13 |
+| 11 | 8.11 Webhooks/realtime/connectors | 8.3, 8.4, 8.10 |
+| 12 | 8.12 Blobs/scan/import-export | 8.2, 8.5, 8.9, 8.10 |
+| 13 | 8.13 Observability/backup/control plane | 8.1-8.12 |
 
 Each sub-phase closes with: focused tests against a real PostgreSQL
 instance (never an in-memory fake standing in for PostgreSQL-specific
@@ -272,8 +425,11 @@ since that is what a server actually is.
 
 ## Acceptance criteria for closing Phase 8
 
-Phase 8 is complete only when all eight sub-phases have gate documents
-produced on a machine with PostgreSQL and the chosen HTTP framework
-available, D1 (or its Hical alternative) is a confirmed, recorded decision
-rather than a standing recommendation, and Phase 9's CI (9.1) can actually
-build and run the server's own test suite, not just the workstation's.
+Phase 8 is complete only when all thirteen sub-phases have gate documents from
+a machine with PostgreSQL and the pinned Hical dependency graph, every
+capability in `phase-8-backend-capability-map.md` has an owner or explicit
+deferral/rejection, provider include boundaries and conformance suites pass,
+Hical upstream tests pass in the
+qualification lane, and Phase 9 CI builds/runs the server suite. Replacing Hical
+or a missing-capability provider must require only an adapter/composition-root
+change, never domain, protocol, workflow, endpoint, or migration changes.

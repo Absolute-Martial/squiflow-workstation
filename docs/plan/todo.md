@@ -127,23 +127,46 @@ than being counted here.
 
 ## Phase 7 - The interface *(portable core verified; Qt runtime lane pending)*
 
-- [ ] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell)
+- [~] 7.0 Fluent UI component sourcing — [plan](phase-7-fluent-ui-sourcing.md): Layer 0
+      (`qwindowkit`), Layer 1 (Qt native `FluentWinUI3` style, applied),
+      Layer 2 (`FluentUI` + FluentPySide's `FluentControls`), and Layer 3
+      (`Rin-UI`) are vendored under `external/ui-fluent/` and import paths
+      are wired behind `SQUIFLOW_WITH_UI_FLUENT` (default OFF) -- nothing
+      compiled or visually verified yet (no Qt install in this sandbox);
+      `qmsetup` and its pinned nested `syscmdline` source are vendored; QWindowKit Core+Quick is enabled in the Linux Qt and MSVC CI lanes
+- [~] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell),
+      [gate](../qa/phase-7.1-window-shell-gate.md): geometry persistence and
+      validation proven in the portable lane; the Qt-side apply/capture in
+      `QmlSurfaceQt` is written but unverified until the Qt runtime lane runs it
 - [~] 7.2 Navigation and module visibility from activation — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7.2-navigation-and-activation.md)
 - [~] 7.3 Lists — portable and static gates passed; Qt runtime lane pending — [implementation plan](phase-7-interface-plan.md#73----lists)
-- [ ] 7.4 Forms and validation — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
-- [ ] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
-- [ ] 7.6 Images and the AVIF plugin — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
+- [~] 7.4 Forms and validation — portable bridge and shared QML form implemented; Qt runtime pending — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
+- [~] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — immutable snapshots, templates, atomic Qt Core/Gui PDF renderer implemented; Qt visual spike pending — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
+- [~] 7.6 Images and the AVIF plugin — bounded hash cache, stable-id provider, placeholder and AVIF capability gate implemented; Qt plugin runtime pending — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
+- [~] 7.7 Design system, application shell, and real dashboard — portable implementation and strict gate complete; Linux Qt/MSVC offscreen jobs configured and must pass before full closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#77----design-system-application-shell-and-dashboard), [gate](../qa/phase-7.7-dashboard-gate.md)
+- [~] 7.8 Master-data and primary commercial pages — presentation implementation and portable gate complete; Qt 6.11.1/MSVC runtime evidence remains mandatory — [implementation plan](phase-7.7-7.10-application-ui-plan.md#78----master-data-and-primary-commercial-pages), [gate](../qa/phase-7.8-primary-pages-gate.md)
+- [ ] 7.9 Remaining operational and supporting pages — quotations, agreements, jobs, sourcing, companion, files, administration/settings — [implementation plan](phase-7.7-7.10-application-ui-plan.md#79----remaining-operational-and-supporting-module-pages)
+- [ ] 7.10 UI integration, accessibility, performance, and Qt runtime closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#710----integration-accessibility-performance-and-qt-runtime-closure)
 
-## Phase 8 - The server *(none of this compiles here)*
+## Phase 8 - The server *(portable token core compiles; provider runtime does not)*
 
-- [ ] 8.1 Skeleton and configuration — [implementation plan](phase-8-server-plan.md#81----skeleton-and-configuration)
+- [ ] 8.1 Skeleton, configuration, and replaceable Hical adapter — [server plan](phase-8-server-plan.md#81----skeleton-and-configuration), [provider isolation plan](phase-8-framework-and-provider-isolation.md)
 - [ ] 8.2 PostgreSQL and migrations — [implementation plan](phase-8-server-plan.md#82----postgresql-and-migrations)
-- [ ] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens)
+- [~] 8.3 Identity and tokens — [implementation plan](phase-8-server-plan.md#83----identity-and-tokens),
+      [gate](../qa/phase-8.3-identity-token-core.md): portable bearer-token
+      issuance, hashing, and constant-time validation proven; the storage
+      backend and HTTP-layer wiring remain, now unblocked by D1's resolution
 - [ ] 8.4 Sync endpoints, idempotency, sequence assignment — [implementation plan](phase-8-server-plan.md#84----sync-endpoints-idempotency-sequence-assignment)
 - [ ] 8.5 Media, including the AVIF conversion worker — [implementation plan](phase-8-server-plan.md#85----media-including-the-avif-conversion-worker)
 - [ ] 8.6 The update proxy — [implementation plan](phase-8-server-plan.md#86----the-update-proxy)
 - [ ] 8.7 Mail - prepared by the system, sent only on confirmation — [implementation plan](phase-8-server-plan.md#87----mail-prepared-by-the-system-sent-only-on-confirmation)
 - [ ] 8.8 Per-module endpoints — [implementation plan](phase-8-server-plan.md#88----per-module-endpoints)
+- [ ] 8.9 Tenant lifecycle, RLS, module manifests, and safe extension seams — [implementation plan](phase-8-server-plan.md#89----tenant-lifecycle-module-manifests-and-extension-seams)
+- [ ] 8.10 Durable jobs, scheduler, and worker process — [implementation plan](phase-8-server-plan.md#810----durable-jobs-scheduler-and-worker-process)
+- [ ] 8.11 Webhooks, realtime notifications, and connector registry — [implementation plan](phase-8-server-plan.md#811----webhooks-realtime-notifications-and-connector-registry)
+- [ ] 8.12 Blob lifecycle, quarantine, scanning, and bulk import/export — [implementation plan](phase-8-server-plan.md#812----blob-lifecycle-quarantine-scanning-and-bulk-importexport)
+- [ ] 8.13 Observability, backup/restore, and operator control plane — [implementation plan](phase-8-server-plan.md#813----observability-backuprestore-and-operator-control-plane)
+- [ ] Phase 8 capability completeness gate — every row in the [backend capability map](phase-8-backend-capability-map.md) is owned, tested, or explicitly deferred/rejected
 
 ## Phase 9 - Build, packaging and release
 
@@ -164,7 +187,7 @@ and each one blocks something.
 
 | # | Question | Blocks |
 |---|---|---|
-| D1 | **Oat++ has no current release.** 1.3.0 is the last one; 1.4.0 has been in development for years. Recommendation: pin a specific 1.4.0 commit through a vcpkg overlay port, never a branch | Phase 8 |
+| D1 | **Decided: Hical**, not Oat++, is the Phase 8 inbound HTTP adapter. The supplied 2.6.7 snapshot is vendored and all missing capabilities stay behind provider ports | Done — unblocks 8.1 |
 | D2 | The storage seam is a **typed record store**, not prepare-bind-step SQL. A SQL-shaped seam cannot be faked, and nothing above it would be testable here | already built; reversible only now |
 | D3 | Is `jobs` really an Extra module? It currently requires nothing, which is unusual for something this central | 4.8 |
 | D4 | **Decided:** consume an agreement quantity cap when the invoice is issued and release it when that invoice is cancelled; jobs do not consume caps | Done in 5.7 |
@@ -175,6 +198,8 @@ and each one blocks something.
 - [ ] Spike: printing through `QPdfWriter` without dragging in QtWidgets — before 7.5
 - [ ] Spike: an AVIF image plugin verified against the pinned Qt — before 7.6
 - [ ] Confirm `cmake --preset` configures at all — nothing in `cmake/` has ever run
+- [ ] Qualify vendored Hical 2.6.7 with pinned Boost/OpenSSL/zlib and its upstream tests on the Phase 8 compiler matrix
+- [ ] Run the Phase 8.5 bounded streaming-upload spike; Hical multipart is currently full-buffered
 
 ## Standing rules that are easy to forget
 

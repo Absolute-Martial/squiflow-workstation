@@ -1,0 +1,4 @@
+#include "shell/thumbnail_cache.hpp"
+#include "support/check.hpp"
+#include <filesystem>
+int main(){namespace t=squiflow::testing;using namespace squiflow::shell;auto root=std::filesystem::temp_directory_path()/"squiflow-thumb-gate";std::filesystem::remove_all(root);ThumbnailCache c(root,8,2);std::vector<std::uint8_t>b(4,1);auto h=[](char x){return std::string(64,x);};ThumbnailKey a{"file-1",h('a')};t::check(c.store(a,b)&&c.lookup(a),"exact id and hash hit");t::check(!c.lookup({"file-1",h('b')}),"changed hash misses");t::check(c.store({"file-1",h('b')},b)&&!c.lookup(a),"new hash invalidates old file version");c.store({"file-2",h('c')},b);c.lookup({"file-1",h('b')});c.store({"file-3",h('d')},b);t::check(!c.lookup({"file-2",h('c')})&&c.entry_count()==2&&c.byte_count()==8,"oldest entry evicted at hard bounds");t::check(!c.store({"../path",h('e')},b),"QML path-shaped id refused");std::filesystem::remove_all(root);return t::report();}

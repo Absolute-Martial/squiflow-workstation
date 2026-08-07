@@ -4,7 +4,10 @@ add_library(squiflow_app STATIC
     real_startup_runtime.cpp
     activation_controller.cpp
     qt_message_mapping.cpp
-    composition_root.cpp)
+    composition_root.cpp
+    dashboard/dashboard_service.cpp
+    primary/primary_page_service.cpp
+    primary/local_primary_query.cpp)
 add_library(squiflow::app ALIAS squiflow_app)
 target_include_directories(squiflow_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(squiflow_app
@@ -36,11 +39,53 @@ if(SQUIFLOW_WITH_QT)
             ../ui/Main.qml
             ../ui/Theme.qml
             ../ui/common/DataList.qml
+            ../ui/common/Form.qml
+            ../ui/common/FilePreview.qml
+            ../ui/common/PageScaffold.qml
+            ../ui/common/CommandBar.qml
+            ../ui/common/StatusBanner.qml
+            ../ui/common/MetricCard.qml
+            ../ui/common/SectionCard.qml
+            ../ui/common/EmptyState.qml
+            ../ui/common/ErrorState.qml
+            ../ui/common/LoadingSkeleton.qml
+            ../ui/common/ConfirmDialog.qml
+            ../ui/common/UnsavedChangesDialog.qml
+            ../ui/common/PrimaryListPage.qml
+            ../ui/dashboard/DashboardPage.qml
+            ../ui/parties/PartiesPage.qml
+            ../ui/parties/PartyDetailPage.qml
+            ../ui/parties/PartyFormPage.qml
+            ../ui/parties/ContactEditor.qml
+            ../ui/catalog/CatalogPage.qml
+            ../ui/catalog/ProductDetailPage.qml
+            ../ui/catalog/ProductFormPage.qml
+            ../ui/pricing/PricingPage.qml
+            ../ui/pricing/RateDetailPage.qml
+            ../ui/pricing/RateFormPage.qml
+            ../ui/pricing/PriceResolutionPanel.qml
+            ../ui/orders/OrdersPage.qml
+            ../ui/orders/OrderDetailPage.qml
+            ../ui/orders/OrderEditorPage.qml
+            ../ui/orders/OrderLineEditor.qml
+            ../ui/orders/PriceEvidenceBadge.qml
+            ../ui/counter/CounterSalePage.qml
+            ../ui/counter/CartLine.qml
+            ../ui/counter/PaymentPanel.qml
+            ../ui/receivables/ReceivablesPage.qml
+            ../ui/receivables/InvoiceDetailPage.qml
+            ../ui/receivables/PaymentAllocationPage.qml
+            ../ui/receivables/StatementPanel.qml
+            ../ui/receivables/DocumentDeliveryPanel.qml
             ../ui/navigation/NavigationRail.qml
             ../ui/navigation/NavigationDrawer.qml
             ../ui/navigation/NavigationHost.qml
             ../ui/navigation/NoAccessibleModules.qml
             ../ui/screens/ModuleListScreen.qml
+        RESOURCES
+            ../ui/documents/quotation.html
+            ../ui/documents/invoice.html
+            ../ui/documents/statement.html
         RESOURCE_PREFIX /qt/qml)
     qt_add_resources(squiflow_workstation squiflow_ui_config
         PREFIX "/" FILES ../ui/qtquickcontrols2.conf)
