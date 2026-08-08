@@ -50,6 +50,16 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}\.vcpkg
         run: cmake --workflow --preset windows-msvc-release-bundle
+      - name: Smoke test staged dashboard runtime
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QSG_RHI_BACKEND: software
+        run: |
+          $exe = Get-ChildItem build/windows-msvc-release/stage -Recurse -Filter squiflow_workstation.exe | Select-Object -First 1
+          if (-not $exe) { throw 'Staged workstation executable was not found' }
+          & $exe.FullName --smoke-test
+          if ($LASTEXITCODE -ne 0) { throw "Staged workstation smoke test failed: $LASTEXITCODE" }
       - name: Write SHA-256 checksums
         shell: pwsh
         run: |

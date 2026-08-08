@@ -15,6 +15,8 @@ Item {
         onLoaded: {
             if (item && item.hasOwnProperty("navigationBridge"))
                 item.navigationBridge = root.bridge
+            if (item && item.hasOwnProperty("dashboardBridge"))
+                item.dashboardBridge = root.bridge.currentDashboardBridge
         }
     }
 

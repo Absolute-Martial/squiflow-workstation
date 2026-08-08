@@ -2,14 +2,17 @@
 
 #if defined(SQUIFLOW_WITH_QT)
 
+#include "app/workspace_runtime.hpp"
 #include "shell/navigation_bridge_qt.hpp"
+#include "shell/native_window_bridge_qt.hpp"
 #include "shell/navigation_controller.hpp"
 #include "shell/navigation_manifest.hpp"
 #include "shell/navigation_model_qt.hpp"
+#include "shell/shell_state_qt.hpp"
 
+#include <QCoreApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QQuickImageProvider>
 #include <QScreen>
 #include <QWindow>
 
@@ -52,12 +55,18 @@ app::StepResult QmlSurfaceQt::startShell() {
             std::make_unique<NavigationModelQt>(*navigation_controller_, this);
         navigation_bridge_ = std::make_unique<NavigationBridgeQt>(
             *navigation_controller_, *navigation_model_, this);
+        shell_state_ = std::make_unique<ShellStateQt>(this);
+        native_window_bridge_ = std::make_unique<NativeWindowBridgeQt>(this);
 
         engine_ = std::make_unique<QQmlApplicationEngine>();
         if (pending_image_provider_) {
             engine_->addImageProvider(QStringLiteral("squiflow-files"), pending_image_provider_.release());
         }
 #if defined(SQUIFLOW_WITH_UI_FLUENT)
+        // A staged release carries qualified QML modules beside the executable;
+        // source-tree paths remain the development/CI fallback.
+        engine_->addImportPath(QCoreApplication::applicationDirPath() +
+                               QStringLiteral("/qml"));
         // Layer 2/3 of the hybrid Fluent UI sourcing strategy (see
         // docs/plan/phase-7-fluent-ui-sourcing.md): pure-QML component
         // modules vendored under external/ui-fluent/. Layer 1 (Qt's native
@@ -71,8 +80,15 @@ app::StepResult QmlSurfaceQt::startShell() {
                                                    navigation_model_.get());
         engine_->rootContext()->setContextProperty("navigationBridge",
                                                    navigation_bridge_.get());
+        engine_->rootContext()->setContextProperty("shellState", shell_state_.get());
+        engine_->rootContext()->setContextProperty("nativeWindowBridge",
+                                                   native_window_bridge_.get());
         connect(engine_.get(), &QQmlApplicationEngine::objectCreationFailed,
                 this, [this] { creation_failed_ = true; });
+        if (pending_workspace_ != nullptr && pending_tenant_) {
+            navigation_bridge_->attachWorkspace(*pending_workspace_, *pending_tenant_,
+                                                pending_activation_);
+        }
         if (pending_navigation_access_) {
             navigation_bridge_->publishAccess(
                 std::move(*pending_navigation_access_));
@@ -81,6 +97,8 @@ app::StepResult QmlSurfaceQt::startShell() {
     } catch (const std::exception& failure) {
         engine_.reset();
         navigation_bridge_.reset();
+        shell_state_.reset();
+        native_window_bridge_.reset();
         navigation_model_.reset();
         navigation_controller_.reset();
         navigation_registry_.reset();
@@ -134,6 +152,23 @@ bool QmlSurfaceQt::installImageProvider(std::unique_ptr<QQuickImageProvider> pro
     return true;
 }
 
+void QmlSurfaceQt::attachWorkspace(
+    app::AuthenticatedWorkspace& workspace, app::TenantId tenant,
+    protocol::Activation activation) {
+    pending_workspace_ = &workspace;
+    pending_tenant_ = tenant;
+    pending_activation_ = std::move(activation);
+    if (navigation_bridge_) {
+        navigation_bridge_->attachWorkspace(workspace, tenant, pending_activation_);
+    }
+}
+
+void QmlSurfaceQt::detachWorkspace() noexcept {
+    if (navigation_bridge_) navigation_bridge_->detachWorkspace();
+    pending_workspace_ = nullptr;
+    pending_tenant_.reset();
+}
+
 void QmlSurfaceQt::publishNavigationAccess(NavigationAccess access) {
     if (navigation_bridge_) {
         navigation_bridge_->publishAccess(std::move(access));
@@ -164,12 +199,15 @@ void QmlSurfaceQt::stopWindow() noexcept {
 }
 
 void QmlSurfaceQt::stopShell() noexcept {
+    detachWorkspace();
     engine_.reset();
     pending_image_provider_.reset();
     if (navigation_bridge_) {
         navigation_bridge_->shutdown();
     }
     navigation_bridge_.reset();
+    shell_state_.reset();
+    native_window_bridge_.reset();
     navigation_model_.reset();
     navigation_controller_.reset();
     navigation_registry_.reset();

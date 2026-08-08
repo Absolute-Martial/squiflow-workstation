@@ -33,28 +33,53 @@ int main() {
     using namespace squiflow;
 
     auto manifest = shell::make_navigation_manifest();
-    t::check(manifest.size() == protocol::kModuleCount,
-             "manifest has one primary route for every module");
+    t::check(manifest.size() == protocol::kModuleCount + 2,
+             "manifest has one primary route per module, dashboard and counter sale");
     shell::require_navigation_complete(manifest, all_modules());
     t::check(true, "complete manifest accepted");
 
     std::vector<bool> represented(protocol::kModuleCount, false);
     for (const shell::ScreenContribution& route : manifest.all()) {
         const auto owner = static_cast<std::size_t>(route.owner);
-        t::check(!represented[owner], "module represented exactly once");
+        auto bridge = route.create_bridge();
+        if (route.id == "dashboard.home") {
+            t::check(route.owner == protocol::ModuleId::administration &&
+                         !route.required_right.has_value(),
+                     "dashboard is activation-filtered but has no invented right");
+            t::check(route.component_url ==
+                         "qrc:/qt/qml/SquiFlow/dashboard/DashboardPage.qml",
+                     "dashboard uses its compiled application page");
+            t::check(dynamic_cast<const shell::DashboardPresentationBridge*>(
+                         bridge.get()) != nullptr,
+                     "dashboard factory owns dashboard presentation bridge");
+            continue;
+        }
+        if (route.id == "orders.counter_sale") {
+            t::check(route.owner == protocol::ModuleId::orders &&
+                         route.required_right == protocol::RightId::right_order_write,
+                     "counter sale is a separate write-authorized orders route");
+            t::check(route.component_url ==
+                         "qrc:/qt/qml/SquiFlow/counter/CounterSalePage.qml" &&
+                         bridge != nullptr,
+                     "counter sale uses its compiled keyboard-first page");
+            continue;
+        }
+        t::check(!represented[owner], "module has one primary route");
         represented[owner] = true;
         t::check(route.required_right.has_value(), "primary route has typed read right");
         t::check(protocol::right_module(*route.required_right) == route.owner,
                  "primary route right belongs to its module");
-        t::check(route.component_url ==
-                     "qrc:/qt/qml/SquiFlow/screens/ModuleListScreen.qml",
-                 "primary route uses compiled generic list screen");
-        auto bridge = route.create_bridge();
+        t::check(route.component_url.starts_with("qrc:/qt/qml/SquiFlow/") &&
+                     route.component_url.ends_with(".qml"),
+                 "primary route uses a compiled generic or module-specific page");
         const auto* typed = dynamic_cast<const shell::RoutePresentationBridge*>(bridge.get());
         t::check(typed != nullptr && typed->route_id() == route.id,
                  "factory creates bridge bound to exact stable route id");
         t::check(typed != nullptr && !typed->list().columns().empty(),
                  "each primary route owns a validated module list bridge");
+    }
+    for (const bool found : represented) {
+        t::check(found, "every registered module retains a primary route");
     }
 
     auto incomplete = all_modules();

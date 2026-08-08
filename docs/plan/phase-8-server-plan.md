@@ -267,39 +267,24 @@ remember them.
 **Scope:** `server/src/tenancy/tenant_service.hpp/.cpp`,
 `tenant_store.hpp/.cpp`, `tenant_context.hpp/.cpp`, PostgreSQL row-level
 security policies and tenant-scoped sequences; `server/src/modules/module_
-manifest.hpp/.cpp` and `tenant_module_state.hpp/.cpp` for built-in module
-identity, version, dependencies, migrations, rights, routes, activation and
-compatibility; `server/src/extensions/extension_manifest.hpp/.cpp`,
-`extension_grant.hpp/.cpp`, and `entitlement_verifier.hpp/.cpp` for declarative
-external-app requests, separately approved grants, and core-owned commercial
-feature checks; tenant provision, suspend, export and delete commands. Safe
-custom-field metadata may be spiked for non-authoritative descriptive fields
-only. No local extension runtime or marketplace is required for the initial
-release; remote apps use the 8.11 operation/webhook boundary.
+manifest.hpp/.cpp` and `tenant_module_state.hpp/.cpp` for module identity,
+version, dependencies, migrations, rights, routes, activation and compatibility;
+tenant provision, suspend, export and delete commands. Safe custom-field
+metadata may be spiked for non-authoritative descriptive fields only.
 
 **Invariants:** tenant identity comes from the validated token/session and is
 never accepted from a request body; every tenant table and object/blob/job key
 is tenant scoped; PostgreSQL transactions set and verify tenant context before
 access; cross-tenant reads/writes fail closed even with guessed ids; disabling a
 module preserves its data and rights state; custom metadata cannot replace or
-weaken money, identity, permission, workflow, audit, entitlement or system
-fields. Built-in modules are trusted reviewed source and rebuild-only. External
-apps are separate principals: a manifest requests rights, an administrator
-grants a subset, and authoritative dispatch re-checks tenant, actor, right and
-entitlement. No external DLL/shared library, Qt plugin, embedded script, or
-native C++ plugin is loaded into the server/workstation process; package signing
-proves origin/integrity, not authorization. External code never receives direct
-database, token, key, migration, audit, adapter or verifier access.
+weaken money, identity, permission, workflow, audit or system fields. No
+unsigned native plugin is loaded into the server process.
 
 **Tests:** provision/suspend/reactivate/export/delete lifecycle, invalid module
 dependency graph, incompatible module version, RLS negative matrix across every
 store, pooled-connection tenant-context reset, guessed-id access, tenant-scoped
 sequence collision, module activation rollback, complete export and verified
-deletion without cross-tenant effects; forged/modified/downgraded manifest and
-signature rejection, requested-rights greater than grant, changed-manifest
-re-approval, wrong-tenant/feature/issuer/validity entitlement rejection, and an
-architecture gate rejecting native dynamic loading, embedded script runtimes,
-and provider-adapter access from extension contracts.
+deletion without cross-tenant effects.
 
 ## 8.10 -- Durable jobs, scheduler, and worker process
 

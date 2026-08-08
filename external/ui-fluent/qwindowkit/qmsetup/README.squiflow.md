@@ -1,6 +1,11 @@
 # qmsetup (vendored for QWindowKit)
 
-- Source: https://github.com/stdware/qmsetup (`main`, uploaded zip snapshot on 2026-08-06; commit SHA unavailable)
+- Source: https://github.com/stdware/qmsetup (user-supplied snapshot)
 - License: MIT (`LICENSE`)
 - Purpose: host-build CMake helpers required by QWindowKit.
-- Snapshot limitation: upstream's `src/syscmdline` git submodule is empty in the GitHub zip. QWindowKit configuration therefore remains disabled until `SineStriker/syscmdline` is vendored or installed for the host build.
+- Nested dependency: `src/syscmdline` is vendored from the supplied archive at
+  commit `0c9f3de8b11bd2f33b03bea5521bf446af4ead69`; see its source pin and
+  `README.squiflow.md`.
+
+qmsetup and syscmdline are build-time dependencies only and are not workstation
+plugins or business-logic dependencies.

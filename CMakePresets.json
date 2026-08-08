@@ -42,6 +42,25 @@
       }
     },
     {
+      "name": "linux-qt-release",
+      "displayName": "Linux Qt 6.11.1 RelWithDebInfo",
+      "inherits": "common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "SQUIFLOW_WITH_SQLITE": "OFF",
+        "SQUIFLOW_WITH_QT": "ON",
+        "SQUIFLOW_WITH_QWINDOWKIT": "ON",
+        "SQUIFLOW_SODIUM_ROOT": "$env{SQUIFLOW_SODIUM_ROOT}",
+        "SQUIFLOW_WITH_UI_FLUENT": "ON"
+      },
+      "generator": "Ninja"
+    },
+    {
       "name": "windows-msvc-common",
       "hidden": true,
       "inherits": "common",
@@ -54,7 +73,9 @@
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows",
         "SQUIFLOW_WITH_SQLITE": "ON",
-        "SQUIFLOW_WITH_QT": "ON"
+        "SQUIFLOW_WITH_QT": "ON",
+        "SQUIFLOW_WITH_QWINDOWKIT": "ON",
+        "SQUIFLOW_WITH_UI_FLUENT": "ON"
       },
       "generator": "Ninja"
     },
@@ -85,6 +106,11 @@
     {
       "name": "linux-gcc-asan",
       "configurePreset": "linux-gcc-asan",
+      "jobs": 2
+    },
+    {
+      "name": "linux-qt-release",
+      "configurePreset": "linux-qt-release",
       "jobs": 2
     },
     {
@@ -138,6 +164,16 @@
       }
     },
     {
+      "name": "linux-qt-release",
+      "configurePreset": "linux-qt-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
       "name": "windows-msvc-debug",
       "configurePreset": "windows-msvc-debug",
       "output": {
@@ -173,6 +209,23 @@
         {
           "type": "test",
           "name": "linux-gcc-debug"
+        }
+      ]
+    },
+    {
+      "name": "linux-qt-check",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-qt-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-qt-release"
+        },
+        {
+          "type": "test",
+          "name": "linux-qt-release"
         }
       ]
     },

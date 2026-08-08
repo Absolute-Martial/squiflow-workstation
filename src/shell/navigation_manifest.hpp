@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shell/dashboard_bridge.hpp"
 #include "shell/list_bridge.hpp"
 #include "shell/screen_registry.hpp"
 
@@ -13,6 +14,15 @@ namespace squiflow::shell {
 
 // Lightweight, portable bridge identity shared by every primary module route.
 // Phase 7.3 layers list behavior on top without changing route identity.
+class DashboardPresentationBridge final : public PresentationBridge {
+  public:
+    DashboardBridge& dashboard() noexcept { return dashboard_; }
+    const DashboardBridge& dashboard() const noexcept { return dashboard_; }
+
+  private:
+    DashboardBridge dashboard_{};
+};
+
 class RoutePresentationBridge final : public PresentationBridge {
   public:
     RoutePresentationBridge(std::string route_id, std::vector<ListColumn> columns);

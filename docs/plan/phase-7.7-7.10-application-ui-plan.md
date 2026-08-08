@@ -1,9 +1,9 @@
 # Phase 7.7-7.10 -- native application UI implementation plan
 
-Status: planned. Phases 7.1-7.6 provide the window, navigation, lists, forms,
-PDF, image-preview, and Fluent foundations. They do **not** constitute a
-finished user-facing application. This plan owns the dashboard, real module
-pages, interactive workflows, and final UI integration.
+Status: Phase 7.7 implemented in the portable/static lane with Qt runtime
+verification delegated to the configured Linux Qt and Windows MSVC jobs;
+Phases 7.8-7.10 remain planned. Phases 7.1-7.6 provide the window, navigation,
+lists, forms, PDF, image-preview, and Fluent foundations.
 
 ## Outcome
 
@@ -50,6 +50,14 @@ refreshes from authoritative data.
 ---
 
 ## 7.7 -- design system, application shell, and dashboard
+
+### 7.7 implementation status
+
+Portable implementation and focused tests are complete. Qt 6.11.1/Linux and
+MSVC workflows, QWindowKit Core+Quick build, and staged offscreen release smoke
+tests are configured. Full closure waits only for those external CI jobs to
+produce runtime evidence; visual/accessibility/performance evidence remains in
+7.10. See `docs/qa/phase-7.7-dashboard-gate.md`.
 
 ### Goal
 
@@ -408,5 +416,6 @@ independent CMake/CTest when available, then commit before moving forward.
   surfaces are confirmed, but should follow 7.8 to avoid changing shared
   patterns repeatedly.
 - 7.10 depends on 7.7-7.9 and requires a real Qt 6.11.1 toolchain.
-- Missing `syscmdline` blocks only QWindowKit's final native backdrop/chrome
-  gate. It does not block dashboard or module page implementation.
+- The supplied `syscmdline` source resolves QWindowKit's nested host-build
+  dependency. Linux Qt 6.11.1 and Windows MSVC now compile Core+Quick; native
+  backdrop/chrome visual evidence remains a Phase 7.10 machine gate.

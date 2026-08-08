@@ -103,3 +103,16 @@ anything older, checked rather than assumed.
 
 When Qt 6.12 LTS ships, expected September 2026. That is also the moment the
 Windows 10 support horizon becomes concrete rather than announced.
+
+## Supplied Phase 7.7 UI build sources
+
+| Source | Pin | Purpose | Runtime? |
+|---|---|---|---|
+| QWindowKit | 1.5.1.0 snapshot | Qt Core+Quick native window layer | Yes, opt-in |
+| qmsetup | supplied snapshot | QWindowKit CMake host helpers | No |
+| syscmdline | `0c9f3de8b11bd2f33b03bea5521bf446af4ead69`, archive SHA-256 `97f6bb4d...f3d5481` | qmsetup host utility | No |
+| qtimageformats | 6.11.1, archive SHA-256 `b2bf6c68...bac413` | matching image plugin source/provenance | Qt plugin only |
+
+Exact full hashes are in each source's `SQUIFLOW_SOURCE_PIN` and
+`README.squiflow.md`. Presence of source does not prove AVIF decoding; the
+matching produced/installed plugin must pass Phase 7.10 fixtures.

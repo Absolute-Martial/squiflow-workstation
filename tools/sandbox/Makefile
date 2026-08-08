@@ -234,6 +234,10 @@ $(BUILD)/platform_secrets_test: $(SECRETS_SRC) tests/platform/secrets_test.cpp $
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $(SECRETS_SRC) tests/platform/secrets_test.cpp $(SODIUM_LIB) -o $@
 
+$(BUILD)/platform_password_hash_test: src/platform/password_hash.cpp tests/platform/password_hash_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) src/platform/password_hash.cpp tests/platform/password_hash_test.cpp $(SODIUM_LIB) -o $@
+
 $(BUILD)/platform_network_state_test: $(NETWORK_STATE_SRC) tests/platform/network_state_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -267,6 +271,132 @@ $(BUILD)/app_real_startup_runtime_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 
 $(BUILD)/app_contracts_test: tests/app/contracts_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_dashboard_service_test: $(PROTOCOL_SRC) src/engine/identity/rights_set.cpp src/app/dashboard/dashboard_service.cpp tests/app/dashboard_service_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_primary_page_service_test: $(PROTOCOL_SRC) src/engine/identity/rights_set.cpp \
+                                        src/app/primary/primary_page_service.cpp \
+                                        tests/app/primary_page_service_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_local_primary_query_test: $(STORAGE_SRC) src/engine/records/lifecycle.cpp \
+                                       src/app/primary/local_primary_query.cpp \
+                                       tests/app/local_primary_query_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_record_page_service_test: $(PROTOCOL_SRC) src/engine/identity/rights_set.cpp \
+                                       src/engine/records/identity.cpp \
+                                       src/app/primary/primary_page_service.cpp \
+                                       src/app/primary/record_page_service.cpp \
+                                       tests/app/record_page_service_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_local_record_query_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) \
+                                      src/modules/administration/domain/person.cpp \
+                                      src/modules/administration/domain/device.cpp \
+                                      src/modules/administration/data/repository.cpp \
+                                      src/modules/parties/domain/party.cpp \
+                                      src/modules/parties/data/repository.cpp \
+                                      src/modules/catalog/domain/product.cpp \
+                                      src/modules/catalog/data/repository.cpp \
+                                      src/modules/pricing/domain/rate.cpp \
+                                      src/modules/pricing/data/repository.cpp \
+                                      src/modules/orders/domain/order.cpp \
+                                      src/modules/orders/data/repository.cpp \
+                                      src/modules/receivables/domain/invoice.cpp \
+                                      src/modules/receivables/domain/payment.cpp \
+                                      src/modules/receivables/domain/credit_account.cpp \
+                                      src/modules/receivables/domain/document_number_block.cpp \
+                                      src/modules/receivables/domain/document_delivery.cpp \
+                                      src/modules/receivables/domain/statement.cpp \
+                                      src/modules/receivables/data/repository.cpp \
+                                      src/modules/jobs/domain/job.cpp \
+                                      src/modules/jobs/data/repository.cpp \
+                                      src/modules/quotations/domain/quotation.cpp \
+                                      src/modules/quotations/data/repository.cpp \
+                                      src/modules/agreements/domain/agreement.cpp \
+                                      src/modules/agreements/domain/consumption.cpp \
+                                      src/modules/agreements/data/repository.cpp \
+                                      src/modules/sourcing/domain/sourcing.cpp \
+                                      src/modules/sourcing/data/repository.cpp \
+                                      src/modules/companion/domain/task.cpp \
+                                      src/modules/companion/data/repository.cpp \
+                                      src/modules/files/domain/file_asset.cpp \
+                                      src/modules/files/data/repository.cpp \
+                                      src/app/primary/local_record_query.cpp \
+                                      tests/app/local_record_query_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_command_gateway_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) $(PAYLOAD_SRC) $(MODULES_SRC) \
+                                   src/app/session_authorization.cpp \
+                                   src/app/credential_command.cpp src/platform/password_hash.cpp \
+                                   src/app/primary/command_gateway.cpp \
+                                   tests/app/command_gateway_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) $(PAYLOAD_SRC) $(MODULES_SRC) src/app/session_authorization.cpp src/app/credential_command.cpp src/platform/password_hash.cpp src/app/primary/command_gateway.cpp tests/app/command_gateway_test.cpp $(SODIUM_LIB) -o $@
+
+$(BUILD)/app_credential_command_test: $(PROTOCOL_SRC) src/engine/storage/store.cpp \
+                                      src/engine/records/payload.cpp \
+                                      src/platform/password_hash.cpp \
+                                      src/app/credential_command.cpp \
+                                      tests/app/credential_command_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $(PROTOCOL_SRC) src/engine/storage/store.cpp src/engine/records/payload.cpp src/platform/password_hash.cpp src/app/credential_command.cpp tests/app/credential_command_test.cpp $(SODIUM_LIB) -o $@
+
+$(BUILD)/app_session_authorization_test: $(PROTOCOL_SRC) src/engine/identity/rights_set.cpp \
+                                         src/app/session_authorization.cpp \
+                                         tests/app/session_authorization_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_workspace_runtime_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                                     $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
+                                     src/modules/parties/domain/party.cpp \
+                                     src/modules/parties/data/repository.cpp \
+                                     src/modules/catalog/domain/product.cpp \
+                                     src/modules/catalog/data/repository.cpp \
+                                     src/modules/pricing/domain/rate.cpp \
+                                     src/modules/pricing/data/repository.cpp \
+                                     src/modules/orders/domain/order.cpp \
+                                     src/modules/orders/data/repository.cpp \
+                                     src/modules/receivables/domain/invoice.cpp \
+                                     src/modules/receivables/domain/payment.cpp \
+                                     src/modules/receivables/domain/credit_account.cpp \
+                                     src/modules/receivables/domain/document_number_block.cpp \
+                                     src/modules/receivables/domain/document_delivery.cpp \
+                                     src/modules/receivables/domain/statement.cpp \
+                                     src/modules/receivables/data/repository.cpp \
+                                     src/modules/jobs/domain/job.cpp \
+                                     src/modules/jobs/data/repository.cpp \
+                                     src/modules/quotations/domain/quotation.cpp \
+                                     src/modules/quotations/data/repository.cpp \
+                                     src/modules/agreements/domain/agreement.cpp \
+                                     src/modules/agreements/domain/consumption.cpp \
+                                     src/modules/agreements/data/repository.cpp \
+                                     src/modules/sourcing/domain/sourcing.cpp \
+                                     src/modules/sourcing/data/repository.cpp \
+                                     src/modules/companion/domain/task.cpp \
+                                     src/modules/companion/data/repository.cpp \
+                                     src/modules/files/domain/file_asset.cpp \
+                                     src/modules/files/data/repository.cpp \
+                                     src/app/primary/local_primary_query.cpp \
+                                     src/app/primary/local_record_query.cpp \
+                                     src/app/primary/primary_page_service.cpp \
+                                     src/app/primary/record_page_service.cpp \
+                                     src/app/credential_command.cpp \
+                                     src/platform/password_hash.cpp \
+                                     src/app/primary/command_gateway.cpp \
+                                     src/app/session_authorization.cpp \
+                                     src/app/workspace_runtime.cpp \
+                                     tests/app/workspace_runtime_test.cpp $(SODIUM_LIB)
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -315,6 +445,14 @@ $(BUILD)/shell_thumbnail_cache_test: src/shell/thumbnail_cache.cpp tests/shell/t
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(BUILD)/shell_window_state_test: src/shell/window_state.cpp tests/shell/window_state_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_dashboard_bridge_test: src/shell/dashboard_bridge.cpp tests/shell/dashboard_bridge_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/shell_state_test: src/shell/notification_queue.cpp src/shell/shell_state.cpp tests/shell/shell_state_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
@@ -442,6 +580,14 @@ $(BUILD)/administration_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYN
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/app_credential_authentication_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                              $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
+                              src/platform/password_hash.cpp \
+                              src/app/credential_authentication.cpp \
+                              tests/app/credential_authentication_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) src/platform/password_hash.cpp src/app/credential_authentication.cpp tests/app/credential_authentication_test.cpp $(SODIUM_LIB) -o $@
+
 $(BUILD)/parties_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                        $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) \
                        src/modules/parties/tests/parties_test.cpp
@@ -558,9 +704,11 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_ui_resources.py
 >@$(PYTHON) tools/sandbox/check_qt_bridge.py
 >@$(PYTHON) tools/sandbox/check_navigation_and_lists.py
+>@$(PYTHON) tools/sandbox/check_dashboard_and_shell.py
+>@$(PYTHON) tools/sandbox/check_phase78_design_policy.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_password_hash_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/app_dashboard_service_test $(BUILD)/app_primary_page_service_test $(BUILD)/app_local_primary_query_test $(BUILD)/app_record_page_service_test $(BUILD)/app_local_record_query_test $(BUILD)/app_command_gateway_test $(BUILD)/app_session_authorization_test $(BUILD)/app_credential_authentication_test $(BUILD)/app_credential_command_test $(BUILD)/app_workspace_runtime_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/shell_dashboard_bridge_test $(BUILD)/shell_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -594,6 +742,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo '== platform secrets =='
 >./$(BUILD)/platform_secrets_test
 >@echo
+>@echo '== platform password hashing =='
+>./$(BUILD)/platform_password_hash_test
+>@echo
 >@echo '== platform network state =='
 >./$(BUILD)/platform_network_state_test
 >@echo
@@ -611,6 +762,36 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== application contracts =='
 >./$(BUILD)/app_contracts_test
+>@echo
+>@echo '== application dashboard service =='
+>./$(BUILD)/app_dashboard_service_test
+>@echo
+>@echo '== application primary page service =='
+>./$(BUILD)/app_primary_page_service_test
+>@echo
+>@echo '== application local primary query =='
+>./$(BUILD)/app_local_primary_query_test
+>@echo
+>@echo '== application record page service =='
+>./$(BUILD)/app_record_page_service_test
+>@echo
+>@echo '== application local record query =='
+>./$(BUILD)/app_local_record_query_test
+>@echo
+>@echo '== application command gateway =='
+>./$(BUILD)/app_command_gateway_test
+>@echo
+>@echo '== session authorization =='
+>./$(BUILD)/app_session_authorization_test
+>@echo
+>@echo '== credential authentication =='
+>./$(BUILD)/app_credential_authentication_test
+>@echo
+>@echo '== credential command preparation =='
+>./$(BUILD)/app_credential_command_test
+>@echo
+>@echo '== authenticated workspace runtime =='
+>./$(BUILD)/app_workspace_runtime_test
 >@echo
 >@echo '== primitive mapping =='
 >./$(BUILD)/shell_primitive_mapping_test
@@ -647,6 +828,12 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== window state =='
 >./$(BUILD)/shell_window_state_test
+>@echo
+>@echo '== dashboard bridge =='
+>./$(BUILD)/shell_dashboard_bridge_test
+>@echo
+>@echo '== shell state and notifications =='
+>./$(BUILD)/shell_state_test
 >@echo
 >@echo '== server identity: token issuer =='
 >./$(BUILD)/server_identity_token_issuer_test

@@ -88,6 +88,13 @@ public:
 
     bool handled(protocol::OperationId operation) const noexcept;
 
+    // True only for a registered write-kind operation: an ordinary handler
+    // installed with on_write, or a workflow (workflows only ever produce
+    // writes). A gateway that only ever wants to accept commands can ask this
+    // instead of building a Call and finding out from a thrown RegistryError
+    // that the operation was a read, or was never handled at all.
+    bool is_command(protocol::OperationId operation) const noexcept;
+
     // Every operation the protocol declares for a registered module, with no
     // handler. A screen would offer these and they would refuse for no reason
     // a person could act on, so startup fails rather than shipping a button

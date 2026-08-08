@@ -24,15 +24,38 @@ if(SQUIFLOW_WITH_QT)
         #     ${CMAKE_CURRENT_BINARY_DIR}/ui-fluent-fluentui)
         # target_link_libraries(squiflow_shell PRIVATE fluentuiplugin)
     endif()
+    target_sources(squiflow_workstation PRIVATE workstation_main_qt.cpp)
+
     target_sources(squiflow_shell PRIVATE
         ../shell/paged_list_model_qt.cpp
         ../shell/list_screen_bridge_qt.cpp
+        ../shell/record_screen_bridge_qt.cpp
         ../shell/navigation_model_qt.cpp
         ../shell/navigation_bridge_qt.cpp
         ../shell/qml_surface_qt.cpp
         ../shell/document_render_qt.cpp
-        ../shell/image_provider_qt.cpp)
+        ../shell/image_provider_qt.cpp
+        ../shell/dashboard_model_qt.cpp
+        ../shell/dashboard_bridge_qt.cpp
+        ../shell/shell_state_qt.cpp
+        ../shell/native_window_bridge_qt.cpp)
     target_link_libraries(squiflow_shell PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+
+    if(SQUIFLOW_WITH_QWINDOWKIT)
+        set(QWINDOWKIT_BUILD_STATIC ON CACHE BOOL "" FORCE)
+        set(QWINDOWKIT_BUILD_WIDGETS OFF CACHE BOOL "" FORCE)
+        set(QWINDOWKIT_BUILD_QUICK ON CACHE BOOL "" FORCE)
+        set(QWINDOWKIT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+        set(QWINDOWKIT_BUILD_DOCUMENTATIONS OFF CACHE BOOL "" FORCE)
+        set(QWINDOWKIT_INSTALL OFF CACHE BOOL "" FORCE)
+        add_subdirectory(
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../external/ui-fluent/qwindowkit"
+            "${CMAKE_CURRENT_BINARY_DIR}/qwindowkit"
+            EXCLUDE_FROM_ALL)
+        target_link_libraries(squiflow_shell PRIVATE QWKQuick)
+        target_compile_definitions(squiflow_shell PRIVATE
+            SQUIFLOW_WITH_QWINDOWKIT=1)
+    endif()
     target_link_libraries(squiflow_workstation PRIVATE squiflow::shell)
 
     if(SQUIFLOW_BUILD_TESTS)

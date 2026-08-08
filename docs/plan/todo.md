@@ -133,7 +133,7 @@ than being counted here.
       (`Rin-UI`) are vendored under `external/ui-fluent/` and import paths
       are wired behind `SQUIFLOW_WITH_UI_FLUENT` (default OFF) -- nothing
       compiled or visually verified yet (no Qt install in this sandbox);
-      `qmsetup` is now vendored; `qwindowkit` still needs qmsetup's missing nested `syscmdline` submodule
+      `qmsetup` and its pinned nested `syscmdline` source are vendored; QWindowKit Core+Quick is enabled in the Linux Qt and MSVC CI lanes
 - [~] 7.1 Window and shell — [implementation plan](phase-7-interface-plan.md#71----window-and-shell),
       [gate](../qa/phase-7.1-window-shell-gate.md): geometry persistence and
       validation proven in the portable lane; the Qt-side apply/capture in
@@ -143,8 +143,8 @@ than being counted here.
 - [~] 7.4 Forms and validation — portable bridge and shared QML form implemented; Qt runtime pending — [implementation plan](phase-7-interface-plan.md#74----forms-and-validation)
 - [~] 7.5 Documents and print via `QPdfWriter`, avoiding QtWidgets — immutable snapshots, templates, atomic Qt Core/Gui PDF renderer implemented; Qt visual spike pending — [implementation plan](phase-7-interface-plan.md#75----documents-and-print-via-qpdfwriter-avoiding-qtwidgets)
 - [~] 7.6 Images and the AVIF plugin — bounded hash cache, stable-id provider, placeholder and AVIF capability gate implemented; Qt plugin runtime pending — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
-- [ ] 7.7 Design system, application shell, and real dashboard — [implementation plan](phase-7.7-7.10-application-ui-plan.md#77----design-system-application-shell-and-dashboard)
-- [ ] 7.8 Master-data and primary commercial pages — parties, catalog, pricing, orders/counter sales, receivables — [implementation plan](phase-7.7-7.10-application-ui-plan.md#78----master-data-and-primary-commercial-pages)
+- [~] 7.7 Design system, application shell, and real dashboard — portable implementation and strict gate complete; Linux Qt/MSVC offscreen jobs configured and must pass before full closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#77----design-system-application-shell-and-dashboard), [gate](../qa/phase-7.7-dashboard-gate.md)
+- [~] 7.8 Master-data and primary commercial pages — presentation implementation and portable gate complete; Qt 6.11.1/MSVC runtime evidence remains mandatory — [implementation plan](phase-7.7-7.10-application-ui-plan.md#78----master-data-and-primary-commercial-pages), [gate](../qa/phase-7.8-primary-pages-gate.md)
 - [ ] 7.9 Remaining operational and supporting pages — quotations, agreements, jobs, sourcing, companion, files, administration/settings — [implementation plan](phase-7.7-7.10-application-ui-plan.md#79----remaining-operational-and-supporting-module-pages)
 - [ ] 7.10 UI integration, accessibility, performance, and Qt runtime closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#710----integration-accessibility-performance-and-qt-runtime-closure)
 
@@ -161,7 +161,7 @@ than being counted here.
 - [ ] 8.6 The update proxy — [implementation plan](phase-8-server-plan.md#86----the-update-proxy)
 - [ ] 8.7 Mail - prepared by the system, sent only on confirmation — [implementation plan](phase-8-server-plan.md#87----mail-prepared-by-the-system-sent-only-on-confirmation)
 - [ ] 8.8 Per-module endpoints — [implementation plan](phase-8-server-plan.md#88----per-module-endpoints)
-- [ ] 8.9 Tenant lifecycle, RLS, built-in module manifests, external-app grants, core-owned entitlements, and safe extension seams — [implementation plan](phase-8-server-plan.md#89----tenant-lifecycle-module-manifests-and-extension-seams)
+- [ ] 8.9 Tenant lifecycle, RLS, module manifests, and safe extension seams — [implementation plan](phase-8-server-plan.md#89----tenant-lifecycle-module-manifests-and-extension-seams)
 - [ ] 8.10 Durable jobs, scheduler, and worker process — [implementation plan](phase-8-server-plan.md#810----durable-jobs-scheduler-and-worker-process)
 - [ ] 8.11 Webhooks, realtime notifications, and connector registry — [implementation plan](phase-8-server-plan.md#811----webhooks-realtime-notifications-and-connector-registry)
 - [ ] 8.12 Blob lifecycle, quarantine, scanning, and bulk import/export — [implementation plan](phase-8-server-plan.md#812----blob-lifecycle-quarantine-scanning-and-bulk-importexport)

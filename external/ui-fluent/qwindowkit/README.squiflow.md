@@ -1,20 +1,18 @@
 # QWindowKit (vendored)
 
-- Source: https://github.com/stdware/qwindowkit (`main`, uploaded as a zip snapshot by the user on 2026-08-06; no commit SHA available from the archive)
-- License: Apache-2.0 (see `LICENSE` in this directory)
-- Scope: cross-platform frameless window + native Mica/Acrylic/Blur backdrop support (Windows/macOS/Linux code paths), Qt Quick and Qt Core modules only.
+- Source: https://github.com/stdware/qwindowkit (user-supplied snapshot)
+- License: Apache-2.0 (`LICENSE`)
+- Version in source: 1.5.1.0
+- Scope: Qt Core+Quick frameless window and native backdrop support.
 
-## What was kept
-- `src/core` and `src/quick` (the Widgets module was dropped; this project is Qt Quick only)
-- Top-level `CMakeLists.txt`, `src/CMakeLists.txt`, `src/QWindowKitConfig.cmake.in`, `LICENSE`, `README.md`
+## SquiFlow integration
 
-## What was dropped
-- `src/widgets` (QWidgets module, not used by this Qt Quick shell)
-- `examples/`, `docs/`, `share/` (not needed to build the library)
+`SQUIFLOW_WITH_QWINDOWKIT=ON` adds the source as an isolated subdirectory,
+links `QWKQuick` to the workstation, and disables Widgets, examples, docs, and
+install targets. The application continues to own its public QML component
+layer; pages never import QWindowKit directly.
 
-## Build integration status
-- `qmsetup` is now vendored from the user-provided snapshot.
-- That snapshot itself has an empty `src/syscmdline` git submodule. `qmsetup` builds its host utility against `syscmdline`, so QWindowKit still cannot configure honestly until that final nested dependency is supplied or installed.
-- No CMake target in this repository references this directory yet; it is
-  vendored source only, gated to be wired once `qmsetup` is available and a
-  Qt 6.8+ toolchain can actually build/verify it.
+The user-supplied qmsetup snapshot and its formerly missing `src/syscmdline`
+submodule are now present. Linux Qt 6.11.1 and Windows MSVC CI build this lane.
+Private Qt targets are a qualified build dependency, so a Qt upgrade must rerun
+the native window, DPI, snap, and backdrop gates.
