@@ -234,6 +234,10 @@ $(BUILD)/platform_secrets_test: $(SECRETS_SRC) tests/platform/secrets_test.cpp $
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $(SECRETS_SRC) tests/platform/secrets_test.cpp $(SODIUM_LIB) -o $@
 
+$(BUILD)/platform_password_hash_test: src/platform/password_hash.cpp tests/platform/password_hash_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) src/platform/password_hash.cpp tests/platform/password_hash_test.cpp $(SODIUM_LIB) -o $@
+
 $(BUILD)/platform_network_state_test: $(NETWORK_STATE_SRC) tests/platform/network_state_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -565,6 +569,14 @@ $(BUILD)/administration_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYN
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/app_credential_authentication_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
+                              $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) \
+                              src/platform/password_hash.cpp \
+                              src/app/credential_authentication.cpp \
+                              tests/app/credential_authentication_test.cpp $(SODIUM_LIB)
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) $(PAYLOAD_SRC) $(MODULES_SRC) $(ADMIN_SRC) src/platform/password_hash.cpp src/app/credential_authentication.cpp tests/app/credential_authentication_test.cpp $(SODIUM_LIB) -o $@
+
 $(BUILD)/parties_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) \
                        $(PAYLOAD_SRC) $(MODULES_SRC) $(PARTIES_SRC) \
                        src/modules/parties/tests/parties_test.cpp
@@ -685,7 +697,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_phase78_design_policy.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/app_dashboard_service_test $(BUILD)/app_primary_page_service_test $(BUILD)/app_local_primary_query_test $(BUILD)/app_record_page_service_test $(BUILD)/app_local_record_query_test $(BUILD)/app_command_gateway_test $(BUILD)/app_session_authorization_test $(BUILD)/app_workspace_runtime_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/shell_dashboard_bridge_test $(BUILD)/shell_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_password_hash_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/app_dashboard_service_test $(BUILD)/app_primary_page_service_test $(BUILD)/app_local_primary_query_test $(BUILD)/app_record_page_service_test $(BUILD)/app_local_record_query_test $(BUILD)/app_command_gateway_test $(BUILD)/app_session_authorization_test $(BUILD)/app_credential_authentication_test $(BUILD)/app_workspace_runtime_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/shell_dashboard_bridge_test $(BUILD)/shell_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -718,6 +730,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== platform secrets =='
 >./$(BUILD)/platform_secrets_test
+>@echo
+>@echo '== platform password hashing =='
+>./$(BUILD)/platform_password_hash_test
 >@echo
 >@echo '== platform network state =='
 >./$(BUILD)/platform_network_state_test
@@ -757,6 +772,9 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== session authorization =='
 >./$(BUILD)/app_session_authorization_test
+>@echo
+>@echo '== credential authentication =='
+>./$(BUILD)/app_credential_authentication_test
 >@echo
 >@echo '== authenticated workspace runtime =='
 >./$(BUILD)/app_workspace_runtime_test

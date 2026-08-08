@@ -28,7 +28,8 @@ add_library(squiflow_platform STATIC
     network_monitor.cpp
     background_service.cpp
     background_executor.cpp
-    background_supervisor.cpp)
+    background_supervisor.cpp
+    password_hash.cpp)
 
 add_library(squiflow::platform ALIAS squiflow_platform)
 

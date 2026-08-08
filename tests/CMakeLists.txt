@@ -33,6 +33,7 @@ endfunction()
 
 squiflow_add_platform_test(platform_paths_test platform/paths_test.cpp)
 squiflow_add_platform_test(platform_logging_test platform/logging_test.cpp)
+squiflow_add_platform_test(platform_password_hash_test platform/password_hash_test.cpp)
 
 add_executable(app_contracts_test app/contracts_test.cpp)
 target_link_libraries(app_contracts_test
@@ -113,6 +114,10 @@ add_test(NAME app.command_gateway COMMAND app_command_gateway_test)
 add_executable(app_session_authorization_test app/session_authorization_test.cpp)
 target_link_libraries(app_session_authorization_test PRIVATE squiflow::app squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
 add_test(NAME app.session_authorization COMMAND app_session_authorization_test)
+
+add_executable(app_credential_authentication_test app/credential_authentication_test.cpp)
+target_link_libraries(app_credential_authentication_test PRIVATE squiflow::app squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
+add_test(NAME app.credential_authentication COMMAND app_credential_authentication_test)
 add_executable(app_workspace_runtime_test app/workspace_runtime_test.cpp)
 target_link_libraries(app_workspace_runtime_test PRIVATE squiflow::app squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
 add_test(NAME app.workspace_runtime COMMAND app_workspace_runtime_test)
