@@ -145,10 +145,12 @@ than being counted here.
 - [~] 7.6 Images and the AVIF plugin — bounded hash cache, stable-id provider, placeholder and AVIF capability gate implemented; Qt plugin runtime pending — [implementation plan](phase-7-interface-plan.md#76----images-and-the-avif-plugin)
 - [~] 7.7 Design system, application shell, and real dashboard — portable implementation and strict gate complete; Linux Qt/MSVC offscreen jobs configured and must pass before full closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#77----design-system-application-shell-and-dashboard), [gate](../qa/phase-7.7-dashboard-gate.md)
 - [~] 7.8 Master-data and primary commercial pages — presentation implementation and portable gate complete; Qt 6.11.1/MSVC runtime evidence remains mandatory — [implementation plan](phase-7.7-7.10-application-ui-plan.md#78----master-data-and-primary-commercial-pages), [gate](../qa/phase-7.8-primary-pages-gate.md)
-- [ ] 7.9 Remaining operational and supporting pages — quotations, agreements, jobs, sourcing, companion, files, administration/settings — [implementation plan](phase-7.7-7.10-application-ui-plan.md#79----remaining-operational-and-supporting-module-pages)
+- [~] 7.9 Remaining operational and supporting pages — dedicated route surfaces and the authorized record bridge are committed; module-specific editor/action payloads and Qt runtime evidence remain — [implementation plan](phase-7.7-7.10-application-ui-plan.md#79----remaining-operational-and-supporting-module-pages), [environment handoff](environment-agent-phase-7-to-8-handoff.md)
 - [ ] 7.10 UI integration, accessibility, performance, and Qt runtime closure — [implementation plan](phase-7.7-7.10-application-ui-plan.md#710----integration-accessibility-performance-and-qt-runtime-closure)
 
 ## Phase 8 - The server *(portable token core compiles; provider runtime does not)*
+
+Execution entry points: [environment-agent handoff](environment-agent-phase-7-to-8-handoff.md), [workstation/server protocol plan](phase-8-workstation-server-protocol-plan.md), [server plan](phase-8-server-plan.md), and [open-source capability map](phase-8-backend-capability-map.md).
 
 - [ ] 8.1 Skeleton, configuration, and replaceable Hical adapter — [server plan](phase-8-server-plan.md#81----skeleton-and-configuration), [provider isolation plan](phase-8-framework-and-provider-isolation.md)
 - [ ] 8.2 PostgreSQL and migrations — [implementation plan](phase-8-server-plan.md#82----postgresql-and-migrations)

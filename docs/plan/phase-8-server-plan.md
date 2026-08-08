@@ -6,7 +6,9 @@ Boost/OpenSSL/zlib/Hical runtime lane, PostgreSQL, or real network gate. The
 adapter and missing-provider boundaries are defined in
 `phase-8-framework-and-provider-isolation.md`. The complete capability register,
 including lessons from Twenty, Odoo, and Frappe/ERPNext, is
-`phase-8-backend-capability-map.md`.
+`phase-8-backend-capability-map.md`. The exact workstation/server boundary,
+handshake, auth, push/pull, cursor, conflict, realtime, codec, and compatibility
+contract is `phase-8-workstation-server-protocol-plan.md`.
 
 ## Decisions this phase is built on
 
