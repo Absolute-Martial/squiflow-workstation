@@ -1,4 +1,5 @@
 #include "app/primary/command_gateway.hpp"
+#include "app/credential_command.hpp"
 
 #include <algorithm>
 
@@ -71,10 +72,18 @@ Result<CommandAck, DomainError> CommandGateway::dispatch(
         return invalid("idempotency_key");
     }
 
+    auto prepared = prepare_credential_payload(request.operation, request.payload);
+    if (!prepared.ok) {
+        return error(prepared.fault == CredentialPayloadFault::HashingFailed
+                         ? DomainErrorCode::Conflict
+                         : DomainErrorCode::ValidationFailed,
+                     std::move(prepared.message_key), std::move(prepared.field));
+    }
+
     modules::Call call;
     call.operation = request.operation;
     call.record_id = request.record_id;
-    call.payload = request.payload;
+    call.payload = std::move(prepared.payload);
     call.idempotency_key = request.idempotency_key;
 
     modules::Outcome outcome;

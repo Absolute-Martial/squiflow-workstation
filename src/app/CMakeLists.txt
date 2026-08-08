@@ -13,7 +13,8 @@ add_library(squiflow_app STATIC
     primary/command_gateway.cpp
     session_authorization.cpp
     workspace_runtime.cpp
-    credential_authentication.cpp)
+    credential_authentication.cpp
+    credential_command.cpp)
 add_library(squiflow::app ALIAS squiflow_app)
 target_include_directories(squiflow_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(squiflow_app
