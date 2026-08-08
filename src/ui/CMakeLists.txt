@@ -29,6 +29,7 @@ if(SQUIFLOW_WITH_QT)
     target_sources(squiflow_shell PRIVATE
         ../shell/paged_list_model_qt.cpp
         ../shell/list_screen_bridge_qt.cpp
+        ../shell/record_screen_bridge_qt.cpp
         ../shell/navigation_model_qt.cpp
         ../shell/navigation_bridge_qt.cpp
         ../shell/qml_surface_qt.cpp

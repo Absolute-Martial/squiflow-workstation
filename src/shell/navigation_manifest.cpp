@@ -62,7 +62,8 @@ ScreenRegistry make_navigation_manifest() {
     manifest.add(primary_route(M::administration, "administration.home",
                                "navigation.administration", "settings", "group.system",
                                50, 10, R::right_person_manage,
-                               {column("name"), column("access")}));
+                               {column("name"), column("access")},
+                               "qrc:/qt/qml/SquiFlow/administration/AdministrationPage.qml"));
     manifest.add(primary_route(M::parties, "parties.list", "navigation.parties",
                                "people", "group.work", 10, 10, R::right_party_read,
                                {column("name"), column("terms")},
@@ -92,25 +93,31 @@ ScreenRegistry make_navigation_manifest() {
                                "qrc:/qt/qml/SquiFlow/receivables/ReceivablesPage.qml"));
     manifest.add(primary_route(M::jobs, "jobs.list", "navigation.jobs", "briefcase",
                                "group.work", 10, 50, R::right_job_read,
-                               {column("number"), column("customer"), column("status")}));
+                               {column("number"), column("customer"), column("status")},
+                               "qrc:/qt/qml/SquiFlow/jobs/JobsPage.qml"));
     manifest.add(primary_route(M::quotations, "quotations.list", "navigation.quotations",
                                "quote", "group.sales", 20, 10, R::right_quotation_read,
                                {column("number"), column("customer"), column("status"),
-                                column("total", false, false)}));
+                                column("total", false, false)},
+                               "qrc:/qt/qml/SquiFlow/quotations/QuotationsPage.qml"));
     manifest.add(primary_route(M::agreements, "agreements.list", "navigation.agreements",
                                "handshake", "group.sales", 20, 20,
                                R::right_agreement_read,
-                               {column("name"), column("customer"), column("status")}));
+                               {column("name"), column("customer"), column("status")},
+                               "qrc:/qt/qml/SquiFlow/agreements/AgreementsPage.qml"));
     manifest.add(primary_route(M::sourcing, "sourcing.suppliers", "navigation.sourcing",
                                "truck", "group.purchasing", 40, 10,
                                R::right_supplier_read,
-                               {column("supplier"), column("status")}));
+                               {column("supplier"), column("status")},
+                               "qrc:/qt/qml/SquiFlow/sourcing/SourcingPage.qml"));
     manifest.add(primary_route(M::companion, "companion.tasks", "navigation.companion",
                                "check", "group.work", 10, 60, R::right_task_read,
-                               {column("title"), column("status"), column("due")}));
+                               {column("title"), column("status"), column("due")},
+                               "qrc:/qt/qml/SquiFlow/companion/CompanionPage.qml"));
     manifest.add(primary_route(M::files, "files.search", "navigation.files", "folder",
                                "group.files", 60, 10, R::right_file_search,
-                               {column("name"), column("location")}));
+                               {column("name"), column("location")},
+                               "qrc:/qt/qml/SquiFlow/files/FilesPage.qml"));
     return manifest;
 }
 

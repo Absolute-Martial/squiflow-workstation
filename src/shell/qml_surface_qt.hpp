@@ -2,6 +2,7 @@
 
 #if defined(SQUIFLOW_WITH_QT)
 
+#include "app/contracts/request_context.hpp"
 #include "shell/screen_registry.hpp"
 #include "shell/surface_lifecycle.hpp"
 #include "shell/window_state.hpp"
@@ -15,6 +16,8 @@
 class QQmlApplicationEngine;
 class QQuickImageProvider;
 class QWindow;
+
+namespace squiflow::app { class AuthenticatedWorkspace; }
 
 namespace squiflow::shell {
 
@@ -37,6 +40,9 @@ class QmlSurfaceQt final : public QObject {
     app::StepResult startWindow();
     Q_INVOKABLE void requestShutdown();
     void publishNavigationAccess(NavigationAccess access);
+    void attachWorkspace(app::AuthenticatedWorkspace& workspace, app::TenantId tenant,
+                         protocol::Activation activation);
+    void detachWorkspace() noexcept;
     bool installImageProvider(std::unique_ptr<QQuickImageProvider> provider);
     void stopWindow() noexcept;
     void stopShell() noexcept;
@@ -51,6 +57,9 @@ class QmlSurfaceQt final : public QObject {
     std::unique_ptr<NativeWindowBridgeQt> native_window_bridge_{};
     std::unique_ptr<ShellStateQt> shell_state_{};
     std::optional<NavigationAccess> pending_navigation_access_{};
+    app::AuthenticatedWorkspace* pending_workspace_{nullptr};
+    std::optional<app::TenantId> pending_tenant_{};
+    protocol::Activation pending_activation_{};
     std::unique_ptr<QQuickImageProvider> pending_image_provider_{};
     std::unique_ptr<QQmlApplicationEngine> engine_{};
     QPointer<QWindow> root_{};

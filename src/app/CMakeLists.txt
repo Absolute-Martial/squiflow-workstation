@@ -59,6 +59,9 @@ if(SQUIFLOW_WITH_QT)
             ../ui/common/ConfirmDialog.qml
             ../ui/common/UnsavedChangesDialog.qml
             ../ui/common/PrimaryListPage.qml
+            ../ui/common/OperationalModulePage.qml
+            ../ui/common/RecordDetailPane.qml
+            ../ui/common/RecordActionDialog.qml
             ../ui/dashboard/DashboardPage.qml
             ../ui/parties/PartiesPage.qml
             ../ui/parties/PartyDetailPage.qml
@@ -84,6 +87,13 @@ if(SQUIFLOW_WITH_QT)
             ../ui/receivables/PaymentAllocationPage.qml
             ../ui/receivables/StatementPanel.qml
             ../ui/receivables/DocumentDeliveryPanel.qml
+            ../ui/quotations/QuotationsPage.qml
+            ../ui/agreements/AgreementsPage.qml
+            ../ui/jobs/JobsPage.qml
+            ../ui/sourcing/SourcingPage.qml
+            ../ui/companion/CompanionPage.qml
+            ../ui/files/FilesPage.qml
+            ../ui/administration/AdministrationPage.qml
             ../ui/navigation/NavigationRail.qml
             ../ui/navigation/NavigationDrawer.qml
             ../ui/navigation/NavigationHost.qml

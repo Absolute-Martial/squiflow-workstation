@@ -2,6 +2,7 @@
 
 #if defined(SQUIFLOW_WITH_QT)
 
+#include "app/workspace_runtime.hpp"
 #include "shell/navigation_bridge_qt.hpp"
 #include "shell/native_window_bridge_qt.hpp"
 #include "shell/navigation_controller.hpp"
@@ -84,6 +85,10 @@ app::StepResult QmlSurfaceQt::startShell() {
                                                    native_window_bridge_.get());
         connect(engine_.get(), &QQmlApplicationEngine::objectCreationFailed,
                 this, [this] { creation_failed_ = true; });
+        if (pending_workspace_ != nullptr && pending_tenant_) {
+            navigation_bridge_->attachWorkspace(*pending_workspace_, *pending_tenant_,
+                                                pending_activation_);
+        }
         if (pending_navigation_access_) {
             navigation_bridge_->publishAccess(
                 std::move(*pending_navigation_access_));
@@ -147,6 +152,23 @@ bool QmlSurfaceQt::installImageProvider(std::unique_ptr<QQuickImageProvider> pro
     return true;
 }
 
+void QmlSurfaceQt::attachWorkspace(
+    app::AuthenticatedWorkspace& workspace, app::TenantId tenant,
+    protocol::Activation activation) {
+    pending_workspace_ = &workspace;
+    pending_tenant_ = tenant;
+    pending_activation_ = std::move(activation);
+    if (navigation_bridge_) {
+        navigation_bridge_->attachWorkspace(workspace, tenant, pending_activation_);
+    }
+}
+
+void QmlSurfaceQt::detachWorkspace() noexcept {
+    if (navigation_bridge_) navigation_bridge_->detachWorkspace();
+    pending_workspace_ = nullptr;
+    pending_tenant_.reset();
+}
+
 void QmlSurfaceQt::publishNavigationAccess(NavigationAccess access) {
     if (navigation_bridge_) {
         navigation_bridge_->publishAccess(std::move(access));
@@ -177,6 +199,7 @@ void QmlSurfaceQt::stopWindow() noexcept {
 }
 
 void QmlSurfaceQt::stopShell() noexcept {
+    detachWorkspace();
     engine_.reset();
     pending_image_provider_.reset();
     if (navigation_bridge_) {
