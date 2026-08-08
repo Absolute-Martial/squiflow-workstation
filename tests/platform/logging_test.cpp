@@ -2373,10 +2373,27 @@ void no_gap_is_ever_silent() {
               "written plus dropped accounts for all of them, with none "
               "unaccounted for");
         check(delivered.peak_depth <= 8, "the queue stayed inside its bound");
-        check(file.counters().discarded_files > 0,
-              "the hard budget threw whole generations away");
         check(file.counters().storage_failures == 0,
               "and did so deliberately, not because writing failed");
+    }
+
+    // The budget guarantee is a property of the file, not of the writer
+    // thread: a family that outgrows its budget must drop whole
+    // generations. Under CI load the queue can swallow so much of the burst
+    // that the cramped family never grows, so prove the discard side
+    // synchronously, in a directory of its own, with no thread timing.
+    const std::filesystem::path direct_dir = cramped / "direct";
+    std::filesystem::create_directories(direct_dir, error);
+    {
+        platform::LocalLogStorage direct_storage(direct_dir.string());
+        RotatingLogFile direct(direct_storage, small_policy(4096, 2, 8192));
+        for (int index = 0; index < 2000; ++index) {
+            direct.write_line(filler(64, 'x') + std::to_string(index));
+        }
+        check(direct.counters().discarded_files > 0,
+              "the hard budget threw whole generations away");
+        check(direct.counters().storage_failures == 0,
+              "and did so deliberately, because the budget said so");
     }
 
     check(count_matching_lines(cramped, "squiflow.log", "dropped=\"") >= 1,
