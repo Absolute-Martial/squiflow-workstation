@@ -286,6 +286,57 @@ $(BUILD)/app_local_primary_query_test: $(STORAGE_SRC) src/engine/records/lifecyc
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
 
+$(BUILD)/app_record_page_service_test: $(PROTOCOL_SRC) src/engine/identity/rights_set.cpp \
+                                       src/engine/records/identity.cpp \
+                                       src/app/primary/primary_page_service.cpp \
+                                       src/app/primary/record_page_service.cpp \
+                                       tests/app/record_page_service_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_local_record_query_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) \
+                                      src/modules/administration/domain/person.cpp \
+                                      src/modules/administration/domain/device.cpp \
+                                      src/modules/administration/data/repository.cpp \
+                                      src/modules/parties/domain/party.cpp \
+                                      src/modules/parties/data/repository.cpp \
+                                      src/modules/catalog/domain/product.cpp \
+                                      src/modules/catalog/data/repository.cpp \
+                                      src/modules/pricing/domain/rate.cpp \
+                                      src/modules/pricing/data/repository.cpp \
+                                      src/modules/orders/domain/order.cpp \
+                                      src/modules/orders/data/repository.cpp \
+                                      src/modules/receivables/domain/invoice.cpp \
+                                      src/modules/receivables/domain/payment.cpp \
+                                      src/modules/receivables/domain/credit_account.cpp \
+                                      src/modules/receivables/domain/document_number_block.cpp \
+                                      src/modules/receivables/domain/document_delivery.cpp \
+                                      src/modules/receivables/domain/statement.cpp \
+                                      src/modules/receivables/data/repository.cpp \
+                                      src/modules/jobs/domain/job.cpp \
+                                      src/modules/jobs/data/repository.cpp \
+                                      src/modules/quotations/domain/quotation.cpp \
+                                      src/modules/quotations/data/repository.cpp \
+                                      src/modules/agreements/domain/agreement.cpp \
+                                      src/modules/agreements/domain/consumption.cpp \
+                                      src/modules/agreements/data/repository.cpp \
+                                      src/modules/sourcing/domain/sourcing.cpp \
+                                      src/modules/sourcing/data/repository.cpp \
+                                      src/modules/companion/domain/task.cpp \
+                                      src/modules/companion/data/repository.cpp \
+                                      src/modules/files/domain/file_asset.cpp \
+                                      src/modules/files/data/repository.cpp \
+                                      src/app/primary/local_record_query.cpp \
+                                      tests/app/local_record_query_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
+$(BUILD)/app_command_gateway_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_SRC) $(SYNC_SRC) $(MODULES_SRC) \
+                                   src/app/primary/command_gateway.cpp \
+                                   tests/app/command_gateway_test.cpp
+>@mkdir -p $(BUILD)
+>$(CXX) $(CXXFLAGS) $^ -o $@
+
 $(BUILD)/shell_presentation_seam_test: src/shell/completion_gate.cpp tests/shell/presentation_seam_test.cpp
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) $^ -o $@
@@ -586,7 +637,7 @@ architecture:
 >@$(PYTHON) tools/sandbox/check_phase78_design_policy.py
 >@echo
 
-tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/app_dashboard_service_test $(BUILD)/app_primary_page_service_test $(BUILD)/app_local_primary_query_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/shell_dashboard_bridge_test $(BUILD)/shell_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
+tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/platform_crash_test $(BUILD)/platform_single_instance_test $(BUILD)/platform_secrets_test $(BUILD)/platform_network_state_test $(BUILD)/platform_background_services_test $(BUILD)/app_startup_test $(BUILD)/app_composition_root_test $(BUILD)/app_real_startup_runtime_test $(BUILD)/app_contracts_test $(BUILD)/app_dashboard_service_test $(BUILD)/app_primary_page_service_test $(BUILD)/app_local_primary_query_test $(BUILD)/app_record_page_service_test $(BUILD)/app_local_record_query_test $(BUILD)/app_command_gateway_test $(BUILD)/protocol_test $(BUILD)/engine_test $(BUILD)/storage_test $(BUILD)/shell_presentation_seam_test $(BUILD)/shell_primitive_mapping_test $(BUILD)/shell_surface_lifecycle_test $(BUILD)/shell_screen_registry_test $(BUILD)/shell_navigation_manifest_test $(BUILD)/shell_navigation_controller_test $(BUILD)/shell_paged_list_cache_test $(BUILD)/shell_list_bridge_test $(BUILD)/shell_form_bridge_test $(BUILD)/shell_document_snapshot_test $(BUILD)/shell_thumbnail_cache_test $(BUILD)/shell_window_state_test $(BUILD)/shell_dashboard_bridge_test $(BUILD)/shell_state_test $(BUILD)/server_identity_token_issuer_test $(BUILD)/app_domain_event_bus_test \
        $(BUILD)/migration_test $(BUILD)/writer_test $(BUILD)/outbox_test \
        $(BUILD)/sync_test $(BUILD)/payload_test $(BUILD)/framework_test \
        $(BUILD)/workflow_test $(BUILD)/quote_to_order_test \
@@ -646,6 +697,15 @@ tests: $(BUILD)/platform_paths_test $(BUILD)/platform_logging_test $(BUILD)/plat
 >@echo
 >@echo '== application local primary query =='
 >./$(BUILD)/app_local_primary_query_test
+>@echo
+>@echo '== application record page service =='
+>./$(BUILD)/app_record_page_service_test
+>@echo
+>@echo '== application local record query =='
+>./$(BUILD)/app_local_record_query_test
+>@echo
+>@echo '== application command gateway =='
+>./$(BUILD)/app_command_gateway_test
 >@echo
 >@echo '== primitive mapping =='
 >./$(BUILD)/shell_primitive_mapping_test

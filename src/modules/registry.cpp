@@ -170,6 +170,14 @@ bool Registry::workflow_available(protocol::OperationId operation) const noexcep
     return std::all_of(found->second.requirements.begin(),found->second.requirements.end(),[this](auto m){return has(m)&&active(m);});
 }
 bool Registry::handled(protocol::OperationId operation) const noexcept { return protocol::is_workflow_operation(operation)?workflow_available(operation):handlers_.contains(operation); }
+
+bool Registry::is_command(protocol::OperationId operation) const noexcept {
+    if (protocol::is_workflow_operation(operation)) {
+        return workflows_.contains(operation);
+    }
+    const auto found = handlers_.find(operation);
+    return found != handlers_.end() && found->second.kind == Kind::Write;
+}
 std::vector<std::string> Registry::unhandled() const {
     std::vector<std::string> missing;
     for(const auto& info:protocol::all_operations()) if(!protocol::is_workflow_operation(info.id)&&has(info.module)&&!handlers_.contains(info.id)) missing.emplace_back(info.name);
