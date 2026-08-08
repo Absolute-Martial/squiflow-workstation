@@ -20,6 +20,7 @@
 // the shell.
 
 #include "app/contracts/request_context.hpp"
+#include "app/session_authorization.hpp"
 #include "engine/identity/session.hpp"
 #include "engine/records/identity.hpp"
 #include "engine/storage/database.hpp"

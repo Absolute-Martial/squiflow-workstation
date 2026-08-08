@@ -12,13 +12,13 @@ Result<CommandAck, DomainError> error(DomainErrorCode code, std::string message_
         DomainError{code, std::move(message_key), std::move(field)});
 }
 
-Result<CommandAck, DomainError> unauthorized(std::string field) {
-    return error(DomainErrorCode::Unauthorized, "command_gateway.error.unauthorized",
+Result<CommandAck, DomainError> invalid(std::string field) {
+    return error(DomainErrorCode::ValidationFailed, "command_gateway.error.invalid_request",
                  std::move(field));
 }
 
-Result<CommandAck, DomainError> invalid(std::string field) {
-    return error(DomainErrorCode::ValidationFailed, "command_gateway.error.invalid_request",
+Result<CommandAck, DomainError> unauthorized(std::string field) {
+    return error(DomainErrorCode::Unauthorized, "command_gateway.error.unauthorized",
                  std::move(field));
 }
 
@@ -45,19 +45,9 @@ Result<CommandAck, DomainError> CommandGateway::dispatch(
     const RequestContext& context, const engine::Session& live_session,
     std::uint64_t live_session_generation, engine::ConnectionState connection,
     const CommandRequest& request) const {
-    if (!live_session.is_signed_in() || live_session_generation == 0) {
-        return unauthorized("session");
-    }
-    if (context.session_generation() != live_session_generation) {
-        return unauthorized("session_generation");
-    }
-    if (context.user_id() != live_session.person) {
-        return unauthorized("user_id");
-    }
-    for (const protocol::RightId right : context.permissions().granted()) {
-        if (!live_session.rights.has(right)) {
-            return unauthorized("permissions");
-        }
+    if (auto authorized = authorize_session(context, live_session, live_session_generation);
+        !authorized) {
+        return Result<CommandAck, DomainError>::failure(authorized.error());
     }
 
     if (!protocol::is_valid(request.operation) || !registry_.is_command(request.operation)) {

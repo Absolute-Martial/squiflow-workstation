@@ -10,7 +10,9 @@ add_library(squiflow_app STATIC
     primary/local_primary_query.cpp
     primary/record_page_service.cpp
     primary/local_record_query.cpp
-    primary/command_gateway.cpp)
+    primary/command_gateway.cpp
+    session_authorization.cpp
+    workspace_runtime.cpp)
 add_library(squiflow::app ALIAS squiflow_app)
 target_include_directories(squiflow_app PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(squiflow_app
