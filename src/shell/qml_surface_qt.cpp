@@ -13,6 +13,7 @@
 #include <QCoreApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickImageProvider>
 #include <QScreen>
 #include <QWindow>
 

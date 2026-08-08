@@ -12,9 +12,11 @@
 namespace squiflow::protocol {
 
 enum class OperationId : std::uint16_t {
+#if !defined(Q_MOC_RUN)
 #define SQF_OPERATION(name, module, right, cls, offline) name,
 #include <squiflow/protocol/operations.def>
 #undef SQF_OPERATION
+#endif
     Count
 };
 
