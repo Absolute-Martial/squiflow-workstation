@@ -13,3 +13,4 @@ build/
 # Large native-workstation build resources kept locally only (not committed, not in checkpoints)
 third_party/provided-build-sources/
 .idea/
+CMakeUserPresets.json
