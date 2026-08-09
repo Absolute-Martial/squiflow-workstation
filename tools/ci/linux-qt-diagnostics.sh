@@ -1,4 +1,3 @@
-++ b/tools/ci/linux-qt-diagnostics.sh
 #!/usr/bin/env bash
 set -u
 set -o pipefail
@@ -9,6 +8,17 @@ EXE="$BUILD_DIR/src/ui/squiflow_workstation"
 mkdir -p "$REPORT_DIR"
 
 status=0
+
+# The repository's policy/integrity checks use PyYAML. Keep this dependency
+# isolated to the diagnostic runner rather than relying on a preinstalled
+# package on the GitHub-hosted runner.
+PYTHON_VENV="$REPORT_DIR/python-venv"
+if [ ! -x "$PYTHON_VENV/bin/python" ]; then
+  python3 -m venv "$PYTHON_VENV"
+  "$PYTHON_VENV/bin/python" -m pip install --disable-pip-version-check --quiet PyYAML
+fi
+export PATH="$PYTHON_VENV/bin:$PATH"
+
 run_capture() {
   local name="$1"; shift
   local log="$REPORT_DIR/${name}.log"
