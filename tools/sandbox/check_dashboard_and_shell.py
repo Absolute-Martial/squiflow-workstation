@@ -54,7 +54,7 @@ require("src/ui/Theme.qml", (
     "Application.styleHints.colorScheme", "surfaceRaised", "positive",
     "warning", "focus", "pageMarginCompact"))
 
-qml_cmake = read("src/app/CMakeLists.txt")
+qml_cmake = read("src/ui/CMakeLists.txt")
 for relative in (
     "common/PageScaffold.qml", "common/CommandBar.qml",
     "common/StatusBanner.qml", "common/MetricCard.qml",
@@ -63,7 +63,7 @@ for relative in (
     "common/ConfirmDialog.qml", "common/UnsavedChangesDialog.qml",
     "dashboard/DashboardPage.qml"):
     if relative not in qml_cmake:
-        errors.append(f"src/app/CMakeLists.txt: {relative} is not embedded")
+        errors.append(f"src/ui/CMakeLists.txt: {relative} is not embedded")
 
 manifest = read("src/shell/navigation_manifest.cpp")
 if '"dashboard.home"' not in manifest or "DashboardPresentationBridge" not in manifest:
