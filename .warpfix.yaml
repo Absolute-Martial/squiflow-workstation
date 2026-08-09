@@ -1,16 +1,27 @@
-# Add to your repo root to customize per-repo behavior
+# SquiFlow workstation repository policy for warpfix review and repair.
 
 review:
   profile: assertive
   auto_review: true
   path_instructions:
-    - glob: "src/auth/**"
-      instruction: "Check for security vulnerabilities"
-    - glob: "**/*.test.js"
-      instruction: "Verify test coverage"
+    - glob: "src/app/**"
+      instruction: "Ordering, migrations and composition must stay inside RealStartupRuntime; treat no unauthenticated path that grants rights."
+    - glob: "src/app/real_startup_runtime*"
+      instruction: "Fixed 12-step order; rollback must stop logging only after the failure is recorded; never allow a synthetic session that grants rights."
+    - glob: "src/engine/identity/**"
+      instruction: "Session and rights are the trust boundary. Check for security vulnerabilities and for any path that authorizes without a real provisioned device and operator."
+    - glob: "src/platform/secrets*"
+      instruction: "Check for security vulnerabilities: secrets must stay under the machine-bound secret store, zeroed out, and never logged."
+    - glob: "src/ui/**"
+      instruction: "UI must consume C++-formatted exact money (amountText/totalText), never calculate; never call Qt.quit; raw colors only in Theme.qml; files remain compiled resources listed in CMake."
+    - glob: "src/shell/qml_surface_qt*"
+      instruction: "The surface only reflects rights published by the runtime; no QML-facing access decisions here."
+    - glob: "tests/**"
+      instruction: "Each test must check outcomes; verify test coverage of the failure/rollback paths."
   ignore_paths:
-    - "dist/**"
-    - "*.min.js"
+    - "build/**"
+    - "external/**"
+    - "tools/vendor/**"
 
 repair:
   auto_fix: true
@@ -22,10 +33,17 @@ analysis:
   dead_code: true
   security_scan: true
   predictive_ci: true
+  ci_commands:
+    - "cmake --build build/linux-gcc-debug -j8 && ctest --test-dir build/linux-gcc-debug -j8"
+    - "make -f tools/sandbox/Makefile check"
 
 quality_gates:
-  - name: "No console.log in production"
-    rule: "No console.log in src/ files"
+  - name: "No synthetic access"
+    rule: "No right or activation is granted outside an authenticated Session load (no grant_all in main, no synthetic session in src/)"
+  - name: "Startup refusal is bounded"
+    rule: "Step failure messages go through bounded_lifecycle_message; no raw error text with record content"
+  - name: "Money renders but never calculates"
+    rule: "QML binds amountText/totalText exact-money strings; no arithmetic on money in src/ui/"
 
 chat:
   enabled: true
