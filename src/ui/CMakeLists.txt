@@ -1,5 +1,5 @@
 if(SQUIFLOW_WITH_QT)
-    find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
+    find_package(Qt6 6.11.1 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
 
     target_compile_definitions(squiflow_shell PRIVATE SQUIFLOW_WITH_QT=1)
     set_target_properties(squiflow_shell PROPERTIES AUTOMOC ON)

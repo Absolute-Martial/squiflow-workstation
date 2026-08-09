@@ -45,20 +45,21 @@ jobs:
           aqtsource: git+https://github.com/miurahr/aqtinstall@16db45a70b5905ad596941b223469bc86a56901e
       - name: Build pinned libsodium for CMake lane
         run: echo "SQUIFLOW_SODIUM_ROOT=$(tools/ci/build-libsodium.sh)" >> "$GITHUB_ENV"
-      - name: Configure, build and test Qt/QWindowKit
-        run: cmake --workflow --preset linux-qt-check
-      - name: Launch offscreen dashboard smoke test
-        env:
-          QT_QPA_PLATFORM: offscreen
-          QSG_RHI_BACKEND: software
-        run: ./build/linux-qt-release/src/app/squiflow_workstation --smoke-test
-      - name: Upload Qt test logs on failure
-        if: failure()
+      - name: Run Linux Qt build, tests and runtime diagnostics
+        run: tools/ci/linux-qt-diagnostics.sh
+      - name: Upload complete Linux Qt diagnostic bundle
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: linux-qt-test-logs
-          path: build/linux-qt-release/Testing/Temporary/
-          if-no-files-found: ignore
+          name: linux-qt-diagnostics-${{ github.run_id }}
+          path: |
+            build/linux-qt-diagnostics/**
+            build/linux-qt-release/Testing/Temporary/**
+            build/linux-qt-release/CMakeFiles/CMakeError.log
+            build/linux-qt-release/CMakeFiles/CMakeOutput.log
+            build/linux-qt-release/CMakeCache.txt
+          if-no-files-found: warn
+          retention-days: 14
 
   windows-msvc:
     runs-on: windows-2025
@@ -102,7 +103,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           QSG_RHI_BACKEND: software
-        run: "& .\\build\\windows-msvc-release\\src\\app\\squiflow_workstation.exe --smoke-test"
+        run: "& .\\build\\windows-msvc-release\\src\\ui\\squiflow_workstation.exe --smoke-test"
       - name: Upload test logs on failure
         if: failure()
         uses: actions/upload-artifact@v7

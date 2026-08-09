@@ -659,6 +659,10 @@ void the_real_storage_agrees_with_the_fake() {
           "no credential reached the disk");
     check(contains(content, "invoice issued"), "the events are readable");
 
+    // Windows refuses to remove an open file. Close the inspection stream
+    // before deleting the temporary directory; POSIX permits unlinking an
+    // open file, which previously hid this portability defect in Linux CI.
+    live.close();
     std::filesystem::remove_all(root, error);
     check(!error, "the test directory was cleaned up");
 }

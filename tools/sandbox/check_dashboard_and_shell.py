@@ -97,7 +97,10 @@ for path in (".github/workflows/ci.yml", ".github/workflows/release.yml"):
         errors.append(f"{path}: {failure}")
 require(".github/workflows/ci.yml", (
     "linux-strict", "linux-qt", "windows-msvc", "--smoke-test",
-    "linux-qt-check", "windows-msvc-check"))
+    "linux-qt-diagnostics", "windows-msvc-check"))
+qt_driver = read(".github/workflows/ci.yml") + read("tools/ci/linux-qt-diagnostics.sh")
+if "linux-qt-check" not in qt_driver:
+    errors.append("linux-qt diagnostics: the linux-qt-check workflow preset must be driven by the lane")
 require(".github/workflows/release.yml", (
     "windows-msvc-release-bundle", "--smoke-test", "SHA256SUMS.txt",
     "Publish GitHub release"))

@@ -1,7 +1,9 @@
 include_guard(GLOBAL)
 include(GNUInstallDirs)
 
-install(TARGETS squiflow_workstation RUNTIME DESTINATION . COMPONENT Runtime)
+if(TARGET squiflow_workstation)
+    install(TARGETS squiflow_workstation RUNTIME DESTINATION . COMPONENT Runtime)
+endif()
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/packaging/licenses/" DESTINATION licenses COMPONENT Runtime)
 
 set(SQUIFLOW_ARCHIVE_DIR "${CMAKE_BINARY_DIR}/artifacts")

@@ -2,6 +2,7 @@
 #include "support/check.hpp"
 
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <optional>
@@ -32,7 +33,8 @@ public:
 };
 
 std::string temp_file_path(const std::string& suffix) {
-    return "/tmp/squiflow_window_state_test_" + suffix + ".txt";
+    const auto directory = std::filesystem::temp_directory_path();
+    return (directory / ("squiflow_window_state_test_" + suffix + ".txt")).string();
 }
 
 }  // namespace
