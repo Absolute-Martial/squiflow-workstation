@@ -87,6 +87,16 @@ void test_values() {
     const Blob bytes{1, 2, 3};
     check(Value::binary(bytes).as_binary() != nullptr && *Value::binary(bytes).as_binary() == bytes,
           "binary round-trips");
+    check(Value::integer(42).describe() == "42", "integer describes without changing kind");
+    check(Value::real(3.5).describe().rfind("3.500000", 0) == 0,
+          "real describes its stored value");
+    check(Value::text("flex").describe() == "flex", "text describes without nullable access");
+    check(Value::binary(bytes).describe() == "binary(3)",
+          "binary describes its stored size");
+    check(Value::text("a").compare(Value::text("a")) == 0,
+          "equal text values compare equal");
+    check(Value::binary(bytes).compare(Value::binary(bytes)) == 0,
+          "equal binary values compare equal");
 }
 
 void test_rows() {

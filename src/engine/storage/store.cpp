@@ -168,11 +168,18 @@ int Value::compare(const Value& other) const {
             }
             return own_real < other_real ? -1 : 1;
         }
-        case ValueKind::Text:
-            return sign_of(as_text()->compare(*other.as_text()));
+        case ValueKind::Text: {
+            // The active variant alternative is established by kind(). Access
+            // it directly here rather than dereferencing a nullable get_if()
+            // result; this also makes the invariant explicit to static
+            // analyzers.
+            const auto& own = std::get<std::string>(data_);
+            const auto& them = std::get<std::string>(other.data_);
+            return sign_of(own.compare(them));
+        }
         case ValueKind::Binary: {
-            const Blob& own = *as_binary();
-            const Blob& them = *other.as_binary();
+            const auto& own = std::get<Blob>(data_);
+            const auto& them = std::get<Blob>(other.data_);
             if (own == them) {
                 return 0;
             }
@@ -198,13 +205,13 @@ std::string Value::describe() const {
         case ValueKind::Null:
             return "null";
         case ValueKind::Integer:
-            return std::to_string(*as_integer());
+            return std::to_string(std::get<std::int64_t>(data_));
         case ValueKind::Real:
-            return std::to_string(*as_real());
+            return std::to_string(std::get<double>(data_));
         case ValueKind::Text:
-            return *as_text();
+            return std::get<std::string>(data_);
         case ValueKind::Binary:
-            return "binary(" + std::to_string(as_binary()->size()) + ")";
+            return "binary(" + std::to_string(std::get<Blob>(data_).size()) + ")";
     }
     return "null";
 }

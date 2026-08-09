@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <iostream>
 #include <string_view>
 #include <utility>
 
@@ -73,21 +74,35 @@ int squiflow_workstation_main_qt(int argc, char** argv) {
             application.quit();
         });
 
+    const bool smoke_test =
+        std::any_of(argv + 1, argv + argc, [](const char* value) {
+            return QString::fromUtf8(value) == QStringLiteral("--smoke-test");
+        });
+
     const auto started = application_host.start();
     // A CI smoke launch on a machine that has never been provisioned still
     // exercises every startup door; the expected refusal is not an error
     // there. Production launches return 2 so the operator never mistakes an
     // unprovisioned machine for a running shell.
-    const bool smoke_test =
-        std::any_of(argv + 1, argv + argc, [](const char* value) {
-            return QString::fromUtf8(value) == QStringLiteral("--smoke-test");
-        });
     switch (started.disposition) {
         case squiflow::app::StartupDisposition::Running:
             break;
         case squiflow::app::StartupDisposition::SecondaryInstance:
             return 0;
         case squiflow::app::StartupDisposition::Failed:
+            if (smoke_test) {
+                std::cerr << "SquiFlow smoke-test startup failure"
+                          << " step="
+                          << squiflow::app::startup_step_name(
+                                 started.failure.has_value()
+                                     ? started.failure->step
+                                     : squiflow::app::StartupStep::Paths)
+                          << " message="
+                          << (started.failure.has_value()
+                                  ? started.failure->message
+                                  : "missing startup failure detail")
+                          << '\n';
+            }
             if (services.logger() != nullptr) {
                 services.logger()->error(
                     "startup.identity",
