@@ -14,6 +14,13 @@ else()
         -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor -Wold-style-cast
         -Wcast-align -Wunused -Woverloaded-virtual -Wconversion -Wsign-conversion
         -Wnull-dereference -Wdouble-promotion -Wformat=2)
+    # GCC's -Wnull-dereference is an optimizer pass: at -O2 it misreports
+    # std::get_if/std::vector::size inside a std::variant as possibly null
+    # (GCC 13, variants with string/vector alternatives). The verification
+    # lane keeps the check enabled but not fatal, exactly like
+    # tools/sandbox/Makefile does, so release builds stay green.
+    target_compile_options(squiflow_warnings INTERFACE
+        -Wno-error=null-dereference)
 endif()
 
 option(SQUIFLOW_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)

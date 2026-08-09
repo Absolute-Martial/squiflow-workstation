@@ -72,6 +72,10 @@ void NativeWindowBridgeQt::setAppearance(bool dark, bool high_contrast) {
         (void)implementation_->agent.setWindowAttribute(
             QStringLiteral("acrylic-material"), false);
     }
+#else
+    // The contrast intent is a Windows-surface concern; keep the Linux
+    // release build honest about the parameter being carried, not used.
+    (void)high_contrast;
 #endif
     if (active != backdrop_active_) {
         backdrop_active_ = active;
