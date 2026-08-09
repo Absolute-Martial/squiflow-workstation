@@ -12,6 +12,14 @@
 #include <string>
 #include <vector>
 
+namespace squiflow::platform {
+class Logger;
+}
+
+namespace squiflow::app {
+class AuthenticatedWorkspace;
+}
+
 namespace squiflow::engine {
 class Database;
 }
@@ -47,12 +55,14 @@ class StartupServices {
     virtual StoreConnection connect_store() = 0;
     virtual bool integrity_ok(engine::Database& database,
                               std::string& detail) = 0;
+    virtual platform::Logger* logger() noexcept = 0;
     virtual SessionLoadResult load_session(engine::Database& database) = 0;
     virtual StepResult start_shell(
         const protocol::Activation& activation,
         const engine::RightsSet& rights,
         const std::vector<protocol::ModuleId>& registered,
-        std::uint64_t session_generation) = 0;
+        std::uint64_t session_generation,
+        AuthenticatedWorkspace& workspace) = 0;
     virtual StepResult start_window() = 0;
     virtual void stop_window() noexcept = 0;
     virtual void stop_shell() noexcept = 0;
@@ -64,6 +74,7 @@ class RealStartupRuntime final : public StartupRuntime {
     using Clock = std::function<std::int64_t()>;
 
     RealStartupRuntime(StartupServices& services, Clock clock);
+    ~RealStartupRuntime() override;
     StepResult start(StartupStep step) override;
     void stop(StartupStep step, ShutdownReason reason) override;
     void rollback_diagnostic(const RollbackFailure& failure) noexcept override;
@@ -71,8 +82,15 @@ class RealStartupRuntime final : public StartupRuntime {
     const modules::Registry* registry() const noexcept { return registry_.get(); }
     const engine::Database* database() const noexcept { return database_.get(); }
     const std::optional<engine::Session>& session() const noexcept { return session_; }
+    const AuthenticatedWorkspace* workspace() const noexcept {
+        return workspace_.get();
+    }
+    AuthenticatedWorkspace* active_workspace() noexcept {
+        return workspace_.get();
+    }
 
   private:
+    StepResult start_step(StartupStep step);
     StepResult start_database();
     StepResult start_migrations();
     StepResult start_integrity();
@@ -89,6 +107,7 @@ class RealStartupRuntime final : public StartupRuntime {
     std::optional<engine::Session> session_{};
     std::vector<protocol::ModuleId> disabled_modules_{};
     std::uint64_t session_generation_{0};
+    std::unique_ptr<AuthenticatedWorkspace> workspace_{};
 };
 
 }  // namespace squiflow::app

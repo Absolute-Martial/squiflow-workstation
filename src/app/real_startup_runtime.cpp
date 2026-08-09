@@ -1,8 +1,10 @@
 #include "app/real_startup_runtime.hpp"
 
 #include "app/composition_root.hpp"
+#include "app/workspace_runtime.hpp"
 #include "engine/storage/database.hpp"
 #include "modules/administration/data/repository.hpp"
+#include "platform/logger.hpp"
 
 #include <exception>
 #include <stdexcept>
@@ -15,6 +17,24 @@ StepResult failed(std::string message) {
     return {StepDisposition::Failed, bounded_lifecycle_message(message)};
 }
 
+std::string failure_category(StartupStep step) {
+    switch (step) {
+        case StartupStep::Paths: return "startup.paths";
+        case StartupStep::Logging: return "startup.logging";
+        case StartupStep::CrashHandler: return "startup.crash_handler";
+        case StartupStep::SingleInstance: return "startup.single_instance";
+        case StartupStep::DatabaseConnection: return "startup.database";
+        case StartupStep::Migrations: return "startup.migrations";
+        case StartupStep::IntegrityCheck: return "startup.integrity";
+        case StartupStep::IdentitySession: return "startup.identity";
+        case StartupStep::Activation: return "startup.activation";
+        case StartupStep::ModuleRegistration: return "startup.modules";
+        case StartupStep::Shell: return "startup.shell";
+        case StartupStep::Window: return "startup.window";
+    }
+    return "startup";
+}
+
 }  // namespace
 
 RealStartupRuntime::RealStartupRuntime(StartupServices& services, Clock clock)
@@ -24,7 +44,25 @@ RealStartupRuntime::RealStartupRuntime(StartupServices& services, Clock clock)
     }
 }
 
+RealStartupRuntime::~RealStartupRuntime() = default;
+
 StepResult RealStartupRuntime::start(StartupStep step) {
+    const StepResult result = start_step(step);
+    if (result.disposition == StepDisposition::Failed) {
+        // Record the refusal in the step log while logging is still wound
+        // up; the rollback wind-down stops logging before the failure is
+        // returned to the entry point.
+        if (auto* logger = services_.logger()) {
+            try {
+                logger->error(failure_category(step), result.message);
+            } catch (...) {
+            }
+        }
+    }
+    return result;
+}
+
+StepResult RealStartupRuntime::start_step(StartupStep step) {
     switch (step) {
         case StartupStep::Paths: return services_.start_paths();
         case StartupStep::Logging: return services_.start_logging();
@@ -134,11 +172,26 @@ StepResult RealStartupRuntime::start_modules() {
 }
 
 StepResult RealStartupRuntime::start_shell() {
-    if (!registry_ || !session_) {
+    if (!registry_ || !database_ || !session_) {
         return failed("shell prerequisites are incomplete");
     }
-    return services_.start_shell(registry_->activation(), session_->rights,
-                                 registry_->registered(), session_generation_);
+    // The workspace is the single authenticated composition of the shell.
+    // It is composed here, at the fixed Shell step, from the registry, the
+    // database and the loaded session. Its own generation guard starts fresh
+    // here; the session generation published to the shell comes from the
+    // identity step and is carried through unchanged.
+    auto workspace = std::make_unique<AuthenticatedWorkspace>(*registry_, *database_);
+    workspace->sign_in(*session_);
+    StepResult shell =
+        services_.start_shell(registry_->activation(), session_->rights,
+                              registry_->registered(), session_generation_,
+                              *workspace);
+    if (shell.disposition == StepDisposition::Failed) {
+        workspace_.reset();
+        return shell;
+    }
+    workspace_ = std::move(workspace);
+    return shell;
 }
 
 void RealStartupRuntime::stop(StartupStep step, ShutdownReason) {
@@ -148,6 +201,7 @@ void RealStartupRuntime::stop(StartupStep step, ShutdownReason) {
             break;
         case StartupStep::Shell:
             services_.stop_shell();
+            workspace_.reset();
             break;
         case StartupStep::ModuleRegistration:
             registry_.reset();

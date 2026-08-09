@@ -24,7 +24,8 @@ if(SQUIFLOW_WITH_QT)
         #     ${CMAKE_CURRENT_BINARY_DIR}/ui-fluent-fluentui)
         # target_link_libraries(squiflow_shell PRIVATE fluentuiplugin)
     endif()
-    target_sources(squiflow_workstation PRIVATE workstation_main_qt.cpp)
+    target_sources(squiflow_workstation PRIVATE workstation_main_qt.cpp
+        real_startup_services_qt.cpp)
 
     target_sources(squiflow_shell PRIVATE
         ../shell/paged_list_model_qt.cpp
@@ -56,12 +57,25 @@ if(SQUIFLOW_WITH_QT)
         target_compile_definitions(squiflow_shell PRIVATE
             SQUIFLOW_WITH_QWINDOWKIT=1)
     endif()
-    target_link_libraries(squiflow_workstation PRIVATE squiflow::shell)
+    target_link_libraries(squiflow_workstation PRIVATE squiflow::shell squiflow::engine)
 
     if(SQUIFLOW_BUILD_TESTS)
         add_executable(qt_bridge_test ../../tests/shell/qt_bridge_test.cpp)
         target_compile_definitions(qt_bridge_test PRIVATE SQUIFLOW_WITH_QT=1)
         target_link_libraries(qt_bridge_test PRIVATE squiflow::shell squiflow::testing Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick squiflow::warnings squiflow::hardening squiflow::sanitizers)
         add_test(NAME shell.qt_bridge COMMAND qt_bridge_test)
+
+        if(SQUIFLOW_WITH_SQLITE)
+            # The authenticated-startup journey against a real SQLite store and
+            # the real shipped binary. Memory lanes silently report a pass at
+            # build time (see the test source): they cannot pretend a record
+            # ever survived a process exit.
+            add_executable(seed_provisioned ../../tests/shell/seed_provisioned.cpp)
+            target_link_libraries(seed_provisioned PRIVATE squiflow::app squiflow::engine squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)
+            add_test(NAME app.authenticated_startup
+                COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/shell/e2e_authenticated_startup.sh
+                        $<TARGET_FILE:squiflow_workstation>
+                        $<TARGET_FILE:seed_provisioned>)
+        endif()
     endif()
 endif()

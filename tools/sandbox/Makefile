@@ -266,7 +266,16 @@ $(BUILD)/app_real_startup_runtime_test: $(PROTOCOL_SRC) $(ENGINE_SRC) $(STORAGE_
                                        $(COMPANION_SRC) $(FILES_SRC) $(ALL_WORKFLOWS_SRC) \
                                        src/app/startup.cpp src/app/startup_sequence.cpp \
                                        src/app/composition_root.cpp src/app/real_startup_runtime.cpp \
-                                       tests/app/real_startup_runtime_test.cpp
+                                       src/app/workspace_runtime.cpp $(LOGGING_SRC) \
+                                       src/app/primary/local_primary_query.cpp \
+                                       src/app/primary/local_record_query.cpp \
+                                       src/app/primary/primary_page_service.cpp \
+                                       src/app/primary/record_page_service.cpp \
+                                       src/app/primary/command_gateway.cpp \
+                                       src/app/credential_command.cpp \
+                                       src/app/session_authorization.cpp \
+                                       src/platform/password_hash.cpp \
+                                       tests/app/real_startup_runtime_test.cpp $(SODIUM_LIB)
 >@mkdir -p $(BUILD)
 >$(CXX) $(CXXFLAGS) -Iexternal/protocol/include $^ -o $@
 

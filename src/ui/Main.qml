@@ -57,7 +57,7 @@ ApplicationWindow {
             shellState.requestRoute(navigationBridge.currentRoute)
             unsavedDialog.open()
         } else {
-            lifecycleBridge.requestShutdown()
+            applicationSurface.requestShutdown()
         }
     }
 
@@ -66,7 +66,7 @@ ApplicationWindow {
         function onRouteApproved(stableId) {
             if (root.shutdownAfterDiscard) {
                 root.shutdownAfterDiscard = false
-                root.lifecycleBridge.requestShutdown()
+                root.applicationSurface.requestShutdown()
             } else {
                 navigationBridge.selectRoute(stableId)
             }

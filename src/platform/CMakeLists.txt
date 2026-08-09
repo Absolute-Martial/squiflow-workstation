@@ -61,7 +61,7 @@ if(WIN32)
     target_sources(squiflow_platform PRIVATE crash_handler_win.cpp single_instance_win.cpp secrets_dpapi.cpp)
     target_link_libraries(squiflow_platform PRIVATE Advapi32 Crypt32 DbgHelp User32)
 else()
-    target_sources(squiflow_platform PRIVATE crash_handler_posix.cpp single_instance_posix.cpp)
+    target_sources(squiflow_platform PRIVATE crash_handler_posix.cpp single_instance_posix.cpp secrets_posix.cpp)
 endif()
 
 if(SQUIFLOW_WITH_QT)

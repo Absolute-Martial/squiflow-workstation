@@ -1,5 +1,6 @@
 #include "app/real_startup_runtime.hpp"
 #include "app/startup_sequence.hpp"
+#include "app/workspace_runtime.hpp"
 #include "engine/storage/database.hpp"
 #include "engine/storage/memory_store.hpp"
 #include "support/check.hpp"
@@ -10,6 +11,7 @@
 
 namespace app = squiflow::app;
 namespace engine = squiflow::engine;
+namespace platform = squiflow::platform;
 namespace protocol = squiflow::protocol;
 using squiflow::testing::check;
 using squiflow::testing::section;
@@ -24,6 +26,7 @@ struct Services final : app::StartupServices {
     bool healthy{true};
     bool shell_started{false};
     bool window_started{false};
+    bool workspace_attached{false};
     bool instance_released{false};
     bool logging_stopped{false};
     bool paths_stopped{false};
@@ -66,14 +69,18 @@ struct Services final : app::StartupServices {
         const protocol::Activation& activation,
         const engine::RightsSet& rights,
         const std::vector<protocol::ModuleId>& registered,
-        std::uint64_t session_generation) override {
+        std::uint64_t session_generation,
+        app::AuthenticatedWorkspace& workspace) override {
         shell_started = activation.is_active(protocol::ModuleId::administration) &&
                         rights.count() == protocol::kRightCount;
         registered_count = registered.size();
         seen_generation = session_generation;
-        return shell_started ? app::StepResult{}
-                             : app::StepResult{app::StepDisposition::Failed,
-                                               "invalid shell access"};
+        workspace_attached = workspace.signed_in() &&
+                             workspace.current_session().is_signed_in();
+        return shell_started && workspace_attached
+            ? app::StepResult{}
+            : app::StepResult{app::StepDisposition::Failed,
+                              "invalid shell access"};
     }
     app::StepResult start_window() override {
         window_started = shell_started;
@@ -83,6 +90,7 @@ struct Services final : app::StartupServices {
     }
     void stop_window() noexcept override { window_started = false; }
     void stop_shell() noexcept override { shell_started = false; }
+    platform::Logger* logger() noexcept override { return nullptr; }
     void rollback_diagnostic(
         const app::RollbackFailure& failure) noexcept override {
         diagnostics.push_back(failure);
@@ -115,8 +123,12 @@ int main() {
           "live composition has every module and workflow");
     check(runtime.session() && runtime.session()->is_signed_in(),
           "identity session is retained");
+    check(runtime.workspace() && runtime.workspace()->signed_in(),
+          "authenticated workspace is composed and signed in");
     check(services.shell_started && services.window_started,
           "shell and window see completed application state");
+    check(services.workspace_attached,
+          "shell received the live authenticated workspace");
     check(services.registered_count == protocol::kModuleCount &&
               services.seen_generation == 7,
           "shell receives owned activation inputs");
@@ -127,8 +139,8 @@ int main() {
               services.paths_stopped,
           "platform resources are released");
     check(runtime.database() == nullptr && runtime.registry() == nullptr &&
-              !runtime.session(),
-          "runtime releases database, registry and session");
+              !runtime.session() && runtime.workspace() == nullptr,
+          "runtime releases database, registry, session and workspace");
 
     section("secondary instance never connects storage");
     Services secondary_services;
