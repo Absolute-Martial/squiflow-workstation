@@ -2,3 +2,6 @@ add_library(squiflow_shell STATIC completion_gate.cpp surface_lifecycle.cpp scre
 add_library(squiflow::shell ALIAS squiflow_shell)
 target_include_directories(squiflow_shell PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(squiflow_shell PUBLIC squiflow::protocol squiflow::engine PRIVATE squiflow::app squiflow::warnings squiflow::hardening squiflow::sanitizers)
+if(SQUIFLOW_USE_PCH AND SQUIFLOW_COMMON_PCH_HEADERS)
+    target_precompile_headers(squiflow_shell PRIVATE ${SQUIFLOW_COMMON_PCH_HEADERS})
+endif()

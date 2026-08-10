@@ -31,7 +31,7 @@
         "SQUIFLOW_WITH_QT": "OFF",
         "SQUIFLOW_SODIUM_ROOT": "$env{SQUIFLOW_SODIUM_ROOT}"
       },
-      "generator": "Unix Makefiles"
+      "generator": "Ninja"
     },
     {
       "name": "linux-gcc-asan",
@@ -100,28 +100,23 @@
   "buildPresets": [
     {
       "name": "linux-gcc-debug",
-      "configurePreset": "linux-gcc-debug",
-      "jobs": 2
+      "configurePreset": "linux-gcc-debug"
     },
     {
       "name": "linux-gcc-asan",
-      "configurePreset": "linux-gcc-asan",
-      "jobs": 2
+      "configurePreset": "linux-gcc-asan"
     },
     {
       "name": "linux-qt-release",
-      "configurePreset": "linux-qt-release",
-      "jobs": 2
+      "configurePreset": "linux-qt-release"
     },
     {
       "name": "windows-msvc-debug",
-      "configurePreset": "windows-msvc-debug",
-      "jobs": 2
+      "configurePreset": "windows-msvc-debug"
     },
     {
       "name": "windows-msvc-release",
-      "configurePreset": "windows-msvc-release",
-      "jobs": 2
+      "configurePreset": "windows-msvc-release"
     },
     {
       "name": "windows-msvc-package",
@@ -129,8 +124,7 @@
       "configurePreset": "windows-msvc-release",
       "targets": [
         "squiflow_archive"
-      ],
-      "jobs": 2
+      ]
     },
     {
       "name": "windows-msvc-source",
@@ -138,8 +132,7 @@
       "configurePreset": "windows-msvc-release",
       "targets": [
         "squiflow_source_archive"
-      ],
-      "jobs": 2
+      ]
     }
   ],
   "testPresets": [

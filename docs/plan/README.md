@@ -8,6 +8,9 @@ the changes it describes.
   files and its done-condition. The intention.
 - **`status.md`** -- what is actually finished, with the output that proves
   it. The record.
+- **`build-performance.md`** -- the August 2026 build/startup/runtime
+  performance pass: what was actually measured, what changed, and what could
+  not be verified in the sandbox that pass ran in.
 - **`language-and-verification.md`** -- the C++23 rules this project holds
   itself to, and the measured gap between what the compiler flag promises and
   what the standard library actually ships here.

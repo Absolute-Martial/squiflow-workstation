@@ -43,6 +43,12 @@ function(squiflow_add_module MODULE_NAME)
         target_link_libraries(${target} PUBLIC squiflow::module::${dep})
     endforeach()
 
+    # One choke point, same as every other cross-cutting concern in this
+    # function: every module gets the shared PCH without having to ask.
+    if(SQUIFLOW_USE_PCH AND SQUIFLOW_COMMON_PCH_HEADERS)
+        target_precompile_headers(${target} PRIVATE ${SQUIFLOW_COMMON_PCH_HEADERS})
+    endif()
+
     set_target_properties(${target} PROPERTIES
         FOLDER "modules"
         SQUIFLOW_MODULE_TIER "${ARG_TIER}"

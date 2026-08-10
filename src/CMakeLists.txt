@@ -7,6 +7,7 @@ set(SQUIFLOW_ROOT "${CMAKE_SOURCE_DIR}")
 include("${SQUIFLOW_ROOT}/cmake/Warnings.cmake")
 include("${SQUIFLOW_ROOT}/cmake/Hardening.cmake")
 include("${SQUIFLOW_ROOT}/cmake/Sanitizers.cmake")
+include("${SQUIFLOW_ROOT}/cmake/BuildAcceleration.cmake")
 include("${SQUIFLOW_ROOT}/cmake/SquiflowModule.cmake")
 include("${SQUIFLOW_ROOT}/cmake/ModuleGraph.cmake")
 

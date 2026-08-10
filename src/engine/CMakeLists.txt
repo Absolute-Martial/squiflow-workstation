@@ -60,4 +60,8 @@ target_link_libraries(squiflow_engine
     PUBLIC  squiflow::protocol Threads::Threads
     PRIVATE squiflow::warnings squiflow::hardening squiflow::sanitizers)
 
+if(SQUIFLOW_USE_PCH AND SQUIFLOW_COMMON_PCH_HEADERS)
+    target_precompile_headers(squiflow_engine PRIVATE ${SQUIFLOW_COMMON_PCH_HEADERS})
+endif()
+
 set_target_properties(squiflow_engine PROPERTIES FOLDER "engine")

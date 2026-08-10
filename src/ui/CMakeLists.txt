@@ -12,6 +12,16 @@ if(SQUIFLOW_WITH_QT)
     # module share this directory by design.
     add_executable(squiflow_workstation ../app/main.cpp)
     target_link_libraries(squiflow_workstation PRIVATE squiflow::app)
+    if(SQUIFLOW_USE_PCH AND SQUIFLOW_COMMON_PCH_HEADERS)
+        target_precompile_headers(squiflow_workstation PRIVATE ${SQUIFLOW_COMMON_PCH_HEADERS})
+    endif()
+    # SQUIFLOW_QT_PCH_HEADERS (cmake/BuildAcceleration.cmake) deliberately is
+    # not applied here. It is a reasonable next step by the same logic as the
+    # STL PCH above, but this optimization pass had no Qt 6.11 toolchain to
+    # build and time it against, and the project's own rule for this pass is
+    # not to apply changes that weren't measured in this codebase. Wire it
+    # onto squiflow_workstation/squiflow_shell and re-run the clean-build
+    # timing once a Qt toolchain is available before trusting it.
     target_compile_definitions(squiflow_workstation PRIVATE SQUIFLOW_WITH_QT=1)
     set_target_properties(squiflow_workstation PROPERTIES AUTOMOC ON)
 

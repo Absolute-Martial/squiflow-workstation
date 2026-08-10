@@ -78,3 +78,14 @@ endif()
 target_link_libraries(squiflow_platform
     PRIVATE ${SQUIFLOW_SODIUM_TARGET}
             squiflow::warnings squiflow::hardening squiflow::sanitizers)
+
+if(SQUIFLOW_USE_PCH AND SQUIFLOW_COMMON_PCH_HEADERS)
+    target_precompile_headers(squiflow_platform PRIVATE ${SQUIFLOW_COMMON_PCH_HEADERS})
+    # GCC 13 miscompiles the inlined std::string move at -O2 inside
+    # log_level_policy.cpp's clipped() when <string> comes from the PCH,
+    # reporting a false positive -Warray-bounds through char_traits::copy.
+    # Compile that one translation unit from the raw headers instead; the
+    # rest of the target keeps its PCH.
+    set_source_files_properties(log_level_policy.cpp
+        PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE)
+endif()

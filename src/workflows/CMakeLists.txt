@@ -21,6 +21,9 @@ target_link_libraries(squiflow_workflows
            squiflow_module_agreements
            squiflow_module_sourcing
     PRIVATE squiflow::warnings squiflow::hardening squiflow::sanitizers)
+if(SQUIFLOW_USE_PCH AND SQUIFLOW_COMMON_PCH_HEADERS)
+    target_precompile_headers(squiflow_workflows PRIVATE ${SQUIFLOW_COMMON_PCH_HEADERS})
+endif()
 if(SQUIFLOW_BUILD_TESTS AND EXISTS "${SQUIFLOW_ROOT}/tests/workflows/workflow_framework_test.cpp")
     add_executable(workflow_framework_test "${SQUIFLOW_ROOT}/tests/workflows/workflow_framework_test.cpp")
     target_link_libraries(workflow_framework_test PRIVATE squiflow::workflows squiflow::testing squiflow::warnings squiflow::hardening squiflow::sanitizers)

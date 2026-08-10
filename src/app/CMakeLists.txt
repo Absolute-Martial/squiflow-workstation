@@ -28,6 +28,10 @@ target_link_libraries(squiflow_app
             squiflow_module_companion squiflow_module_files
             squiflow::warnings squiflow::hardening squiflow::sanitizers)
 
+if(SQUIFLOW_USE_PCH AND SQUIFLOW_COMMON_PCH_HEADERS)
+    target_precompile_headers(squiflow_app PRIVATE ${SQUIFLOW_COMMON_PCH_HEADERS})
+endif()
+
 # The squiflow_workstation executable and its QML module are declared in
 # src/ui/CMakeLists.txt, in the directory that owns the module files. The Qt
 # tooling (qmlcachegen, metatypes, autogen) derives every output path from the
