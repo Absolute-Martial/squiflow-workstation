@@ -46,7 +46,7 @@ jobs:
         with:
           cmake-version: '4.4.2'
       - uses: seanmiddleditch/gha-setup-ninja@v6
-      - uses: jurplel/install-qt-action@v4.3.1
+      - uses: jurplel/install-qt-action@v4.4.0
         with:
           version: '6.11.1'
           arch: linux_gcc_64
@@ -86,7 +86,7 @@ jobs:
         with:
           cmake-version: '4.4.2'
       - uses: seanmiddleditch/gha-setup-ninja@v6
-      - uses: jurplel/install-qt-action@v4.3.1
+      - uses: jurplel/install-qt-action@v4.4.0
         with:
           version: '6.11.1'
           arch: win64_msvc2022_64
